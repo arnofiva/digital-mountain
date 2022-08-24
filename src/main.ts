@@ -5,6 +5,8 @@ import WebScene from "@arcgis/core/WebScene";
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
+import esriConfig from "@arcgis/core/config";
+
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
 // const params = new URLSearchParams(document.location.search.slice(1));
@@ -22,9 +24,11 @@ import "@esri/calcite-components/dist/components/calcite-loader";
 //   IdentityManager.setOAuthResponseHash(responseHash);
 // };
 
+esriConfig.apiKey = "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
+
 const map = new WebScene({
   portalItem: {
-    id: "91b46c2b162c48dba264b2190e1dbcff",
+    id: "0b6dbaf6640540cfa83a3ba4cf97fb3f",
   },
 });
 
