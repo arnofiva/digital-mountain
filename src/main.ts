@@ -42,12 +42,6 @@ map.when().then(() => {
   map.ground.surfaceColor = new Color([220, 220, 220]);
 });
 
-map.loadAll().then(() => {
-  const slides = map.presentation.slides;
-  const slide = slides.getItemAt(Math.floor(Math.random() * slides.length));
-  slide.applyTo(view, { animate: false });
-});
-
 whenOnce(() => !view.updating).then(() => {
   const loader = document.getElementById("loader");
   loader?.parentElement?.removeChild(loader);
