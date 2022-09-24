@@ -20,7 +20,10 @@ import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
 import esriConfig from "@arcgis/core/config";
-import contours from "./contours";
+import { WebStyleSymbol } from "@arcgis/core/symbols";
+import Weather from "@arcgis/core/widgets/Weather";
+import { layers as contourLayers, sources as contourSources } from "./vector/contours";
+import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
@@ -61,6 +64,46 @@ const buildings = new SceneLayer({
   })
 });
 
+const trees = new SceneLayer({
+  portalItem: {
+    id: "e6811797f4c74c77bf34ab1e15f24631"
+  },
+  renderer: new SimpleRenderer({
+    symbol: new WebStyleSymbol({
+      name: "Larix",
+      styleName: "EsriRealisticTreesStyle"
+    })
+  }),
+  title: "3D Trees"
+});
+
+const rocks = new VectorTileLayer({
+  portalItem: {
+    id: "f13423a1ff78401c96ac3aeed819bb6e"
+  },
+  style: {
+    version: 10.81,
+    sources: {
+      esri: {
+        type: "vector",
+        url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/VTL__3857__Grison_Rocks/VectorTileServer/"
+      }
+    },
+    layers: [
+      {
+        id: "FL__3857__Grison__Rocks/1",
+        type: "fill",
+        source: "esri",
+        "source-layer": "FL__3857__Grison__Rocks",
+        layout: {},
+        paint: { "fill-color": "#999999" }
+      }
+    ]
+  },
+  visible: false,
+  title: "Rocks"
+});
+
 const urlTemplate =
   "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{level}/{row}/{col}";
 
@@ -72,7 +115,9 @@ const color = new Color("#3A4754");
 const hillshade = new TileLayer({
   portalItem: { id: "1b243539f4514b6ba35e7d995890db1d" }, // Light
   blendMode: "multiply",
-  listMode: "hide-children"
+  listMode: "hide-children",
+  visible: false,
+  title: "World Hillshade (Blended)"
 });
 
 // hillshade.load().then(() => {
@@ -404,90 +449,14 @@ const topoVTL = new VectorTileLayer({
     glyphs:
       "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/resources/fonts/{fontstack}/{range}.pbf",
     sources: {
-      esri: {
-        type: "vector",
-        url: "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer",
-        tiles: [
-          "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"
-        ]
-      },
-      "contours": {
-        "type": "vector",
-        "url": "https://basemaps.arcgis.com/arcgis/rest/services/World_Contours_v2/VectorTileServer",
-        "tiles": [
-          "https://basemaps.arcgis.com/arcgis/rest/services/World_Contours_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"
-        ]
-      },
+      esri: topoSources,
+      contours: contourSources,
     },
     layers: [
       // Gravel
-      {
-        id: "Special area of interest/Rock or gravel",
-        type: "fill",
-        source: "esri",
-        "source-layer": "Special area of interest",
-        filter: ["==", "_symbol", 16],
-        // minzoom: 10,
-        layout: {},
-        paint: {
-          "fill-opacity": 1,
-          "fill-color": "#b8b7ab",
-          "fill-antialias": true,
-          "fill-translate": [0, 0],
-          "fill-translate-anchor": "map"
-        }
-      },
-      // Sand
-      {
-        id: "Special area of interest/Rock or gravel",
-        type: "fill",
-        source: "esri",
-        "source-layer": "Special area of interest",
-        filter: ["==", "_symbol", 6],
-        // minzoom: 10,
-        layout: {},
-        paint: {
-          "fill-opacity": 1,
-          "fill-color": "#eae5da",
-          "fill-antialias": true,
-          "fill-translate": [0, 0],
-          "fill-translate-anchor": "map"
-        }
-      },
-      // Forest
-      {
-        id: "Openspace or forest",
-        type: "fill",
-        source: "esri",
-        "source-layer": "Openspace or forest",
-        minzoom: 9,
-        layout: {},
-        paint: {
-          "fill-color": "#599507",
-          "fill-opacity": 0.12,
-          "fill-antialias": false
-        }
-      },
-      // Water
-      {
-        "id": "Water area/Lake, river or bay",
-        "type": "fill",
-        "source": "esri",
-        "source-layer": "Water area",
-        "filter": [
-          "==",
-          "_symbol",
-          7
-        ],
-        "minzoom": 11,
-        "layout": {},
-        "paint": {
-          "fill-color": "#87d6f2",
-          "fill-outline-color": "#87d6f2"
-        }
-      },,
+      ...topoLayers,
       // Contours
-      ...contours
+      ...contourLayers
     ],
     metadata: {
       arcgisStyleUrl:
@@ -498,13 +467,13 @@ const topoVTL = new VectorTileLayer({
 });
 
 const vectorBasemap = new Basemap({
-  title: "Vector",
+  title: "Winter (Vector)",
   baseLayers: [topoVTL]
   // referenceLayers: [vtl]
 });
 
 const winterBasemap = new Basemap({
-  title: "Winter",
+  title: "Winter (Imagery)",
   baseLayers: [
     new WebTileLayer({
       urlTemplate: "https://tiles.platform.fatmap.com/winter-imagery/{z}/{x}/{y}.jpg"
@@ -514,7 +483,7 @@ const winterBasemap = new Basemap({
 });
 
 const summerBasemap = new Basemap({
-  title: "Summer",
+  title: "Summer (Imagery)",
   baseLayers: [
     new TileLayer({
       portalItem: {
@@ -526,7 +495,7 @@ const summerBasemap = new Basemap({
 });
 
 const view = new SceneView({
-  // qualityProfile: "high",
+  qualityProfile: "high",
   container: "viewDiv",
 
   camera: {
@@ -542,7 +511,9 @@ const view = new SceneView({
   map: new Map({
     layers: [
       //
+      rocks,
       hillshade,
+      trees,
       buildings,
       osmFeatures
       // basemap
@@ -557,12 +528,15 @@ const view = new SceneView({
     lighting: {
       directShadowsEnabled: true
     },
-    atmosphereEnabled: false,
-    starsEnabled: false,
-    background: {
-      type: "color",
-      color
-    }
+    atmosphereEnabled: true,
+    atmosphere: {
+      quality: "high"
+    },
+    // starsEnabled: false,
+    // background: {
+    //   type: "color",
+    //   color
+    // }
   }
 });
 
@@ -586,18 +560,30 @@ view.popup.defaultPopupTemplateEnabled = true;
 
 view.ui.add(
   new Expand({
-    content: new Daylight({ view }),
-    view
+    content: new Weather({ view }),
+    view,
+    group: "environment"
   }),
   "top-right"
 );
 
 view.ui.add(
   new Expand({
+    content: new Daylight({ view }),
+    view,
+    group: "environment"
+  }),
+  "top-right"
+);
+
+
+
+view.ui.add(
+  new Expand({
     content: new LayerList({ view }),
     view
   }),
-  "top-right"
+  "bottom-left"
 );
 
 

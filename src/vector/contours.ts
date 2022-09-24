@@ -1,5 +1,13 @@
 
-const contours = [
+export const sources = {
+  "type": "vector",
+  "url": "https://basemaps.arcgis.com/arcgis/rest/services/World_Contours_v2/VectorTileServer",
+  "tiles": [
+    "https://basemaps.arcgis.com/arcgis/rest/services/World_Contours_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"
+  ]
+};
+
+export const layers = [
     {
       id: "Contour_11_main/0",
       type: "line",
@@ -475,5 +483,3 @@ const contours = [
         }
       },
   ];
-
-  export default contours;
