@@ -1,4 +1,3 @@
-import { whenOnce } from "@arcgis/core/core/reactiveUtils";
 import SceneView from "@arcgis/core/views/SceneView";
 
 import Basemap from "@arcgis/core/Basemap";
@@ -20,11 +19,23 @@ import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
 import esriConfig from "@arcgis/core/config";
-import { WebStyleSymbol } from "@arcgis/core/symbols";
+import { whenOnce } from "@arcgis/core/core/reactiveUtils";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
+import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
+import {
+  LineSymbol3D,
+  LineSymbol3DLayer,
+  ObjectSymbol3DLayer,
+  PathSymbol3DLayer,
+  PointSymbol3D,
+  WebStyleSymbol,
+} from "@arcgis/core/symbols";
+import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
+import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
-import { layers as contourLayers, sources as contourSources } from "./vector/contours";
+import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
-
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -43,12 +54,267 @@ import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 //   IdentityManager.setOAuthResponseHash(responseHash);
 // };
 
-esriConfig.apiKey = "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
+esriConfig.apiKey =
+  "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
 
+const skiLifts = new FeatureLayer({
+  portalItem: {
+    id: "dac535c60f214447af467393838ce36b",
+  },
+  title: "Ski Lifts",
+  elevationInfo: {
+    mode: "absolute-height",
+  },
+  renderer: new SimpleRenderer({
+    symbol: new LineSymbol3D({
+      symbolLayers: [
+        new PathSymbol3DLayer({
+          profile: "quad", // creates a rectangular shape
+          width: 15, // path width in meters
+          height: 0.1, // path height in meters
+          material: { color: [0, 0, 0, 0.4] },
+          cap: "square",
+          profileRotation: "heading",
+        }),
+      ],
+    }),
+  }),
+});
+
+const skiLiftPoles = new SceneLayer({
+  portalItem: {
+    id: "2e2d5046dff7498b9103c3be9760f1b0",
+  },
+  title: "Ski Lift Poles",
+  elevationInfo: {
+    mode: "absolute-height",
+  },
+
+  renderer: new SimpleRenderer({
+    symbol: new PointSymbol3D({
+      symbolLayers: [
+        new ObjectSymbol3DLayer({
+          width: 1.5, // diameter of the object from east to west in meters
+          height: 15, // height of the object in meters
+          depth: 1.5, // diameter of the object from north to south in meters
+          roll: 90,
+          heading: 90,
+          anchor: "center",
+          resource: { primitive: "cylinder" },
+          material: { color: "black" },
+        }),
+        new ObjectSymbol3DLayer({
+          width: 3, // diameter of the object from east to west in meters
+          height: 100, // height of the object in meters
+          depth: 3, // diameter of the object from north to south in meters
+          roll: 180,
+          resource: { primitive: "cylinder" },
+          material: { color: "black" },
+        }),
+      ],
+    }),
+  }),
+});
+
+const skiSlopes = new FeatureLayer({
+  portalItem: {
+    id: "d6ae4391937d4f61975ea97d91960284",
+  },
+  //visible: false,
+  title: "Ski Slopes",
+  elevationInfo: {
+    mode: "on-the-ground",
+  },
+  renderer: new UniqueValueRenderer({
+    field: "piste_diff",
+    defaultLabel: "Other",
+    uniqueValueInfos: [
+      {
+        label: "novice",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 122, 194, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 122, 194, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+              pattern: new LineStylePattern3D({
+                style: "dash",
+              }),
+            }),
+          ],
+        }),
+        value: "novice",
+      },
+      {
+        label: "easy",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 122, 194, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 122, 194, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+            }),
+          ],
+        }),
+        value: "easy",
+      },
+      {
+        label: "intermediate",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [217, 0, 18, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+
+            new LineSymbol3DLayer({
+              material: {
+                color: [217, 0, 18, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+            }),
+          ],
+        }),
+        value: "intermediate",
+      },
+      {
+        label: "advanced",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 0, 0, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 0, 0, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+            }),
+          ],
+        }),
+        value: "advanced",
+      },
+      {
+        label: "expert",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 0, 0, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 0, 0, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+            }),
+          ],
+        }),
+        value: "expert",
+      },
+      {
+        label: "extreme",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 0, 0, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+
+            new LineSymbol3DLayer({
+              material: {
+                color: [0, 0, 0, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+              pattern: new LineStylePattern3D({
+                style: "dash",
+              }),
+            }),
+          ],
+        }),
+        value: "extreme",
+      },
+      {
+        label: "freeride",
+        symbol: new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: {
+                color: [22, 130, 18, 0.1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 5,
+            }),
+
+            new LineSymbol3DLayer({
+              material: {
+                color: [22, 130, 18, 1],
+              },
+              join: "bevel",
+              cap: "round",
+              size: 0.5,
+            }),
+          ],
+        }),
+        value: "freeride",
+      },
+    ],
+  }),
+});
 
 const buildings = new SceneLayer({
   portalItem: {
-    id: "a714a2ca145446b79d97aaa7b895ff95"
+    id: "a714a2ca145446b79d97aaa7b895ff95",
   },
   renderer: new SimpleRenderer({
     symbol: new MeshSymbol3D({
@@ -56,38 +322,58 @@ const buildings = new SceneLayer({
         new FillSymbol3DLayer({
           material: {
             color: [80, 80, 80],
-            colorMixMode: "replace"
-          }
-        })
-      ]
-    })
-  })
+            colorMixMode: "replace",
+          },
+        }),
+      ],
+    }),
+  }),
+});
+
+const treesVariableHeight = new SceneLayer({
+  portalItem: {
+    id: "8d8d3e94f3d7430bb112b32b4d3c0130",
+  },
+  renderer: new SimpleRenderer({
+    symbol: new WebStyleSymbol({
+      name: "Laurus",
+      styleName: "EsriRealisticTreesStyle",
+    }),
+    visualVariables: [
+      new SizeVariable({
+        axis: "height",
+        field: "Height",
+      }),
+    ],
+  }),
+  title: "3D Trees Variable Height",
 });
 
 const trees = new SceneLayer({
   portalItem: {
-    id: "e6811797f4c74c77bf34ab1e15f24631"
+    id: "e6811797f4c74c77bf34ab1e15f24631",
   },
+  visible: false,
   renderer: new SimpleRenderer({
     symbol: new WebStyleSymbol({
       name: "Larix",
-      styleName: "EsriRealisticTreesStyle"
-    })
+      styleName: "EsriRealisticTreesStyle",
+    }),
   }),
-  title: "3D Trees"
+  title: "3D Trees",
 });
 
 const rocks = new VectorTileLayer({
   portalItem: {
-    id: "f13423a1ff78401c96ac3aeed819bb6e"
+    id: "f13423a1ff78401c96ac3aeed819bb6e",
   },
   style: {
     version: 10.81,
     sources: {
       esri: {
         type: "vector",
-        url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/VTL__3857__Grison_Rocks/VectorTileServer/"
-      }
+        url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/VTL__3857__Grison_Rocks/VectorTileServer/",
+      },
     },
     layers: [
       {
@@ -96,12 +382,12 @@ const rocks = new VectorTileLayer({
         source: "esri",
         "source-layer": "FL__3857__Grison__Rocks",
         layout: {},
-        paint: { "fill-color": "#999999" }
-      }
-    ]
+        paint: { "fill-color": "#999999" },
+      },
+    ],
   },
   visible: false,
-  title: "Rocks"
+  title: "Rocks",
 });
 
 const urlTemplate =
@@ -117,7 +403,7 @@ const hillshade = new TileLayer({
   blendMode: "multiply",
   listMode: "hide-children",
   visible: false,
-  title: "World Hillshade (Blended)"
+  title: "World Hillshade (Blended)",
 });
 
 // hillshade.load().then(() => {
@@ -148,7 +434,7 @@ const line = (
       "line-miter-limit": 2,
       "line-round-limit": 1.05,
       "line-cap": blur ? "butt" : "round",
-      "line-join": "round"
+      "line-join": "round",
     },
     paint: {
       // "line-opacity": 1,
@@ -161,12 +447,13 @@ const line = (
       "line-blur": blur ? base : 0,
       "line-translate-anchor": "map",
       "line-offset": 0,
-      "line-translate": [0, 0]
-    }
+      "line-translate": [0, 0],
+    },
   };
 };
 
-const osmURL = "https://basemaps.arcgis.com/arcgis/rest/services/OpenStreetMap_v2/VectorTileServer";
+const osmURL =
+  "https://basemaps.arcgis.com/arcgis/rest/services/OpenStreetMap_v2/VectorTileServer";
 
 const osmSprite =
   "https://cdn.arcgis.com/sharing/rest/content/items/3e1a00aeae81496587988075fe529f71/resources/sprites/sprite";
@@ -212,13 +499,13 @@ const osmStyle = {
       // minzoom: 13,
       layout: {
         "line-cap": "round",
-        "line-join": "round"
+        "line-join": "round",
       },
       paint: {
         "line-color": "rgba(0, 0, 0, 1)",
-        "line-width": 2
+        "line-width": 2,
         // "line-dasharray": [6.0, 3.0]
-      }
+      },
     },
 
     {
@@ -234,13 +521,13 @@ const osmStyle = {
       // "minzoom": 13,
       layout: {
         "line-cap": "round",
-        "line-join": "round"
+        "line-join": "round",
       },
       paint: {
         "line-color": "rgba(0, 0, 0, 1)",
         "line-width": 2,
-        "line-dasharray": [2, 4]
-      }
+        "line-dasharray": [2, 4],
+      },
     },
     {
       id: "road/tertiary/casing",
@@ -254,7 +541,7 @@ const osmStyle = {
       // ],
       minzoom: 11,
       layout: {
-        "line-join": "round"
+        "line-join": "round",
       },
       paint: {
         "line-color": "#8F8F8F",
@@ -268,10 +555,10 @@ const osmStyle = {
             [15, 10],
             [16, 18],
             [17, 21],
-            [18, 27]
-          ]
-        }
-      }
+            [18, 27],
+          ],
+        },
+      },
     },
     {
       id: "road/tertiary/line",
@@ -286,14 +573,14 @@ const osmStyle = {
       minzoom: 9,
       layout: {
         "line-cap": "round",
-        "line-join": "round"
+        "line-join": "round",
       },
       paint: {
         "line-color": {
           stops: [
             [10.5, "#bbbbbb"],
-            [10.6, "#ffffff"]
-          ]
+            [10.6, "#ffffff"],
+          ],
         },
         "line-width": {
           base: 1.2,
@@ -307,10 +594,10 @@ const osmStyle = {
             [15, 8.8],
             [16, 16.4],
             [17, 19.4],
-            [18, 25.4]
-          ]
-        }
-      }
+            [18, 25.4],
+          ],
+        },
+      },
     },
 
     // line("road", 2, "#FFFF00", true),
@@ -322,7 +609,7 @@ const osmStyle = {
     // line("railway", 2, "#FFFFFF"),
     // line("railway (bridge)", 2, "#FF0000", true),
     // line("railway (bridge)", 2, "#FFFFFF"),
-    line("aerialway", 2, "#FF0000", false)
+    //line("aerialway", 2, "#FF0000", false),
 
     // line("road", 2, "#FFFF00", true),
     // line("road", 2, "#FFFFFF"),
@@ -414,9 +701,9 @@ const osmStyle = {
   sources: {
     esri: {
       url: osmURL,
-      type: "vector"
-    }
-  }
+      type: "vector",
+    },
+  },
 };
 
 // const swisstopoUrl =
@@ -430,14 +717,14 @@ const swisstopoBasemap = new Basemap({
   baseLayers: [
     new WebTileLayer({
       title: "swisstopo",
-      urlTemplate: swisstopoUrl
-    })
-  ]
+      urlTemplate: swisstopoUrl,
+    }),
+  ],
 });
 
 const osmFeatures = new VectorTileLayer({
   title: "OSM Features",
-  style: osmStyle
+  style: osmStyle,
   // url: styleUrl
 });
 
@@ -456,19 +743,19 @@ const topoVTL = new VectorTileLayer({
       // Gravel
       ...topoLayers,
       // Contours
-      ...contourLayers
+      //...contourLayers,
     ],
     metadata: {
       arcgisStyleUrl:
         "https://www.arcgis.com/sharing/rest/content/items/7dc6cea0b1764a1f9af2e679f642f0f5/resources/styles/root.json",
-      arcgisOriginalItemTitle: "World Topographic Map"
-    }
-  }
+      arcgisOriginalItemTitle: "World Topographic Map",
+    },
+  },
 });
 
 const vectorBasemap = new Basemap({
   title: "Winter (Vector)",
-  baseLayers: [topoVTL]
+  baseLayers: [topoVTL],
   // referenceLayers: [vtl]
 });
 
@@ -476,10 +763,11 @@ const winterBasemap = new Basemap({
   title: "Winter (Imagery)",
   baseLayers: [
     new WebTileLayer({
-      urlTemplate: "https://tiles.platform.fatmap.com/winter-imagery/{z}/{x}/{y}.jpg"
+      urlTemplate:
+        "https://tiles.platform.fatmap.com/winter-imagery/{z}/{x}/{y}.jpg",
       //subDomains: ["a", "b", "c", "d"]
-    })
-  ]
+    }),
+  ],
 });
 
 const summerBasemap = new Basemap({
@@ -487,10 +775,10 @@ const summerBasemap = new Basemap({
   baseLayers: [
     new TileLayer({
       portalItem: {
-        id: "10df2279f9684e4a9f6a7f08febac2a9"
-      }
-    })
-  ]
+        id: "10df2279f9684e4a9f6a7f08febac2a9",
+      },
+    }),
+  ],
   // referenceLayers: [vtl]
 });
 
@@ -502,10 +790,10 @@ const view = new SceneView({
     position: {
       longitude: 9.50898363,
       latitude: 46.83073544,
-      z: 6112.11573
+      z: 6112.11573,
     },
     heading: 154.97,
-    tilt: 62.39
+    tilt: 62.39,
   },
 
   map: new Map({
@@ -515,42 +803,52 @@ const view = new SceneView({
       hillshade,
       trees,
       buildings,
-      osmFeatures
+      osmFeatures,
+      skiSlopes,
+      skiLifts,
+      skiLiftPoles,
       // basemap
     ],
     basemap: vectorBasemap,
-    ground: "world-elevation"
+    ground: "world-elevation",
   }),
 
   // alphaCompositingEnabled: true,
 
   environment: {
     lighting: {
-      directShadowsEnabled: true
+      directShadowsEnabled: true,
     },
     atmosphereEnabled: true,
     atmosphere: {
-      quality: "high"
+      quality: "high",
     },
     // starsEnabled: false,
     // background: {
     //   type: "color",
     //   color
     // }
-  }
+  },
 });
 
 const basemapList = new BasemapGallery({
   view,
-  source: [vectorBasemap, summerBasemap, winterBasemap, swisstopoBasemap]
+  source: [vectorBasemap, summerBasemap, winterBasemap, swisstopoBasemap],
 });
 
 view.ui.add(
   new Expand({
     view,
-    content: basemapList
+    content: basemapList,
   }),
   "bottom-right"
+);
+
+view.ui.add(
+  new Home({
+    view,
+  }),
+  "top-left"
 );
 
 view.map.ground.surfaceColor = new Color("white");
@@ -562,7 +860,7 @@ view.ui.add(
   new Expand({
     content: new Weather({ view }),
     view,
-    group: "environment"
+    group: "environment",
   }),
   "top-right"
 );
@@ -571,21 +869,18 @@ view.ui.add(
   new Expand({
     content: new Daylight({ view }),
     view,
-    group: "environment"
+    group: "environment",
   }),
   "top-right"
 );
 
-
-
 view.ui.add(
   new Expand({
     content: new LayerList({ view }),
-    view
+    view,
   }),
   "bottom-left"
 );
-
 
 whenOnce(() => !view.updating).then(() => {
   const loader = document.getElementById("loader");
