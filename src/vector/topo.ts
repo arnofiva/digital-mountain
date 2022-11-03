@@ -1,21 +1,19 @@
-
 export const sources = {
-    type: "vector",
-    url: "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer",
-    tiles: [
-      "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"
-    ]
-  };
+  type: "vector",
+  url: "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer",
+  tiles: ["https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"]
+};
 
-export const layers = [{
-    id: "Special area of interest/Rock or gravel",
-    type: "fill",
-    source: "esri",
+export const layers = [
+  {
+    "id": "Special area of interest/Rock or gravel",
+    "type": "fill",
+    "source": "esri",
     "source-layer": "Special area of interest",
-    filter: ["==", "_symbol", 16],
+    "filter": ["==", "_symbol", 16],
     // minzoom: 10,
-    layout: {},
-    paint: {
+    "layout": {},
+    "paint": {
       "fill-opacity": 1,
       "fill-color": "#bbbbbb",
       "fill-antialias": true,
@@ -25,14 +23,14 @@ export const layers = [{
   },
   // Sand
   {
-    id: "Special area of interest/Rock or gravel",
-    type: "fill",
-    source: "esri",
+    "id": "Special area of interest/Rock or gravel",
+    "type": "fill",
+    "source": "esri",
     "source-layer": "Special area of interest",
-    filter: ["==", "_symbol", 6],
+    "filter": ["==", "_symbol", 6],
     // minzoom: 10,
-    layout: {},
-    paint: {
+    "layout": {},
+    "paint": {
       "fill-opacity": 1,
       "fill-color": "#eeeeee",
       "fill-antialias": true,
@@ -42,13 +40,13 @@ export const layers = [{
   },
   // Forest
   {
-    id: "Openspace or forest",
-    type: "fill",
-    source: "esri",
+    "id": "Openspace or forest",
+    "type": "fill",
+    "source": "esri",
     "source-layer": "Openspace or forest",
-    minzoom: 9,
-    layout: {},
-    paint: {
+    "minzoom": 9,
+    "layout": {},
+    "paint": {
       "fill-color": "#599507",
       "fill-opacity": 0.12,
       "fill-antialias": false
@@ -60,15 +58,12 @@ export const layers = [{
     "type": "fill",
     "source": "esri",
     "source-layer": "Water area",
-    "filter": [
-      "==",
-      "_symbol",
-      7
-    ],
+    "filter": ["==", "_symbol", 7],
     "minzoom": 11,
     "layout": {},
     "paint": {
       "fill-color": "#87d6f2",
       "fill-outline-color": "#87d6f2"
     }
-  }];
+  }
+];

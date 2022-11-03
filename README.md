@@ -15,6 +15,14 @@ npm run dev
 
 Then open your browser at http://localhost:3000/
 
+## Linting / formatting
+
+```
+npm run lint
+```
+
+Or install the the [ESLint VSCode extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) to format on save.
+
 ## Create productive build
 
 ```
@@ -36,7 +44,7 @@ If you only copied the `main` branch, follow these steps to create an orphan `gh
 ```
 rm -rf dist
 git checkout --orphan gh-pages
-git rm -rf . 
+git rm -rf .
 git commit --allow-empty -m "Init empty branch"
 git push origin gh-pages
 ```

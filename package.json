@@ -11,7 +11,8 @@
     "start": "vite",
     "dev": "vite",
     "build": "tsc && vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "lint": "eslint . --ext .ts --fix"
   },
   "dependencies": {
     "@arcgis/core": "4.25.0-next.20220919",
@@ -21,6 +22,12 @@
   },
   "devDependencies": {
     "@types/sortablejs": "^1.10.7",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "eslint": "^8.26.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
     "sass": "^1.49.8"
   }
 }
