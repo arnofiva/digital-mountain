@@ -20,3 +20,11 @@ body {
   height: 100%;
   padding: 0;
 }
+
+#edit-buttons calcite-label:last-child {
+  --calcite-label-margin-bottom: 0;
+}
+
+#edit-buttons .hidden {
+  display: none;
+}
