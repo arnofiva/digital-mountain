@@ -68,7 +68,7 @@ const bufferDistance = 15;
 const maxDeviation = 5;
 
 export function connect(view: SceneView): void {
-  const startBtn = document.getElementById("start-slope-button") as HTMLButtonElement;
+  const addBtn = document.getElementById("add-slope-button") as HTMLButtonElement;
   const doneBtn = document.getElementById("done-slope-button") as HTMLButtonElement;
   const editToggleBtn = document.getElementById("edit-slope-toggle-button") as HTMLButtonElement;
 
@@ -132,7 +132,7 @@ export function connect(view: SceneView): void {
     }),
     ({ bufferUpdateCount, routeUpdateCount }) => {
       const showEditButton = bufferUpdateCount !== 0 || routeUpdateCount !== 0;
-      startBtn.className = showEditButton ? "hidden" : "";
+      addBtn.className = showEditButton ? "hidden" : "";
       editToggleBtn.className = showEditButton ? "" : "hidden";
       if (bufferUpdateCount === 0) {
         updateEditMode("route");
@@ -283,17 +283,17 @@ export function connect(view: SceneView): void {
 
   const drawHandles: IHandle[] = [];
   const onDone = () => {
-    startBtn.className = "hidden";
+    addBtn.className = "hidden";
     doneBtn.className = "hidden";
     drawHandles.forEach((h) => h.remove());
     drawHandles.length = 0;
     routeSVM.update(routesLayer.graphics.at(-1), { tool: "reshape" });
   };
-  startBtn.addEventListener("click", () => {
+  addBtn.addEventListener("click", () => {
     bufferSVM.complete();
     routeSVM.complete();
 
-    startBtn.className = "hidden";
+    addBtn.className = "hidden";
     doneBtn.className = "";
 
     drawHandles.push(

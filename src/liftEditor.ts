@@ -161,7 +161,7 @@ export function connect(view: SceneView) {
   const detailGraphicToSimpleGraphicMap = new Map();
   const detailGraphicToTowerLayerMap = new Map();
 
-  const addBtn = document.getElementById("start-lift-button") as HTMLButtonElement;
+  const addBtn = document.getElementById("add-lift-button") as HTMLButtonElement;
   const cancelBtn = document.getElementById("cancel-lift-button") as HTMLButtonElement;
   const editToggleBtn = document.getElementById("edit-lift-toggle-button") as HTMLButtonElement;
 
