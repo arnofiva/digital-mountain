@@ -56,6 +56,16 @@ const invalidRouteSymbol = {
     }
   ]
 };
+
+const completeRouteSymbol = {
+  type: "line-3d",
+  symbolLayers: [
+    {
+      type: "line",
+      size: 2
+    }
+  ]
+};
 const routeCableSymbol = {
   type: "line-3d",
   symbolLayers: [
@@ -238,7 +248,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
     const isValid = contains(parcelGraphic.geometry, routeSimpleGeometry);
     routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? validRouteSymbol : invalidRouteSymbol;
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-stop") {
       if (!isValid) {
         routeSimpleSVM.undo();
@@ -344,7 +354,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGraphic = routeSimpleLayer.graphics.at(routeIdx);
     const isValid = contains(parcelGraphic.geometry, routeDetailGraphic.geometry);
     routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? validRouteSymbol : invalidRouteSymbol;
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-start") {
       const path = (routeDetailGraphic.geometry as Polyline).paths[0];
       const start = path[0];
@@ -437,6 +447,8 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         })
       );
       routeGraphic.geometry = geometry;
+      routeGraphic.symbol = completeRouteSymbol;
+
       const routeDetailGraphic = new Graphic({
         geometry: densify(geometry, towerSeparation),
         symbol: routeCableSymbol
