@@ -19,7 +19,6 @@ import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
 import esriConfig from "@arcgis/core/config";
-import { whenOnce } from "@arcgis/core/core/reactiveUtils";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
@@ -29,16 +28,17 @@ import {
   ObjectSymbol3DLayer,
   PathSymbol3DLayer,
   PointSymbol3D,
+  PolygonSymbol3D,
   WebStyleSymbol
 } from "@arcgis/core/symbols";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
 import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
-import { sources as contourSources } from "./vector/contours";
-import { layers as topoLayers, sources as topoSources } from "./vector/topo";
+import { AppState } from "./appState";
 import { connect as connectLiftEditor } from "./liftEditor";
 import { connect as connectSlopeEditor } from "./slopeEditor";
-import { AppState } from "./appState";
+import { sources as contourSources } from "./vector/contours";
+import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -60,7 +60,7 @@ import { AppState } from "./appState";
 esriConfig.apiKey =
   "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
 
-const skiLiftsLayer = new FeatureLayer({
+const skiLifts = new FeatureLayer({
   portalItem: {
     id: "dac535c60f214447af467393838ce36b"
   },
@@ -73,9 +73,9 @@ const skiLiftsLayer = new FeatureLayer({
       symbolLayers: [
         new PathSymbol3DLayer({
           profile: "quad", // creates a rectangular shape
-          width: 15, // path width in meters
+          width: 5, // path width in meters
           height: 0.1, // path height in meters
-          material: { color: [0, 0, 0, 0.4] },
+          material: { color: [0, 0, 0, 1] },
           cap: "square",
           profileRotation: "heading"
         })
@@ -84,7 +84,7 @@ const skiLiftsLayer = new FeatureLayer({
   })
 });
 
-const skiLiftPolesLayer = new SceneLayer({
+const skiLiftPoles = new SceneLayer({
   portalItem: {
     id: "2e2d5046dff7498b9103c3be9760f1b0"
   },
@@ -97,19 +97,9 @@ const skiLiftPolesLayer = new SceneLayer({
     symbol: new PointSymbol3D({
       symbolLayers: [
         new ObjectSymbol3DLayer({
-          width: 1.5, // diameter of the object from east to west in meters
-          height: 15, // height of the object in meters
-          depth: 1.5, // diameter of the object from north to south in meters
-          roll: 90,
-          heading: 90,
-          anchor: "center",
-          resource: { primitive: "cylinder" },
-          material: { color: "black" }
-        }),
-        new ObjectSymbol3DLayer({
-          width: 3, // diameter of the object from east to west in meters
+          width: 2, // diameter of the object from east to west in meters
           height: 100, // height of the object in meters
-          depth: 3, // diameter of the object from north to south in meters
+          depth: 2, // diameter of the object from north to south in meters
           roll: 180,
           resource: { primitive: "cylinder" },
           material: { color: "black" }
@@ -119,9 +109,117 @@ const skiLiftPolesLayer = new SceneLayer({
   })
 });
 
-const skiSlopesLayer = new FeatureLayer({
+const skiSlopesArea = new FeatureLayer({
   portalItem: {
-    id: "d6ae4391937d4f61975ea97d91960284"
+    id: "7088346644a449648c06c393f57415fc"
+  },
+  //visible: false,
+  title: "Ski Slope Areas",
+  elevationInfo: {
+    mode: "on-the-ground"
+  },
+  renderer: new UniqueValueRenderer({
+    field: "piste_diff",
+    defaultLabel: "Other",
+    uniqueValueInfos: [
+      {
+        label: "novice",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [167, 209, 234, 1]
+              }
+            })
+          ]
+        }),
+        value: "novice"
+      },
+      {
+        label: "easy",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [167, 209, 234, 1]
+              }
+            })
+          ]
+        }),
+        value: "easy"
+      },
+      {
+        label: "intermediate",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [243, 194, 198, 1]
+              }
+            })
+          ]
+        }),
+        value: "intermediate"
+      },
+      {
+        label: "advanced",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [210, 209, 209, 1]
+              }
+            })
+          ]
+        }),
+        value: "advanced"
+      },
+      {
+        label: "expert",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [210, 209, 209, 1]
+              }
+            })
+          ]
+        }),
+        value: "expert"
+      },
+      {
+        label: "extreme",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [210, 209, 209, 1]
+              }
+            })
+          ]
+        }),
+        value: "extreme"
+      },
+      {
+        label: "freeride",
+        symbol: new PolygonSymbol3D({
+          symbolLayers: [
+            new FillSymbol3DLayer({
+              material: {
+                color: [181, 230, 180, 1]
+              }
+            })
+          ]
+        }),
+        value: "freeride"
+      }
+    ]
+  })
+});
+
+const skiSlopes = new FeatureLayer({
+  portalItem: {
+    id: "fa86abad6dc649719c60c6f1ed10b810"
   },
   //visible: false,
   title: "Ski Slopes",
@@ -138,19 +236,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [0, 122, 194, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-            new LineSymbol3DLayer({
-              material: {
                 color: [0, 122, 194, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5,
+              size: 2,
               pattern: new LineStylePattern3D({
                 style: "dash"
               })
@@ -165,19 +255,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [0, 122, 194, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-            new LineSymbol3DLayer({
-              material: {
                 color: [0, 122, 194, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5
+              size: 2
             })
           ]
         }),
@@ -189,20 +271,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [217, 0, 18, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-
-            new LineSymbol3DLayer({
-              material: {
                 color: [217, 0, 18, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5
+              size: 2
             })
           ]
         }),
@@ -214,20 +287,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [0, 0, 0, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-
-            new LineSymbol3DLayer({
-              material: {
                 color: [0, 0, 0, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5
+              size: 2
             })
           ]
         }),
@@ -239,20 +303,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [0, 0, 0, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-
-            new LineSymbol3DLayer({
-              material: {
                 color: [0, 0, 0, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5
+              size: 2
             })
           ]
         }),
@@ -264,20 +319,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [0, 0, 0, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-
-            new LineSymbol3DLayer({
-              material: {
                 color: [0, 0, 0, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5,
+              size: 2,
               pattern: new LineStylePattern3D({
                 style: "dash"
               })
@@ -292,20 +338,11 @@ const skiSlopesLayer = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [22, 130, 18, 0.1]
-              },
-              join: "bevel",
-              cap: "round",
-              size: 5
-            }),
-
-            new LineSymbol3DLayer({
-              material: {
                 color: [22, 130, 18, 1]
               },
               join: "bevel",
               cap: "round",
-              size: 0.5
+              size: 2
             })
           ]
         }),
@@ -805,9 +842,10 @@ const view = new SceneView({
       trees,
       buildings,
       osmFeatures,
-      skiSlopesLayer,
-      skiLiftsLayer,
-      skiLiftPolesLayer
+      skiSlopesArea,
+      skiSlopes,
+      skiLifts,
+      skiLiftPoles
       // basemap
     ],
     basemap: vectorBasemap,
@@ -878,20 +916,30 @@ view.ui.add(
 view.ui.add(
   new Expand({
     content: new LayerList({ view }),
-    view
+    view,
+    expanded: false,
+    group: "bottom-left"
   }),
   "bottom-left"
 );
+view.ui.add(
+  new Expand({
+    view,
+    content: document.getElementById("edit-buttons"),
+    expanded: true,
+    group: "bottom-left"
+  }),
 
-const appState = new AppState({ skiSlopesLayer });
+  "bottom-left"
+);
+const appState = new AppState({ skiSlopes });
 
-view.ui.add("edit-buttons", "bottom-left");
-connectLiftEditor(view, appState);
 connectSlopeEditor(view, appState);
+connectLiftEditor(view, appState);
 
-whenOnce(() => !view.updating).then(() => {
-  const loader = document.getElementById("loader");
-  loader?.parentElement?.removeChild(loader);
-});
+// whenOnce(() => !view.updating).then(() => {
+//   const loader = document.getElementById("loader");
+//   loader?.parentElement?.removeChild(loader);
+// });
 
 window["view"] = view;

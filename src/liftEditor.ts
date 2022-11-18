@@ -1,15 +1,16 @@
+import { watch } from "@arcgis/core/core/reactiveUtils";
 import Geometry from "@arcgis/core/geometry/Geometry";
-import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
-import ObjectSymbol3DLayer from "@arcgis/core/symbols/ObjectSymbol3DLayer";
-import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
-import Point from "@arcgis/core/geometry/Point";
 import { contains, densify, nearestCoordinate } from "@arcgis/core/geometry/geometryEngine";
+import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
-import Draw from "@arcgis/core/views/draw/Draw";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import { LineSymbol3D, PathSymbol3DLayer } from "@arcgis/core/symbols";
+import ObjectSymbol3DLayer from "@arcgis/core/symbols/ObjectSymbol3DLayer";
+import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import Draw from "@arcgis/core/views/draw/Draw";
 import SceneView from "@arcgis/core/views/SceneView";
-import { watch } from "@arcgis/core/core/reactiveUtils";
+import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 
 const validRouteSymbol = {
@@ -66,18 +67,18 @@ const completeRouteSymbol = {
     }
   ]
 };
-const routeCableSymbol = {
-  type: "line-3d",
+const routeCableSymbol = new LineSymbol3D({
   symbolLayers: [
-    {
-      type: "line",
-      size: 2, // points
-      material: { color: "gray" },
-      cap: "round",
-      join: "round"
-    }
+    new PathSymbol3DLayer({
+      profile: "quad", // creates a rectangular shape
+      width: 5, // path width in meters
+      height: 0.1, // path height in meters
+      material: { color: [0, 0, 0, 1] },
+      cap: "square",
+      profileRotation: "heading"
+    })
   ]
-};
+});
 
 const parcelGraphic = Graphic.fromJSON({
   aggregateGeometries: null,
@@ -160,7 +161,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     graphics: [parcelGraphic],
     elevationInfo: { mode: "on-the-ground" }
   });
-  view.map.add(parcelLayer);
+  view.map.layers.unshift(parcelLayer);
 
   const routeSimpleLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" } });
   view.map.add(routeSimpleLayer);
@@ -338,8 +339,8 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         symbol: new PointSymbol3D({
           symbolLayers: [
             new ObjectSymbol3DLayer({
-              width: 1,
-              depth: 1,
+              width: 2,
+              depth: 2,
               height: vertex[2],
               resource: { primitive: "cylinder" },
               material: { color: "black" }

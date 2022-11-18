@@ -1,69 +1,57 @@
-import { contains } from "@arcgis/core/geometry/geometryEngine";
 import { watch } from "@arcgis/core/core/reactiveUtils";
-import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
-import { buffer, generalize, union } from "@arcgis/core/geometry/geometryEngine";
-import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import Graphic from "@arcgis/core/Graphic";
-import SceneView from "@arcgis/core/views/SceneView";
 import { Polygon, Polyline } from "@arcgis/core/geometry";
+import { buffer, contains, generalize, union } from "@arcgis/core/geometry/geometryEngine";
+import Graphic from "@arcgis/core/Graphic";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import { LineSymbol3D, LineSymbol3DLayer, PolygonSymbol3D } from "@arcgis/core/symbols";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
+import SceneView from "@arcgis/core/views/SceneView";
+import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 
-const validRouteSymbol = {
-  type: "line-3d",
+const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
-    {
-      type: "line",
-      size: 2, // points
-      material: { color: "green" },
-      cap: "round",
-      join: "round",
-      pattern: {
-        type: "style",
-        style: "dash"
+    new LineSymbol3DLayer({
+      material: {
+        color: [0, 122, 194, 1]
       },
-      marker: {
-        type: "style",
-        style: "circle",
-        placement: "begin-end",
-        color: "green"
-      }
-    }
+      join: "bevel",
+      cap: "round",
+      size: 2
+    })
   ]
-};
-const invalidRouteSymbol = {
-  type: "line-3d",
+});
+
+const invalidRouteSymbol = new LineSymbol3D({
   symbolLayers: [
-    {
-      type: "line",
-      size: 2, // points
-      material: { color: "red" },
-      cap: "round",
-      join: "round",
-      pattern: {
-        type: "style",
-        style: "dash"
+    new LineSymbol3DLayer({
+      material: {
+        color: [255, 0, 0, 1]
       },
-      marker: {
-        type: "style",
-        style: "circle",
-        placement: "begin-end",
-        color: "red"
-      }
-    }
+      join: "bevel",
+      cap: "round",
+      size: 2
+    })
   ]
-};
-const createBufferSymbol = {
-  type: "simple-fill",
-  color: [200, 200, 200],
-  style: "solid",
-  outline: { color: "green", width: 1 }
-};
-const bufferSymbol = {
-  type: "simple-fill",
-  color: [200, 200, 200],
-  style: "solid",
-  outline: { color: "black", width: 1 }
-};
+});
+const createBufferSymbol = new PolygonSymbol3D({
+  symbolLayers: [
+    new FillSymbol3DLayer({
+      material: {
+        color: [167, 209, 234, 0.3]
+      }
+    })
+  ]
+});
+const bufferSymbol = new PolygonSymbol3D({
+  symbolLayers: [
+    new FillSymbol3DLayer({
+      material: {
+        color: [167, 209, 234, 1]
+      }
+    })
+  ]
+});
 
 const bufferDistance = 15;
 const maxDeviation = 5;
@@ -75,18 +63,21 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
   const bufferUnionGraphic = new Graphic({ symbol: bufferSymbol });
   const bufferUnionLayer = new GraphicsLayer({
+    listMode: "hide",
     elevationInfo: { mode: "on-the-ground" },
     graphics: [bufferUnionGraphic]
   });
-  view.map.add(bufferUnionLayer);
+  view.map.layers.unshift(bufferUnionLayer);
 
   const bufferLayer = new GraphicsLayer({
+    listMode: "hide",
     elevationInfo: { mode: "on-the-ground" },
     graphics: []
   });
   view.map.add(bufferLayer);
 
   const routesLayer = new GraphicsLayer({
+    listMode: "hide",
     elevationInfo: { mode: "on-the-ground" },
     graphics: []
   });
@@ -106,7 +97,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       selfEnabled: false,
       featureSources: [
         { layer: routesLayer, enabled: true },
-        { layer: appState.skiSlopesLayer, enabled: true }
+        { layer: appState.skiSlopes, enabled: true }
       ]
     },
     updateOnGraphicClick: false

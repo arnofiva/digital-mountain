@@ -8,7 +8,7 @@ export class AppState extends Accessor {
   editMode: EditMode | null = null;
 
   @property()
-  readonly skiSlopesLayer: GraphicsLayer;
+  readonly skiSlopes: GraphicsLayer;
 }
 
 export enum EditMode {
