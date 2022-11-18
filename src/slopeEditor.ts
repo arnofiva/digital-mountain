@@ -104,7 +104,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     snappingOptions: {
       enabled: true,
       selfEnabled: false,
-      featureSources: [{ layer: routesLayer, enabled: true }]
+      featureSources: [
+        { layer: routesLayer, enabled: true },
+        { layer: appState.skiSlopesLayer, enabled: true }
+      ]
     },
     updateOnGraphicClick: false
   });

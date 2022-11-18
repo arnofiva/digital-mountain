@@ -60,7 +60,7 @@ import { AppState } from "./appState";
 esriConfig.apiKey =
   "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
 
-const skiLifts = new FeatureLayer({
+const skiLiftsLayer = new FeatureLayer({
   portalItem: {
     id: "dac535c60f214447af467393838ce36b"
   },
@@ -84,7 +84,7 @@ const skiLifts = new FeatureLayer({
   })
 });
 
-const skiLiftPoles = new SceneLayer({
+const skiLiftPolesLayer = new SceneLayer({
   portalItem: {
     id: "2e2d5046dff7498b9103c3be9760f1b0"
   },
@@ -119,7 +119,7 @@ const skiLiftPoles = new SceneLayer({
   })
 });
 
-const skiSlopes = new FeatureLayer({
+const skiSlopesLayer = new FeatureLayer({
   portalItem: {
     id: "d6ae4391937d4f61975ea97d91960284"
   },
@@ -805,9 +805,9 @@ const view = new SceneView({
       trees,
       buildings,
       osmFeatures,
-      skiSlopes,
-      skiLifts,
-      skiLiftPoles
+      skiSlopesLayer,
+      skiLiftsLayer,
+      skiLiftPolesLayer
       // basemap
     ],
     basemap: vectorBasemap,
@@ -883,7 +883,7 @@ view.ui.add(
   "bottom-left"
 );
 
-const appState = new AppState();
+const appState = new AppState({ skiSlopesLayer });
 
 view.ui.add("edit-buttons", "bottom-left");
 connectLiftEditor(view, appState);
