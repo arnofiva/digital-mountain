@@ -171,6 +171,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   const simpleGraphicToDetailGraphicMap = new Map();
   const detailGraphicToSimpleGraphicMap = new Map();
   const detailGraphicToTowerLayerMap = new Map();
+  const towerLayerToDetailGraphicMap = new Map();
 
   const addBtn = document.getElementById("add-lift-button") as HTMLButtonElement;
   const cancelBtn = document.getElementById("cancel-lift-button") as HTMLButtonElement;
@@ -303,6 +304,8 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
           ? result.graphic
           : routeDetailLayer.graphics.includes(result.graphic)
           ? detailGraphicToSimpleGraphicMap.get(result.graphic)
+          : towerLayerToDetailGraphicMap.has(result.graphic.layer)
+          ? detailGraphicToSimpleGraphicMap.get(towerLayerToDetailGraphicMap.get(result.graphic.layer))
           : null;
         if (simpleGraphic) {
           appState.editMode = EditMode.Lift;
@@ -317,6 +320,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     if (!towerLayer) {
       towerLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" } });
       detailGraphicToTowerLayerMap.set(routeDetailGraphic, towerLayer);
+      towerLayerToDetailGraphicMap.set(towerLayer, routeDetailGraphic);
       view.map.add(towerLayer);
     } else {
       towerLayer.graphics.removeAll();
