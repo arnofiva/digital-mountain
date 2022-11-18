@@ -271,8 +271,12 @@ export function connect(view: SceneView): void {
       if (result?.type === "graphic") {
         const routeGraphic = bufferLayer.graphics.includes(result.graphic)
           ? bufferToRouteMap.get(result.graphic)
-          : result.graphic;
-        routeSVM.update(routeGraphic);
+          : routesLayer.graphics.includes(result.graphic)
+          ? result.graphic
+          : null;
+        if (routeGraphic) {
+          routeSVM.update(routeGraphic);
+        }
       }
     });
   });
