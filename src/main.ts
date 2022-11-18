@@ -38,6 +38,7 @@ import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 import { connect as connectLiftEditor } from "./liftEditor";
 import { connect as connectSlopeEditor } from "./slopeEditor";
+import { AppState } from "./appState";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -882,9 +883,11 @@ view.ui.add(
   "bottom-left"
 );
 
+const appState = new AppState();
+
 view.ui.add("edit-buttons", "bottom-left");
-connectLiftEditor(view);
-connectSlopeEditor(view);
+connectLiftEditor(view, appState);
+connectSlopeEditor(view, appState);
 
 whenOnce(() => !view.updating).then(() => {
   const loader = document.getElementById("loader");

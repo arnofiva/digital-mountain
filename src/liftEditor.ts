@@ -10,6 +10,7 @@ import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import SceneView from "@arcgis/core/views/SceneView";
 import { watch } from "@arcgis/core/core/reactiveUtils";
+import { AppState, EditMode } from "./appState";
 
 const validRouteSymbol = {
   type: "line-3d",
@@ -144,7 +145,7 @@ const parcelGraphic = Graphic.fromJSON({
 const towerSeparation = 100;
 const initialTowerHeight = 10;
 
-export function connect(view: SceneView) {
+export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],
     elevationInfo: { mode: "on-the-ground" }
@@ -192,6 +193,16 @@ export function connect(view: SceneView) {
     },
     updateOnGraphicClick: false
   });
+
+  watch(
+    () => appState.editMode,
+    (editMode) => {
+      if (editMode !== EditMode.Lift) {
+        routeSimpleSVM.complete();
+        routeDetailSVM.complete();
+      }
+    }
+  );
 
   function matchRouteDetailGeometryToSimple(detailGeometry: Polyline, simpleGeometry: Polyline): Geometry {
     const detailPath = detailGeometry.paths[0];
@@ -284,6 +295,7 @@ export function connect(view: SceneView) {
           ? detailGraphicToSimpleGraphicMap.get(result.graphic)
           : null;
         if (simpleGraphic) {
+          appState.editMode = EditMode.Lift;
           routeSimpleSVM.update(simpleGraphic);
         }
       }
@@ -392,6 +404,7 @@ export function connect(view: SceneView) {
   }
 
   addBtn.addEventListener("click", () => {
+    appState.editMode = EditMode.Lift;
     addBtn.className = "hidden";
     cancelBtn.className = "";
 
@@ -478,4 +491,6 @@ export function connect(view: SceneView) {
     }
     return result;
   }
+
+  return [routeSimpleSVM, routeDetailSVM];
 }

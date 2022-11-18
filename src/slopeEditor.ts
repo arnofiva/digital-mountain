@@ -6,6 +6,7 @@ import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Graphic from "@arcgis/core/Graphic";
 import SceneView from "@arcgis/core/views/SceneView";
 import { Polygon, Polyline } from "@arcgis/core/geometry";
+import { AppState, EditMode } from "./appState";
 
 const validRouteSymbol = {
   type: "line-3d",
@@ -67,7 +68,7 @@ const bufferSymbol = {
 const bufferDistance = 15;
 const maxDeviation = 5;
 
-export function connect(view: SceneView): void {
+export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
   const addBtn = document.getElementById("add-slope-button") as HTMLButtonElement;
   const doneBtn = document.getElementById("done-slope-button") as HTMLButtonElement;
   const editToggleBtn = document.getElementById("edit-slope-toggle-button") as HTMLButtonElement;
@@ -118,6 +119,16 @@ export function connect(view: SceneView): void {
     },
     updateOnGraphicClick: false
   });
+
+  watch(
+    () => appState.editMode,
+    (editMode) => {
+      if (editMode !== EditMode.Slope) {
+        routeSVM.complete();
+        bufferSVM.complete();
+      }
+    }
+  );
 
   const routeToBufferMap = new Map();
   const bufferToRouteMap = new Map();
@@ -275,6 +286,7 @@ export function connect(view: SceneView): void {
           ? result.graphic
           : null;
         if (routeGraphic) {
+          appState.editMode = EditMode.Slope;
           routeSVM.update(routeGraphic);
         }
       }
@@ -290,6 +302,7 @@ export function connect(view: SceneView): void {
     routeSVM.update(routesLayer.graphics.at(-1), { tool: "reshape" });
   };
   addBtn.addEventListener("click", () => {
+    appState.editMode = EditMode.Slope;
     bufferSVM.complete();
     routeSVM.complete();
 
@@ -339,4 +352,6 @@ export function connect(view: SceneView): void {
     routeSVM.complete();
     onDone();
   });
+
+  return [routeSVM, bufferSVM];
 }
