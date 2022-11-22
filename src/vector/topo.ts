@@ -15,29 +15,29 @@ export const layers = [
     "layout": {},
     "paint": {
       "fill-opacity": 1,
-      "fill-color": "#bbbbbb",
+      "fill-color": "#aaaaaa",
       "fill-antialias": true,
       "fill-translate": [0, 0],
       "fill-translate-anchor": "map"
     }
   },
   // Sand
-  {
-    "id": "Special area of interest/Rock or gravel",
-    "type": "fill",
-    "source": "esri",
-    "source-layer": "Special area of interest",
-    "filter": ["==", "_symbol", 6],
-    // minzoom: 10,
-    "layout": {},
-    "paint": {
-      "fill-opacity": 1,
-      "fill-color": "#eeeeee",
-      "fill-antialias": true,
-      "fill-translate": [0, 0],
-      "fill-translate-anchor": "map"
-    }
-  },
+  // {
+  //   "id": "Special area of interest/Rock or gravel",
+  //   "type": "fill",
+  //   "source": "esri",
+  //   "source-layer": "Special area of interest",
+  //   "filter": ["==", "_symbol", 6],
+  //   // minzoom: 10,
+  //   "layout": {},
+  //   "paint": {
+  //     "fill-opacity": 1,
+  //     "fill-color": "#eeeeee",
+  //     "fill-antialias": true,
+  //     "fill-translate": [0, 0],
+  //     "fill-translate-anchor": "map"
+  //   }
+  // },
   // Forest
   {
     "id": "Openspace or forest",
@@ -47,8 +47,8 @@ export const layers = [
     "minzoom": 9,
     "layout": {},
     "paint": {
-      "fill-color": "#599507",
-      "fill-opacity": 0.12,
+      "fill-color": "#2d4c04",
+      "fill-opacity": 0.25,
       "fill-antialias": false
     }
   },
