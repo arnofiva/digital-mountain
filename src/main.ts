@@ -18,8 +18,10 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
-import { whenOnce } from "@arcgis/core/core/reactiveUtils";
+import IdentityManager from "@arcgis/core/identity/IdentityManager";
+import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import StreamLayer from "@arcgis/core/layers/StreamLayer";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
@@ -50,17 +52,17 @@ import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 // const params = new URLSearchParams(document.location.search.slice(1));
 // const someParam = params.has("someParam");
 
-// IdentityManager.registerOAuthInfos([
-//   new OAuthInfo({
-//     appId: "",
-//     popup: true,
-//     popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
-//   }),
-// ]);
+IdentityManager.registerOAuthInfos([
+  new OAuthInfo({
+    appId: "KojZjH6glligLidj",
+    popup: true,
+    popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
+  }),
+]);
 
-// (window as any).setOAuthResponseHash = (responseHash: string) => {
-//   IdentityManager.setOAuthResponseHash(responseHash);
-// };
+(window as any).setOAuthResponseHash = (responseHash: string) => {
+  IdentityManager.setOAuthResponseHash(responseHash);
+};
 
 // esriConfig.apiKey =
 //   "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
@@ -613,12 +615,12 @@ const hillshade = new TileLayer({
   title: "World Hillshade (Blended)"
 });
 
-// hillshade.load().then(() => {
-//   console.log({ hillshade });
+hillshade.load().then(() => {
+  console.log({ hillshade });
 
-//   const lods = hillshade.tileInfo.lods.slice(0, 16);
-//   hillshade.tileInfo.lods = lods;
-// });
+  const lods = hillshade.tileInfo.lods.slice(0, 15);
+  hillshade.tileInfo.lods = lods;
+});
 
 const line = (
   sourceLayer: string,
@@ -1013,9 +1015,18 @@ const view = new SceneView({
       skiSlopes,
       skiLifts,
       skiLiftPoles,
-      visitorCountStream,
-      snowCatLive,
-      snowCatStream
+      new GroupLayer({
+        title: "Visitor Counts",
+        visibilityMode: "exclusive",
+        visible: false,
+        layers: [visitorCountStream]
+      }),
+      new GroupLayer({
+        title: "Snow Cats",
+        visibilityMode: "exclusive",
+        visible: false,
+        layers: [snowCatLive, snowCatStream]
+      }),
       // basemap
     ],
     basemap: vectorBasemap,
@@ -1107,9 +1118,9 @@ const appState = new AppState({ skiSlopes });
 connectSlopeEditor(view, appState);
 connectLiftEditor(view, appState);
 
-whenOnce(() => !view.updating).then(() => {
-  const loader = document.getElementById("loader");
-  loader?.parentElement?.removeChild(loader);
-});
+// whenOnce(() => !view.updating).then(() => {
+const loader = document.getElementById("loader");
+loader?.parentElement?.removeChild(loader);
+// });
 
 window["view"] = view;
