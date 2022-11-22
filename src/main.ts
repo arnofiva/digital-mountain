@@ -18,19 +18,24 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
-import esriConfig from "@arcgis/core/config";
+import { whenOnce } from "@arcgis/core/core/reactiveUtils";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import StreamLayer from "@arcgis/core/layers/StreamLayer";
+import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import {
+  LabelSymbol3D,
   LineSymbol3D,
   LineSymbol3DLayer,
   ObjectSymbol3DLayer,
   PathSymbol3DLayer,
   PointSymbol3D,
   PolygonSymbol3D,
+  TextSymbol3DLayer,
   WebStyleSymbol
 } from "@arcgis/core/symbols";
+import LineCallout3D from "@arcgis/core/symbols/callouts/LineCallout3D";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
 import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
@@ -57,8 +62,170 @@ import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 //   IdentityManager.setOAuthResponseHash(responseHash);
 // };
 
-esriConfig.apiKey =
-  "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
+// esriConfig.apiKey =
+//   "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
+
+const snowCatStream = new StreamLayer({
+  url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer",
+  title: "Snow Cat Stream",
+  visible: false,
+  elevationInfo: {
+    mode: "on-the-ground"
+  },
+
+  purgeOptions: {
+    displayCount: 10000
+  },
+  labelingInfo: [
+    new LabelClass({
+      labelExpressionInfo: { expression: "return 'SnowCat'" },
+      symbol: new LabelSymbol3D({
+        verticalOffset: {
+          screenLength: 20,
+          maxWorldLength: 20,
+          minWorldLength: 5
+        },
+        callout: new LineCallout3D({
+          size: 0.5,
+          color: [0, 0, 0]
+        }),
+        symbolLayers: [
+          new TextSymbol3DLayer({
+            material: { color: "white" },
+            size: 16, // Defined in points
+            background: {
+              color: [0, 0, 0, 0.4]
+            }
+          })
+        ]
+      })
+    })
+  ],
+  renderer: new SimpleRenderer({
+    symbol: new PointSymbol3D({
+      symbolLayers: [
+        new ObjectSymbol3DLayer({
+          width: 5, // diameter of the object from east to west in meters
+          height: 10, // height of the object in meters
+          depth: 5, // diameter of the object from north to south in meters
+          resource: { primitive: "cylinder" },
+          material: { color: "red" }
+        })
+      ]
+    })
+  })
+});
+
+const snowCatLive = new FeatureLayer({
+  url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowCat_StreamLayer4/FeatureServer",
+  title: "Snow Cat",
+  visible: false,
+  elevationInfo: {
+    mode: "on-the-ground"
+  },
+  refreshInterval: 0.001,
+  labelingInfo: [
+    new LabelClass({
+      labelExpressionInfo: { expression: "return 'SnowCat'" },
+      symbol: new LabelSymbol3D({
+        verticalOffset: {
+          screenLength: 20,
+          maxWorldLength: 20,
+          minWorldLength: 5
+        },
+        callout: new LineCallout3D({
+          size: 0.5,
+          color: [0, 0, 0]
+        }),
+        symbolLayers: [
+          new TextSymbol3DLayer({
+            material: { color: "white" },
+            size: 16, // Defined in points
+            background: {
+              color: [0, 0, 0, 0.4]
+            }
+          })
+        ]
+      })
+    })
+  ],
+  renderer: new SimpleRenderer({
+    symbol: new PointSymbol3D({
+      symbolLayers: [
+        new ObjectSymbol3DLayer({
+          width: 5, // diameter of the object from east to west in meters
+          height: 10, // height of the object in meters
+          depth: 5, // diameter of the object from north to south in meters
+          resource: { primitive: "cylinder" },
+          material: { color: "red" }
+        })
+      ]
+    })
+  })
+});
+
+const visitorCountStream = new StreamLayer({
+  url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/visitorCount_StreamLayer2/StreamServer",
+  title: "Visitor Count Stream",
+  visible: false,
+  elevationInfo: {
+    mode: "on-the-ground"
+  },
+  purgeOptions: {
+    displayCount: 10000
+  },
+
+  labelingInfo: [
+    new LabelClass({
+      labelExpressionInfo: { expression: "$feature.visitor_count" },
+      symbol: new LabelSymbol3D({
+        verticalOffset: {
+          screenLength: 20,
+          maxWorldLength: 20,
+          minWorldLength: 5
+        },
+        callout: new LineCallout3D({
+          size: 0.5,
+          color: [0, 0, 0]
+        }),
+        symbolLayers: [
+          new TextSymbol3DLayer({
+            material: { color: "white" },
+            size: 16, // Defined in points
+            background: {
+              color: [0, 0, 0, 0.4]
+            }
+          })
+        ]
+      })
+    })
+  ],
+
+  renderer: new SimpleRenderer({
+    symbol: new PointSymbol3D({
+      symbolLayers: [
+        new ObjectSymbol3DLayer({
+          // renders points as volumetric objects
+          resource: { primitive: "cylinder" }, // renders points as cylinder
+          material: { color: [217, 0, 18, 0.5] },
+
+          width: 20
+        })
+      ]
+    }),
+    visualVariables: [
+      new SizeVariable({
+        field: "visitor_count", // field containing data for wind speed
+        valueUnit: "meters",
+        axis: "height"
+      }),
+      new SizeVariable({
+        axis: "width-and-depth",
+        useSymbolValue: true // uses the width value defined in the symbol layer
+      })
+    ]
+  })
+});
 
 const skiLifts = new FeatureLayer({
   portalItem: {
@@ -541,7 +708,7 @@ const osmStyle = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "rgba(0, 0, 0, 1)",
+        "line-color": "rgba(0, 0, 0, 0.3)",
         "line-width": 2
         // "line-dasharray": [6.0, 3.0]
       }
@@ -563,7 +730,7 @@ const osmStyle = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "rgba(0, 0, 0, 1)",
+        "line-color": "rgba(0, 0, 0, 0.3)",
         "line-width": 2,
         "line-dasharray": [2, 4]
       }
@@ -845,7 +1012,10 @@ const view = new SceneView({
       skiSlopesArea,
       skiSlopes,
       skiLifts,
-      skiLiftPoles
+      skiLiftPoles,
+      visitorCountStream,
+      snowCatLive,
+      snowCatStream
       // basemap
     ],
     basemap: vectorBasemap,
@@ -937,9 +1107,9 @@ const appState = new AppState({ skiSlopes });
 connectSlopeEditor(view, appState);
 connectLiftEditor(view, appState);
 
-// whenOnce(() => !view.updating).then(() => {
-//   const loader = document.getElementById("loader");
-//   loader?.parentElement?.removeChild(loader);
-// });
+whenOnce(() => !view.updating).then(() => {
+  const loader = document.getElementById("loader");
+  loader?.parentElement?.removeChild(loader);
+});
 
 window["view"] = view;

@@ -159,14 +159,15 @@ const initialTowerHeight = 10;
 export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],
-    elevationInfo: { mode: "on-the-ground" }
+    elevationInfo: { mode: "on-the-ground" },
+    listMode: "hide"
   });
   view.map.layers.unshift(parcelLayer);
 
-  const routeSimpleLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" } });
+  const routeSimpleLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
   view.map.add(routeSimpleLayer);
 
-  const routeDetailLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" } });
+  const routeDetailLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" }, listMode: "hide" });
   view.map.add(routeDetailLayer);
 
   const simpleGraphicToDetailGraphicMap = new Map();
