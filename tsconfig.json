@@ -5,7 +5,10 @@
     "importHelpers": true,
     "jsx": "react",
     "jsxFactory": "tsx",
-    "lib": ["ES2020", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "module": "ES2020",
     "moduleResolution": "Node",
     "noImplicitAny": true,
@@ -18,5 +21,8 @@
     "target": "ES2020",
     "outDir": "dist/js"
   },
-  "include": ["./src/**/*", "./node_modules/@arcgis/core/**/*.d.ts"]
+  "include": [
+    "./src/**/*",
+    "./node_modules/@arcgis/core/**/*.d.ts"
+  ]
 }

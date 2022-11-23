@@ -251,7 +251,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
     const isValid = contains(parcelGraphic.geometry, routeSimpleGeometry);
     routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol as any;
     if (e.toolEventInfo?.type === "reshape-stop") {
       if (!isValid) {
         routeSimpleSVM.undo();
@@ -305,10 +305,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         const simpleGraphic = routeSimpleLayer.graphics.includes(result.graphic)
           ? result.graphic
           : routeDetailLayer.graphics.includes(result.graphic)
-          ? detailGraphicToSimpleGraphicMap.get(result.graphic)
-          : towerLayerToDetailGraphicMap.has(result.graphic.layer)
-          ? detailGraphicToSimpleGraphicMap.get(towerLayerToDetailGraphicMap.get(result.graphic.layer))
-          : null;
+            ? detailGraphicToSimpleGraphicMap.get(result.graphic)
+            : towerLayerToDetailGraphicMap.has(result.graphic.layer)
+              ? detailGraphicToSimpleGraphicMap.get(towerLayerToDetailGraphicMap.get(result.graphic.layer))
+              : null;
         if (simpleGraphic) {
           appState.editMode = EditMode.Lift;
           routeSimpleSVM.update(simpleGraphic);
@@ -360,7 +360,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGraphic = routeSimpleLayer.graphics.at(routeIdx);
     const isValid = contains(parcelGraphic.geometry, routeDetailGraphic.geometry);
     routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol as any;
     if (e.toolEventInfo?.type === "reshape-start") {
       const path = (routeDetailGraphic.geometry as Polyline).paths[0];
       const start = path[0];
@@ -401,14 +401,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
       const routeSimpleGeometry = new Polyline({
         hasZ: newGeometry.hasZ,
-        paths: [newGeometry.paths[0][0], newGeometry.paths[0].at(-1)],
+        paths: [[newGeometry.paths[0][0], newGeometry.paths[0].at(-1)]],
         spatialReference: newGeometry.spatialReference
       });
       routeSimpleGraphic.geometry = routeSimpleGeometry;
     }
   });
 
-  const draw = new Draw({ view });
+  const draw = new Draw({ view: view as any });
   const drawHandles: IHandle[] = [];
   let routeGraphic: Graphic;
   function onDone() {
@@ -426,7 +426,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
     routeGraphic = new Graphic({
       geometry: null,
-      symbol: validRouteSymbol
+      symbol: validRouteSymbol as any
     });
     routeSimpleLayer.add(routeGraphic);
 
@@ -441,7 +441,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         })
       );
       isValid = contains(parcelGraphic.geometry, geometry);
-      routeGraphic.symbol = isValid ? validRouteSymbol : invalidRouteSymbol;
+      routeGraphic.symbol = isValid ? validRouteSymbol : invalidRouteSymbol as any;
       routeGraphic.geometry = geometry;
     };
     const completeGeometry = (vertices: number[][]) => {
@@ -453,7 +453,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         })
       );
       routeGraphic.geometry = geometry;
-      routeGraphic.symbol = completeRouteSymbol;
+      routeGraphic.symbol = completeRouteSymbol as any;
 
       const routeDetailGraphic = new Graphic({
         geometry: densify(geometry, towerSeparation),
