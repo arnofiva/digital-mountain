@@ -39,6 +39,7 @@ import {
 } from "@arcgis/core/symbols";
 import LineCallout3D from "@arcgis/core/symbols/callouts/LineCallout3D";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
+import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
@@ -47,17 +48,21 @@ import { connect as connectSlopeEditor } from "./slopeEditor";
 import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 
+
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
 // const params = new URLSearchParams(document.location.search.slice(1));
 // const someParam = params.has("someParam");
 
+const oAuthInfo = new OAuthInfo({
+  appId: "KojZjH6glligLidj",
+  popup: true,
+  popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
+  portalUrl: "https://zurich.maps.arcgis.com/"
+});
+
 IdentityManager.registerOAuthInfos([
-  new OAuthInfo({
-    appId: "KojZjH6glligLidj",
-    popup: true,
-    popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
-  }),
+  oAuthInfo,
 ]);
 
 (window as any).setOAuthResponseHash = (responseHash: string) => {
@@ -65,7 +70,7 @@ IdentityManager.registerOAuthInfos([
 };
 
 // esriConfig.apiKey =
-//   "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
+// "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
 
 const snowCatStream = new StreamLayer({
   url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer",
@@ -1015,18 +1020,18 @@ const view = new SceneView({
       skiSlopes,
       skiLifts,
       skiLiftPoles,
-      new GroupLayer({
-        title: "Visitor Counts",
-        visibilityMode: "exclusive",
-        visible: false,
-        layers: [visitorCountStream]
-      }),
-      new GroupLayer({
-        title: "Snow Cats",
-        visibilityMode: "exclusive",
-        visible: false,
-        layers: [snowCatLive, snowCatStream]
-      }),
+      // new GroupLayer({
+      //   title: "Visitor Counts",
+      //   visibilityMode: "exclusive",
+      //   visible: false,
+      //   layers: [visitorCountStream]
+      // }),
+      // new GroupLayer({
+      //   title: "Snow Cats",
+      //   visibilityMode: "exclusive",
+      //   visible: false,
+      //   layers: [snowCatLive, snowCatStream]
+      // }),
       // basemap
     ],
     basemap: vectorBasemap,
@@ -1076,6 +1081,72 @@ view.map.ground.surfaceColor = new Color("white");
 view.popup.autoOpenEnabled = true;
 view.popup.defaultPopupTemplateEnabled = true;
 
+const loginButton = document.getElementById("loginButton");
+const logoutButton = document.getElementById("logoutButton");
+
+logoutButton.style.display = "none";
+
+view.ui.add(loginButton, "top-right");
+view.ui.add(logoutButton, "top-right");
+
+const visitorLayers = new GroupLayer({
+  title: "Visitor Counts",
+  visibilityMode: "exclusive",
+  // visible: false,
+  layers: [visitorCountStream]
+});
+const snowcatLayers = new GroupLayer({
+  title: "Snow Cats",
+  visibilityMode: "exclusive",
+  // visible: false,
+  layers: [snowCatLive, snowCatStream]
+});
+
+
+const addAuthLayers = () => {
+  view.map.add(visitorLayers);
+  view.map.add(snowcatLayers);
+  loginButton.style.display = "none";
+  logoutButton.style.display = null;
+}
+
+const removeAuthLayers = () => {
+  view.map.remove(visitorLayers);
+  view.map.remove(snowcatLayers);
+  loginButton.style.display = null;
+  logoutButton.style.display = "none";
+};
+
+
+IdentityManager.checkSignInStatus(snowCatStream.url)
+  .then((credentials) => {
+    console.log("AUTHENTICATED", credentials);
+
+    logoutButton.innerText = "Logout " + credentials.userId;
+
+    addAuthLayers();
+
+    return credentials;
+  });
+
+loginButton.onclick = () => {
+  IdentityManager.getCredential(snowCatStream.url)
+    .then((credentials) => {
+      addAuthLayers();
+
+      console.log("LOGEDIN", credentials);
+      return credentials;
+    })
+};
+
+logoutButton.onclick = () => {
+  IdentityManager.destroyCredentials();
+  removeAuthLayers();
+};
+
+
+
+
 view.ui.add(
   new Expand({
     content: new Weather({ view }),
@@ -1096,6 +1167,21 @@ view.ui.add(
 
 view.ui.add(
   new Expand({
+    content: new ElevationProfile({
+      view,
+      profiles: [
+        { type: "input" },
+        { type: "ground" },
+      ]
+    }),
+    view,
+    group: "environment"
+  }),
+  "top-right"
+);
+
+view.ui.add(
+  new Expand({
     content: new LayerList({ view }),
     view,
     expanded: false,
@@ -1107,7 +1193,8 @@ view.ui.add(
   new Expand({
     view,
     content: document.getElementById("edit-buttons"),
-    expanded: true,
+    expandIconClass: "esri-icon-edit",
+    // expanded: true,
     group: "bottom-left"
   }),
 
@@ -1124,3 +1211,4 @@ loader?.parentElement?.removeChild(loader);
 // });
 
 window["view"] = view;
+
