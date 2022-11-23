@@ -17,7 +17,7 @@
   "dependencies": {
     "@arcgis/core": "4.25.5",
     "@esri/calcite-components": "1.0.0-beta.97",
-    "typescript": "^4.3.2",
+    "typescript": "^4.9.3",
     "vite": "^2.6.14"
   },
   "devDependencies": {
