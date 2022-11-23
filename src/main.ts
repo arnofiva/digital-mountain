@@ -1080,9 +1080,10 @@ const basemapList = new BasemapGallery({
 view.ui.add(
   new Expand({
     view,
-    content: basemapList
+    content: basemapList,
+    group: "layers"
   }),
-  "bottom-right"
+  "top-left"
 );
 
 view.ui.add(
@@ -1199,7 +1200,7 @@ view.ui.add(
     content: new LayerList({ view }),
     view,
     expanded: false,
-    group: "top-left"
+    group: "layers"
   }),
   "top-left"
 );
@@ -1209,10 +1210,10 @@ view.ui.add(
     content: document.getElementById("edit-buttons"),
     expandIconClass: "esri-icon-edit",
     // expanded: true,
-    group: "top-left"
+    // group: "top-left"
   }),
 
-  "top-left"
+  "bottom-left"
 );
 const appState = new AppState({ skiSlopes });
 

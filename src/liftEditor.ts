@@ -153,7 +153,7 @@ const parcelGraphic = Graphic.fromJSON({
   popupTemplate: null
 });
 
-const towerSeparation = 100;
+const towerSeparation = 200;
 const initialTowerHeight = 10;
 
 export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
@@ -320,7 +320,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   function placeTowers(routeDetailGraphic: Graphic) {
     let towerLayer = detailGraphicToTowerLayerMap.get(routeDetailGraphic);
     if (!towerLayer) {
-      towerLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" } });
+      towerLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" }, listMode: "hide" });
       detailGraphicToTowerLayerMap.set(routeDetailGraphic, towerLayer);
       towerLayerToDetailGraphicMap.set(towerLayer, routeDetailGraphic);
       view.map.add(towerLayer);
