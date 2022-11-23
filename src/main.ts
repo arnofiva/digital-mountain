@@ -1072,6 +1072,13 @@ const view = new SceneView({
   }
 });
 
+view.ui.add(
+  new Home({
+    view
+  }),
+  "top-left"
+);
+
 const basemapList = new BasemapGallery({
   view,
   source: [vectorBasemap, summerBasemap, winterBasemap, swisstopoBasemap]
@@ -1082,13 +1089,6 @@ view.ui.add(
     view,
     content: basemapList,
     group: "layers"
-  }),
-  "top-left"
-);
-
-view.ui.add(
-  new Home({
-    view
   }),
   "top-left"
 );
