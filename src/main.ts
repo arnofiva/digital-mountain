@@ -292,6 +292,8 @@ const skiSlopesArea = new FeatureLayer({
   elevationInfo: {
     mode: "on-the-ground"
   },
+  minScale: 0,
+  maxScale: 0,
   renderer: new UniqueValueRenderer({
     field: "piste_diff",
     defaultLabel: "Other",
@@ -400,6 +402,8 @@ const skiSlopes = new FeatureLayer({
   elevationInfo: {
     mode: "on-the-ground"
   },
+  minScale: 0,
+  maxScale: 0,
   renderer: new UniqueValueRenderer({
     field: "piste_diff",
     defaultLabel: "Other",
@@ -1011,15 +1015,27 @@ const view = new SceneView({
   map: new Map({
     layers: [
       //
-      rocks,
-      hillshade,
-      trees,
-      buildings,
-      osmFeatures,
-      skiSlopesArea,
-      skiSlopes,
-      skiLifts,
-      skiLiftPoles,
+      new GroupLayer({
+        title: "Basemap",
+        layers: [
+          rocks,
+          hillshade,
+          trees,
+          buildings,
+        ]
+      }),
+      new GroupLayer({
+        title: "Winter Resort Context",
+        layers: [
+          skiSlopesArea,
+          skiSlopes,
+          skiLifts,
+          skiLiftPoles,
+          osmFeatures,
+        ]
+      }),
+
+
       // new GroupLayer({
       //   title: "Visitor Counts",
       //   visibilityMode: "exclusive",
@@ -1089,52 +1105,50 @@ logoutButton.style.display = "none";
 view.ui.add(loginButton, "top-right");
 view.ui.add(logoutButton, "top-right");
 
-const visitorLayers = new GroupLayer({
-  title: "Visitor Counts",
-  visibilityMode: "exclusive",
-  // visible: false,
-  layers: [visitorCountStream]
-});
-const snowcatLayers = new GroupLayer({
-  title: "Snow Cats",
-  visibilityMode: "exclusive",
-  // visible: false,
-  layers: [snowCatLive, snowCatStream]
-});
+const operationalLayers = new GroupLayer({
+  title: "Operational Layers",
+  layers: [
+    new GroupLayer({
+      title: "Visitor Counts",
+      visibilityMode: "exclusive",
+      // visible: false,
+      layers: [visitorCountStream]
+    }),
+    new GroupLayer({
+      title: "Snow Cats",
+      visibilityMode: "exclusive",
+      // visible: false,
+      layers: [snowCatLive, snowCatStream]
+    })
+  ]
+})
 
 
-const addAuthLayers = () => {
-  view.map.add(visitorLayers);
-  view.map.add(snowcatLayers);
+const addAuthLayers = (userId: string) => {
+  view.map.add(operationalLayers);
   loginButton.style.display = "none";
+  logoutButton.innerText = "Logout " + userId;
   logoutButton.style.display = null;
 }
 
 const removeAuthLayers = () => {
-  view.map.remove(visitorLayers);
-  view.map.remove(snowcatLayers);
+  view.map.remove(operationalLayers);
   loginButton.style.display = null;
   logoutButton.style.display = "none";
+  logoutButton.innerText = "Logout";
 };
 
 
 IdentityManager.checkSignInStatus(snowCatStream.url)
   .then((credentials) => {
-    console.log("AUTHENTICATED", credentials);
-
-    logoutButton.innerText = "Logout " + credentials.userId;
-
-    addAuthLayers();
-
+    addAuthLayers(credentials.userId);
     return credentials;
   });
 
 loginButton.onclick = () => {
   IdentityManager.getCredential(snowCatStream.url)
     .then((credentials) => {
-      addAuthLayers();
-
-      console.log("LOGEDIN", credentials);
+      addAuthLayers(credentials.userId);
       return credentials;
     })
 };
@@ -1185,9 +1199,9 @@ view.ui.add(
     content: new LayerList({ view }),
     view,
     expanded: false,
-    group: "bottom-left"
+    group: "top-left"
   }),
-  "bottom-left"
+  "top-left"
 );
 view.ui.add(
   new Expand({
@@ -1195,10 +1209,10 @@ view.ui.add(
     content: document.getElementById("edit-buttons"),
     expandIconClass: "esri-icon-edit",
     // expanded: true,
-    group: "bottom-left"
+    group: "top-left"
   }),
 
-  "bottom-left"
+  "top-left"
 );
 const appState = new AppState({ skiSlopes });
 
