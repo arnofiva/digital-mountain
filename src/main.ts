@@ -18,9 +18,12 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
+import { Polyline } from "@arcgis/core/geometry";
+import Graphic from "@arcgis/core/Graphic";
 import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import StreamLayer from "@arcgis/core/layers/StreamLayer";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
@@ -44,6 +47,7 @@ import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
 import { connect as connectLiftEditor } from "./liftEditor";
+import createSag from "./sag";
 import { connect as connectSlopeEditor } from "./slopeEditor";
 import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
@@ -234,28 +238,38 @@ const visitorCountStream = new StreamLayer({
   })
 });
 
+const skiLiftSymbol = new LineSymbol3D({
+  symbolLayers: [
+    new PathSymbol3DLayer({
+      profile: "quad", // creates a rectangular shape
+      width: 5, // path width in meters
+      height: 0.1, // path height in meters
+      material: { color: [0, 0, 0, 1] },
+      cap: "butt",
+      profileRotation: "heading"
+    })
+  ]
+});
+
 const skiLifts = new FeatureLayer({
   portalItem: {
     id: "dac535c60f214447af467393838ce36b"
   },
-  title: "Ski Lifts",
+  title: "Without Sag",
   elevationInfo: {
     mode: "absolute-height"
   },
   renderer: new SimpleRenderer({
-    symbol: new LineSymbol3D({
-      symbolLayers: [
-        new PathSymbol3DLayer({
-          profile: "quad", // creates a rectangular shape
-          width: 5, // path width in meters
-          height: 0.1, // path height in meters
-          material: { color: [0, 0, 0, 1] },
-          cap: "square",
-          profileRotation: "heading"
-        })
-      ]
-    })
+    symbol: skiLiftSymbol
   })
+});
+
+const skiLiftsWithSag = new GraphicsLayer({
+  title: "With Sag",
+  elevationInfo: {
+    mode: "absolute-height",
+  },
+  visible: false,
 });
 
 const skiLiftPoles = new SceneLayer({
@@ -1029,7 +1043,11 @@ const view = new SceneView({
         layers: [
           skiSlopesArea,
           skiSlopes,
-          skiLifts,
+          new GroupLayer({
+            title: "Ski Lifts",
+            layers: [skiLiftsWithSag, skiLifts],
+            visibilityMode: "exclusive"
+          }),
           skiLiftPoles,
           osmFeatures,
         ]
@@ -1226,4 +1244,49 @@ loader?.parentElement?.removeChild(loader);
 // });
 
 window["view"] = view;
+
+view.when().then(async () => {
+
+  const query = skiLifts.createQuery();
+  query.objectIds = [
+    738, 774, // Urdenbahn
+    737, 736, 2451, 926, 928, 911, 921, 554, 910, 929, // Rothorn
+    2041, // Verbindung Obertor
+  ];
+  query.outFields = ["*"];
+  query.returnGeometry = true;
+  query.returnZ = true;
+
+
+  const result = await skiLifts.queryFeatures(query);
+
+  const sagToSpanRatio = (f: Graphic) => {
+
+    const objectArt = f.getAttribute("OBJEKTART");
+
+    switch (objectArt) {
+      case 0: // Urdenbahn
+      case 1: // Rothorn
+        return 0.03;
+      case 2: // Chairlift
+        return 0.01;
+      case 5: // T-Bar
+        return 0.005;
+      default:
+        throw Error("Unknown lift type: " + objectArt + " " + f.getAttribute("NAME"));
+    }
+  };
+
+  const sags = result.features
+    .filter(f => f.geometry.type === "polyline")
+    .map(f =>
+      createSag(f.geometry as Polyline, sagToSpanRatio(f))
+    );
+
+  skiLiftsWithSag.addMany(sags.map(geometry => new Graphic({
+    geometry,
+    symbol: skiLiftSymbol
+  })));
+
+})
 
