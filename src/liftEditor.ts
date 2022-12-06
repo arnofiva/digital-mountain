@@ -6,67 +6,54 @@ import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import { LineSymbol3D, PathSymbol3DLayer } from "@arcgis/core/symbols";
+import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
+import LineSymbol3DLayer from "@arcgis/core/symbols/LineSymbol3DLayer";
 import ObjectSymbol3DLayer from "@arcgis/core/symbols/ObjectSymbol3DLayer";
+import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import Draw from "@arcgis/core/views/draw/Draw";
 import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 
-const validRouteSymbol = {
-  type: "line-3d",
+const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
-    {
-      type: "line",
+    new LineSymbol3DLayer({
       size: 2, // points
       material: { color: "green" },
       cap: "round",
       join: "round",
-      pattern: {
-        type: "style",
-        style: "dash"
-      },
-      marker: {
-        type: "style",
+      pattern: new LineStylePattern3D({ style: "dash" }),
+      marker: new LineStyleMarker3D({
         style: "circle",
         placement: "begin-end",
         color: "green"
-      }
-    }
+      })
+    })
   ]
-};
-const invalidRouteSymbol = {
-  type: "line-3d",
+});
+
+const invalidRouteSymbol = new LineSymbol3D({
   symbolLayers: [
-    {
-      type: "line",
+    new LineSymbol3DLayer({
       size: 2, // points
       material: { color: "red" },
       cap: "round",
       join: "round",
-      pattern: {
-        type: "style",
-        style: "dash"
-      },
-      marker: {
-        type: "style",
+      pattern: new LineStylePattern3D({ style: "dash" }),
+      marker: new LineStyleMarker3D({
         style: "circle",
         placement: "begin-end",
         color: "red"
-      }
-    }
+      })
+    })
   ]
-};
+});
 
-const completeRouteSymbol = {
-  type: "line-3d",
-  symbolLayers: [
-    {
-      type: "line",
-      size: 2
-    }
-  ]
-};
+const completeRouteSymbol = new LineSymbol3D({
+  symbolLayers: [new LineSymbol3DLayer({ size: 2 })]
+});
+
 const routeCableSymbol = new LineSymbol3D({
   symbolLayers: [
     new PathSymbol3DLayer({
@@ -251,7 +238,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
     const isValid = contains(parcelGraphic.geometry, routeSimpleGeometry);
     routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol as any;
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-stop") {
       if (!isValid) {
         routeSimpleSVM.undo();
@@ -305,10 +292,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         const simpleGraphic = routeSimpleLayer.graphics.includes(result.graphic)
           ? result.graphic
           : routeDetailLayer.graphics.includes(result.graphic)
-            ? detailGraphicToSimpleGraphicMap.get(result.graphic)
-            : towerLayerToDetailGraphicMap.has(result.graphic.layer)
-              ? detailGraphicToSimpleGraphicMap.get(towerLayerToDetailGraphicMap.get(result.graphic.layer))
-              : null;
+          ? detailGraphicToSimpleGraphicMap.get(result.graphic)
+          : towerLayerToDetailGraphicMap.has(result.graphic.layer)
+          ? detailGraphicToSimpleGraphicMap.get(towerLayerToDetailGraphicMap.get(result.graphic.layer))
+          : null;
         if (simpleGraphic) {
           appState.editMode = EditMode.Lift;
           routeSimpleSVM.update(simpleGraphic);
@@ -360,7 +347,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGraphic = routeSimpleLayer.graphics.at(routeIdx);
     const isValid = contains(parcelGraphic.geometry, routeDetailGraphic.geometry);
     routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol as any;
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-start") {
       const path = (routeDetailGraphic.geometry as Polyline).paths[0];
       const start = path[0];
@@ -426,7 +413,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
     routeGraphic = new Graphic({
       geometry: null,
-      symbol: validRouteSymbol as any
+      symbol: validRouteSymbol
     });
     routeSimpleLayer.add(routeGraphic);
 
@@ -441,7 +428,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         })
       );
       isValid = contains(parcelGraphic.geometry, geometry);
-      routeGraphic.symbol = isValid ? validRouteSymbol : invalidRouteSymbol as any;
+      routeGraphic.symbol = isValid ? validRouteSymbol : invalidRouteSymbol;
       routeGraphic.geometry = geometry;
     };
     const completeGeometry = (vertices: number[][]) => {
@@ -453,7 +440,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         })
       );
       routeGraphic.geometry = geometry;
-      routeGraphic.symbol = completeRouteSymbol as any;
+      routeGraphic.symbol = completeRouteSymbol;
 
       const routeDetailGraphic = new Graphic({
         geometry: densify(geometry, towerSeparation),
