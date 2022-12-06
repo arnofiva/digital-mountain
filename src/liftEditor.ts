@@ -17,6 +17,7 @@ import { AppState, EditMode } from "./appState";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import { Point, Polyline, Polygon } from "@arcgis/core/geometry";
+import Layer from "@arcgis/core/layers/Layer";
 
 import * as vec2 from "./vec2";
 
@@ -186,10 +187,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   const markerLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
   view.map.add(markerLayer);
 
-  const simpleGraphicToDetailGraphicMap = new Map();
-  const detailGraphicToSimpleGraphicMap = new Map();
-  const detailGraphicToTowerLayerMap = new Map();
-  const towerLayerToDetailGraphicMap = new Map();
+  const simpleGraphicToDetailGraphicMap = new Map<Graphic, Graphic>();
+  const detailGraphicToSimpleGraphicMap = new Map<Graphic, Graphic>();
+  const detailGraphicToTowerLayerMap = new Map<Graphic, Layer>();
+  const towerLayerToDetailGraphicMap = new Map<Layer, Graphic>();
 
   const addBtn = document.getElementById("add-lift-button") as HTMLButtonElement;
   const cancelBtn = document.getElementById("cancel-lift-button") as HTMLButtonElement;
@@ -429,8 +430,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   let constraintGeometry: Polyline = null;
   routeDetailSVM.on("update", (e) => {
     const routeDetailGraphic = e.graphics[0];
-    const routeIdx = routeDetailLayer.graphics.indexOf(routeDetailGraphic);
-    const routeSimpleGraphic = routeSimpleLayer.graphics.at(routeIdx);
+    const routeSimpleGraphic = detailGraphicToSimpleGraphicMap.get(routeDetailGraphic);
     const isValid = isRouteValid(routeDetailGraphic.geometry as Polyline, parcelGraphic.geometry as Polygon);
     routeSimpleGraphic.symbol =
       isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
