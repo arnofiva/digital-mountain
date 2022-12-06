@@ -47,10 +47,11 @@ import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
 import { connect as connectLiftEditor } from "./liftEditor";
-import createSag from "./lifts/sag";
+import createSag, { sagToSpanRatio } from "./lifts/sag";
 import { connect as connectSlopeEditor } from "./slopeEditor";
 import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
+import { LiftType } from "./lifts/liftType";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -1242,16 +1243,16 @@ view.when().then(async () => {
 
   const result = await skiLifts.queryFeatures(query);
 
-  const sagToSpanRatio = (f: Graphic) => {
+  const liftType = (f: Graphic) => {
     const objectArt = f.getAttribute("OBJEKTART");
     switch (objectArt) {
       case 0: // Urdenbahn
       case 1: // Rothorn
-        return 0.03;
-      case 2: // Chairlift
-        return 0.01;
-      case 5: // T-Bar
-        return 0.005;
+        return LiftType.CableCar;
+      case 2:
+        return LiftType.Chair;
+      case 5:
+        return LiftType.TBar;
       default:
         throw Error("Unknown lift type: " + objectArt + " " + f.getAttribute("NAME"));
     }
@@ -1259,7 +1260,7 @@ view.when().then(async () => {
 
   const sags = result.features
     .filter((f) => f.geometry.type === "polyline")
-    .map((f) => createSag(f.geometry as Polyline, sagToSpanRatio(f)));
+    .map((f) => createSag(f.geometry as Polyline, sagToSpanRatio(liftType(f))));
 
   skiLiftsWithSag.addMany(
     sags.map(

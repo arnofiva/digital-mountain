@@ -1,4 +1,5 @@
 import { Point, Polyline } from "@arcgis/core/geometry";
+import { LiftType } from "./liftType";
 
 const LINE_WEIGHT_PER_UNIT_LENGTH = 1; // lb/ft
 const COUNT = 50; // number of vertices per sag
@@ -171,5 +172,16 @@ const createSag = (line: Polyline, sagToSpanRatio: number) => {
     paths
   });
 };
+
+export function sagToSpanRatio(liftType: LiftType): number {
+  switch (liftType) {
+    case LiftType.CableCar:
+      return 0.03;
+    case LiftType.Chair:
+      return 0.01;
+    case LiftType.TBar:
+      return 0.005;
+  }
+}
 
 export default createSag;
