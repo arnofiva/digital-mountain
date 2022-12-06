@@ -57,7 +57,7 @@ const invalidRouteSymbol = new LineSymbol3D({
 const validMarkerSymbol = new PointSymbol3D({
   symbolLayers: [
     new IconSymbol3DLayer({
-      size: 2, // points
+      size: 10, // points
       material: { color: "green" },
       resource: { primitive: "circle" }
     })
@@ -67,7 +67,7 @@ const validMarkerSymbol = new PointSymbol3D({
 const invalidMarkerSymbol = new PointSymbol3D({
   symbolLayers: [
     new IconSymbol3DLayer({
-      size: 2, // points
+      size: 10, // points
       material: { color: "red" },
       resource: { primitive: "circle" }
     })
@@ -182,6 +182,9 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
   const routeDetailLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" }, listMode: "hide" });
   view.map.add(routeDetailLayer);
+
+  const markerLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
+  view.map.add(markerLayer);
 
   const simpleGraphicToDetailGraphicMap = new Map();
   const detailGraphicToSimpleGraphicMap = new Map();
@@ -454,7 +457,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   let routeGraphic: Graphic;
   let markerGraphic: Graphic;
   function onDone() {
-    view.graphics.remove(markerGraphic);
+    markerLayer.remove(markerGraphic);
     routeGraphic = null;
     addBtn.className = "hidden";
     cancelBtn.className = "hidden";
@@ -471,7 +474,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     routeSimpleLayer.add(routeGraphic);
 
     markerGraphic = new Graphic();
-    view.graphics.add(markerGraphic);
+    markerLayer.add(markerGraphic);
 
     let isValid = true;
     const updateGeometry = (vertices: number[][]) => {
