@@ -17,7 +17,6 @@ import { AppState, EditMode } from "./appState";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import { Point, Polyline, Polygon } from "@arcgis/core/geometry";
-import Layer from "@arcgis/core/layers/Layer";
 
 import * as vec2 from "./vec2";
 
@@ -170,6 +169,12 @@ const maxLength = 1000;
 const towerSeparation = 200;
 const initialTowerHeight = 10;
 
+interface LiftGraphicGroup {
+  simpleGraphic: Graphic;
+  detailGraphic: Graphic;
+  towerLayer: FeatureLayer;
+}
+
 export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],
@@ -187,10 +192,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   const markerLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
   view.map.add(markerLayer);
 
-  const simpleGraphicToDetailGraphicMap = new Map<Graphic, Graphic>();
-  const detailGraphicToSimpleGraphicMap = new Map<Graphic, Graphic>();
-  const detailGraphicToTowerLayerMap = new Map<Graphic, Layer>();
-  const towerLayerToDetailGraphicMap = new Map<Layer, Graphic>();
+  const liftGraphicGroups: LiftGraphicGroup[] = [];
 
   const addBtn = document.getElementById("add-lift-button") as HTMLButtonElement;
   const cancelBtn = document.getElementById("cancel-lift-button") as HTMLButtonElement;
@@ -305,8 +307,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         routeSimpleSVM.undo();
         return;
       }
-      const routeDetailGraphic = simpleGraphicToDetailGraphicMap.get(routeSimpleGraphic);
-      const routeDetailGeometry = routeDetailGraphic.geometry;
+      const routeDetailGraphic = liftGraphicGroups.find(
+        (group) => group.simpleGraphic === routeSimpleGraphic
+      )?.detailGraphic;
+      const routeDetailGeometry = routeDetailGraphic.geometry as Polyline;
       routeDetailGraphic.geometry = matchRouteDetailGeometryToSimple(routeDetailGeometry, routeSimpleGeometry);
       placeTowers(routeDetailGraphic);
     }
@@ -335,12 +339,16 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   editToggleBtn.addEventListener("click", () => {
     if (routeDetailSVM.updateGraphics.length > 0) {
       const routeDetailGraphic = routeDetailSVM.updateGraphics.at(0);
-      const routeSimpleGraphic = detailGraphicToSimpleGraphicMap.get(routeDetailGraphic);
+      const routeSimpleGraphic = liftGraphicGroups.find(
+        (group) => group.detailGraphic === routeDetailGraphic
+      )?.simpleGraphic;
       routeDetailSVM.complete();
       routeSimpleSVM.update(routeSimpleGraphic);
     } else if (routeSimpleSVM.updateGraphics.length > 0) {
       const routeSimpleGraphic = routeSimpleSVM.updateGraphics.at(0);
-      const routeDetailGraphic = simpleGraphicToDetailGraphicMap.get(routeSimpleGraphic);
+      const routeDetailGraphic = liftGraphicGroups.find(
+        (group) => group.simpleGraphic === routeSimpleGraphic
+      )?.detailGraphic;
       routeSimpleSVM.complete();
       routeDetailSVM.update(routeDetailGraphic);
     }
@@ -350,13 +358,11 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     view.hitTest(event).then(function (response) {
       const result = response.results[0];
       if (result?.type === "graphic") {
-        const simpleGraphic = routeSimpleLayer.graphics.includes(result.graphic)
-          ? result.graphic
-          : routeDetailLayer.graphics.includes(result.graphic)
-          ? detailGraphicToSimpleGraphicMap.get(result.graphic)
-          : towerLayerToDetailGraphicMap.has(result.graphic.layer)
-          ? detailGraphicToSimpleGraphicMap.get(towerLayerToDetailGraphicMap.get(result.graphic.layer))
-          : null;
+        const { graphic } = result;
+        const simpleGraphic = liftGraphicGroups.find(
+          (group) =>
+            graphic === group.simpleGraphic || graphic === group.detailGraphic || graphic.layer === group.towerLayer
+        )?.simpleGraphic;
         if (simpleGraphic) {
           appState.editMode = EditMode.Lift;
           routeSimpleSVM.update(simpleGraphic);
@@ -365,10 +371,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     });
   });
 
-  async function placeTowers(routeDetailGraphic: Graphic): Promise<void> {
+  function placeTowers(routeDetailGraphic: Graphic): FeatureLayer {
     const routeGeometry = routeDetailGraphic.geometry as Polyline;
     let objectID = 0;
-    const newFeatures = [];
+    const newFeatures: Graphic[] = [];
     for (const vertex of routeGeometry.paths[0]) {
       const geometry = new Point({
         x: vertex[0],
@@ -380,7 +386,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       objectID++;
     }
 
-    let towerLayer = detailGraphicToTowerLayerMap.get(routeDetailGraphic);
+    let towerLayer = liftGraphicGroups.find((group) => group.detailGraphic === routeDetailGraphic)?.towerLayer;
     if (!towerLayer) {
       towerLayer = new FeatureLayer({
         elevationInfo: { mode: "relative-to-ground" },
@@ -415,22 +421,24 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         source: newFeatures,
         title: "Tower layer"
       });
-      detailGraphicToTowerLayerMap.set(routeDetailGraphic, towerLayer);
-      towerLayerToDetailGraphicMap.set(towerLayer, routeDetailGraphic);
       view.map.add(towerLayer);
     } else {
-      const { features: existingFeatures } = await towerLayer.queryFeatures();
-      towerLayer.applyEdits({
-        addFeatures: newFeatures,
-        deleteFeatures: existingFeatures
+      towerLayer.queryFeatures().then(({ features: existingFeatures }) => {
+        towerLayer.applyEdits({
+          addFeatures: newFeatures,
+          deleteFeatures: existingFeatures
+        });
       });
     }
+    return towerLayer;
   }
 
   let constraintGeometry: Polyline = null;
   routeDetailSVM.on("update", (e) => {
     const routeDetailGraphic = e.graphics[0];
-    const routeSimpleGraphic = detailGraphicToSimpleGraphicMap.get(routeDetailGraphic);
+    const routeSimpleGraphic = liftGraphicGroups.find(
+      (group) => group.detailGraphic === routeDetailGraphic
+    )?.simpleGraphic;
     const isValid = isRouteValid(routeDetailGraphic.geometry as Polyline, parcelGraphic.geometry as Polygon);
     routeSimpleGraphic.symbol =
       isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
@@ -541,12 +549,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         geometry: densify(geometry, towerSeparation),
         symbol: routeCableSymbol
       });
-
-      detailGraphicToSimpleGraphicMap.set(routeDetailGraphic, routeGraphic);
-      simpleGraphicToDetailGraphicMap.set(routeGraphic, routeDetailGraphic);
-
       routeDetailLayer.add(routeDetailGraphic);
-      placeTowers(routeDetailGraphic);
+
+      const towerLayer = placeTowers(routeDetailGraphic);
+      liftGraphicGroups.push({
+        simpleGraphic: routeGraphic,
+        detailGraphic: routeDetailGraphic,
+        towerLayer
+      });
     };
 
     const action = draw.create("polyline", { mode: "click" });
