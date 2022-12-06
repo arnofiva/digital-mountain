@@ -4,6 +4,7 @@ import { contains, densify, nearestCoordinate } from "@arcgis/core/geometry/geom
 import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import { LineSymbol3D, PathSymbol3DLayer } from "@arcgis/core/symbols";
 import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
@@ -15,6 +16,8 @@ import Draw from "@arcgis/core/views/draw/Draw";
 import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
+import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
+import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -304,17 +307,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     });
   });
 
-  function placeTowers(routeDetailGraphic: Graphic) {
-    let towerLayer = detailGraphicToTowerLayerMap.get(routeDetailGraphic);
-    if (!towerLayer) {
-      towerLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" }, listMode: "hide" });
-      detailGraphicToTowerLayerMap.set(routeDetailGraphic, towerLayer);
-      towerLayerToDetailGraphicMap.set(towerLayer, routeDetailGraphic);
-      view.map.add(towerLayer);
-    } else {
-      towerLayer.graphics.removeAll();
-    }
+  async function placeTowers(routeDetailGraphic: Graphic): Promise<void> {
     const routeGeometry = routeDetailGraphic.geometry as Polyline;
+    let objectID = 0;
+    const newFeatures = [];
     for (const vertex of routeGeometry.paths[0]) {
       const geometry = new Point({
         x: vertex[0],
@@ -322,21 +318,54 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         spatialReference: routeGeometry.spatialReference,
         hasZ: false
       });
-      const graphic = new Graphic({
-        geometry,
-        symbol: new PointSymbol3D({
-          symbolLayers: [
-            new ObjectSymbol3DLayer({
-              width: 2,
-              depth: 2,
-              height: vertex[2],
-              resource: { primitive: "cylinder" },
-              material: { color: "black" }
-            })
+      newFeatures.push(new Graphic({ attributes: { objectID, height: vertex[2] }, geometry }));
+      objectID++;
+    }
+
+    let towerLayer = detailGraphicToTowerLayerMap.get(routeDetailGraphic);
+    if (!towerLayer) {
+      towerLayer = new FeatureLayer({
+        elevationInfo: { mode: "relative-to-ground" },
+        fields: [
+          {
+            name: "objectID",
+            type: "oid"
+          },
+          {
+            name: "height",
+            type: "double"
+          }
+        ],
+        listMode: "hide",
+        objectIdField: "objectID",
+        renderer: new SimpleRenderer({
+          symbol: new PointSymbol3D({
+            symbolLayers: [
+              new ObjectSymbol3DLayer({
+                width: 2,
+                depth: 2,
+                resource: { primitive: "cylinder" },
+                material: { color: "black" }
+              })
+            ]
+          }),
+          visualVariables: [
+            new SizeVariable({ axis: "height", field: "height", valueUnit: "meters" }),
+            new SizeVariable({ axis: "width-and-depth", useSymbolValue: true })
           ]
-        })
+        }),
+        source: newFeatures,
+        title: "Tower layer"
       });
-      towerLayer.graphics.push(graphic);
+      detailGraphicToTowerLayerMap.set(routeDetailGraphic, towerLayer);
+      towerLayerToDetailGraphicMap.set(towerLayer, routeDetailGraphic);
+      view.map.add(towerLayer);
+    } else {
+      const { features: existingFeatures } = await towerLayer.queryFeatures();
+      towerLayer.applyEdits({
+        addFeatures: newFeatures,
+        deleteFeatures: existingFeatures
+      });
     }
   }
 
