@@ -52,7 +52,6 @@ import { connect as connectSlopeEditor } from "./slopeEditor";
 import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
 
-
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
 // const params = new URLSearchParams(document.location.search.slice(1));
@@ -65,9 +64,7 @@ const oAuthInfo = new OAuthInfo({
   portalUrl: "https://zurich.maps.arcgis.com/"
 });
 
-IdentityManager.registerOAuthInfos([
-  oAuthInfo,
-]);
+IdentityManager.registerOAuthInfos([oAuthInfo]);
 
 (window as any).setOAuthResponseHash = (responseHash: string) => {
   IdentityManager.setOAuthResponseHash(responseHash);
@@ -267,9 +264,9 @@ const skiLifts = new FeatureLayer({
 const skiLiftsWithSag = new GraphicsLayer({
   title: "With Sag",
   elevationInfo: {
-    mode: "absolute-height",
+    mode: "absolute-height"
   },
-  visible: false,
+  visible: false
 });
 
 const skiLiftPoles = new SceneLayer({
@@ -1031,12 +1028,7 @@ const view = new SceneView({
       //
       new GroupLayer({
         title: "Basemap",
-        layers: [
-          rocks,
-          hillshade,
-          trees,
-          buildings,
-        ]
+        layers: [rocks, hillshade, trees, buildings]
       }),
       new GroupLayer({
         title: "Winter Resort Context",
@@ -1049,10 +1041,9 @@ const view = new SceneView({
             visibilityMode: "exclusive"
           }),
           skiLiftPoles,
-          osmFeatures,
+          osmFeatures
         ]
-      }),
-
+      })
 
       // new GroupLayer({
       //   title: "Visitor Counts",
@@ -1140,15 +1131,14 @@ const operationalLayers = new GroupLayer({
       layers: [snowCatLive, snowCatStream]
     })
   ]
-})
-
+});
 
 const addAuthLayers = (userId: string) => {
   view.map.add(operationalLayers);
   loginButton.style.display = "none";
   logoutButton.innerText = "Logout " + userId;
   logoutButton.style.display = null;
-}
+};
 
 const removeAuthLayers = () => {
   view.map.remove(operationalLayers);
@@ -1157,28 +1147,22 @@ const removeAuthLayers = () => {
   logoutButton.innerText = "Logout";
 };
 
+IdentityManager.checkSignInStatus(snowCatStream.url).then((credentials) => {
+  addAuthLayers(credentials.userId);
+  return credentials;
+});
 
-IdentityManager.checkSignInStatus(snowCatStream.url)
-  .then((credentials) => {
+loginButton.onclick = () => {
+  IdentityManager.getCredential(snowCatStream.url).then((credentials) => {
     addAuthLayers(credentials.userId);
     return credentials;
   });
-
-loginButton.onclick = () => {
-  IdentityManager.getCredential(snowCatStream.url)
-    .then((credentials) => {
-      addAuthLayers(credentials.userId);
-      return credentials;
-    })
 };
 
 logoutButton.onclick = () => {
   IdentityManager.destroyCredentials();
   removeAuthLayers();
 };
-
-
-
 
 view.ui.add(
   new Expand({
@@ -1202,10 +1186,7 @@ view.ui.add(
   new Expand({
     content: new ElevationProfile({
       view,
-      profiles: [
-        { type: "input" },
-        { type: "ground" },
-      ]
+      profiles: [{ type: "input" }, { type: "ground" }]
     }),
     view,
     group: "environment"
@@ -1226,7 +1207,7 @@ view.ui.add(
   new Expand({
     view,
     content: document.getElementById("edit-buttons"),
-    expandIconClass: "esri-icon-edit",
+    expandIconClass: "esri-icon-edit"
     // expanded: true,
     // group: "top-left"
   }),
@@ -1246,24 +1227,23 @@ loader?.parentElement?.removeChild(loader);
 window["view"] = view;
 
 view.when().then(async () => {
-
   const query = skiLifts.createQuery();
   query.objectIds = [
-    738, 774, // Urdenbahn
-    737, 736, 2451, 926, 928, 911, 921, 554, 910, 929, // Rothorn
-    2041, // Verbindung Obertor
+    // Urdenbahn
+    738, 774,
+    // Rothorn
+    737, 736, 2451, 926, 928, 911, 921, 554, 910, 929,
+    // Verbindung Obertor
+    2041
   ];
   query.outFields = ["*"];
   query.returnGeometry = true;
   query.returnZ = true;
 
-
   const result = await skiLifts.queryFeatures(query);
 
   const sagToSpanRatio = (f: Graphic) => {
-
     const objectArt = f.getAttribute("OBJEKTART");
-
     switch (objectArt) {
       case 0: // Urdenbahn
       case 1: // Rothorn
@@ -1278,15 +1258,16 @@ view.when().then(async () => {
   };
 
   const sags = result.features
-    .filter(f => f.geometry.type === "polyline")
-    .map(f =>
-      createSag(f.geometry as Polyline, sagToSpanRatio(f))
-    );
+    .filter((f) => f.geometry.type === "polyline")
+    .map((f) => createSag(f.geometry as Polyline, sagToSpanRatio(f)));
 
-  skiLiftsWithSag.addMany(sags.map(geometry => new Graphic({
-    geometry,
-    symbol: skiLiftSymbol
-  })));
-
-})
-
+  skiLiftsWithSag.addMany(
+    sags.map(
+      (geometry) =>
+        new Graphic({
+          geometry,
+          symbol: skiLiftSymbol
+        })
+    )
+  );
+});
