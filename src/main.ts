@@ -47,7 +47,7 @@ import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
 import { connect as connectLiftEditor } from "./liftEditor";
-import createSag, { sagToSpanRatio } from "./lifts/sag";
+import { createSag, sagToSpanRatio } from "./lifts/sag";
 import { connect as connectSlopeEditor } from "./slopeEditor";
 import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";

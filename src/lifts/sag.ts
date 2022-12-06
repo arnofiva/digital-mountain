@@ -157,7 +157,7 @@ const createSagLine = (from: Point, to: Point, sagToSpanRatio: number) => {
   return path;
 };
 
-const createSag = (line: Polyline, sagToSpanRatio: number) => {
+export function createSag(line: Polyline, sagToSpanRatio: number) {
   const paths: number[][][] = [];
   line.paths.forEach((path, index) => {
     for (let i = 0; i < path.length - 1; i++) {
@@ -171,7 +171,7 @@ const createSag = (line: Polyline, sagToSpanRatio: number) => {
     spatialReference: line.spatialReference,
     paths
   });
-};
+}
 
 export function sagToSpanRatio(liftType: LiftType): number {
   switch (liftType) {
@@ -183,5 +183,3 @@ export function sagToSpanRatio(liftType: LiftType): number {
       return 0.005;
   }
 }
-
-export default createSag;

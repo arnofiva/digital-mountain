@@ -19,6 +19,8 @@ import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import { Point, Polyline, Polygon } from "@arcgis/core/geometry";
 
 import * as vec2 from "./vec2";
+import { LiftType } from "./lifts/liftType";
+import { createSag, sagToSpanRatio } from "./lifts/sag";
 
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -85,7 +87,7 @@ const routeCableSymbol = new LineSymbol3D({
       width: 5, // path width in meters
       height: 0.1, // path height in meters
       material: { color: [0, 0, 0, 1] },
-      cap: "square",
+      cap: "butt",
       profileRotation: "heading"
     })
   ]
@@ -168,10 +170,12 @@ const minLength = 100;
 const maxLength = 1000;
 const towerSeparation = 200;
 const initialTowerHeight = 10;
+const createLiftType = LiftType.Chair;
 
 interface LiftGraphicGroup {
   simpleGraphic: Graphic;
   detailGraphic: Graphic;
+  displayGraphic: Graphic;
   towerLayer: FeatureLayer;
 }
 
@@ -191,6 +195,9 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
   const markerLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
   view.map.add(markerLayer);
+
+  const routeDisplayLayer = new GraphicsLayer({ elevationInfo: { mode: "absolute-height" }, listMode: "hide" });
+  view.map.add(routeDisplayLayer);
 
   const liftGraphicGroups: LiftGraphicGroup[] = [];
 
@@ -271,7 +278,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     return isContained && (length === 0 || (length >= minLength && length <= maxLength));
   }
 
-  function matchRouteDetailGeometryToSimple(detailGeometry: Polyline, simpleGeometry: Polyline): Geometry {
+  function matchRouteDetailGeometryToSimple(detailGeometry: Polyline, simpleGeometry: Polyline): Polyline {
     const detailPath = detailGeometry.paths[0];
     const simplePath = simpleGeometry.paths[0];
     const detailStart = detailPath[0];
@@ -296,6 +303,17 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     });
   }
 
+  async function detailGeometryToDisplayGeometry(detailGeometry: Polyline): Promise<Polyline> {
+    const result = await view.map.ground.queryElevation(detailGeometry);
+    const resultGeometry = result.geometry as typeof detailGeometry;
+    resultGeometry.paths.forEach((path, pIdx) => {
+      path.forEach((v, vIdx) => {
+        v[2] += detailGeometry.paths[pIdx][vIdx][2];
+      });
+    });
+    return createSag(resultGeometry, sagToSpanRatio(createLiftType));
+  }
+
   routeSimpleSVM.on("update", (e) => {
     const routeSimpleGraphic = e.graphics[0];
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
@@ -307,12 +325,17 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         routeSimpleSVM.undo();
         return;
       }
-      const routeDetailGraphic = liftGraphicGroups.find(
-        (group) => group.simpleGraphic === routeSimpleGraphic
-      )?.detailGraphic;
-      const routeDetailGeometry = routeDetailGraphic.geometry as Polyline;
-      routeDetailGraphic.geometry = matchRouteDetailGeometryToSimple(routeDetailGeometry, routeSimpleGeometry);
-      placeTowers(routeDetailGraphic);
+      const group = liftGraphicGroups.find((group) => group.simpleGraphic === routeSimpleGraphic);
+      const { detailGraphic, displayGraphic } = group;
+      const routeDetailGeometry = matchRouteDetailGeometryToSimple(
+        detailGraphic.geometry as Polyline,
+        routeSimpleGeometry
+      );
+      detailGraphic.geometry = routeDetailGeometry;
+      placeTowers(detailGraphic);
+      detailGeometryToDisplayGeometry(routeDetailGeometry).then((geometry) => {
+        displayGraphic.geometry = geometry;
+      });
     }
   });
 
@@ -361,7 +384,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         const { graphic } = result;
         const simpleGraphic = liftGraphicGroups.find(
           (group) =>
-            graphic === group.simpleGraphic || graphic === group.detailGraphic || graphic.layer === group.towerLayer
+            graphic === group.simpleGraphic ||
+            graphic === group.detailGraphic ||
+            graphic === group.displayGraphic ||
+            graphic.layer === group.towerLayer
         )?.simpleGraphic;
         if (simpleGraphic) {
           appState.editMode = EditMode.Lift;
@@ -435,15 +461,13 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
   let constraintGeometry: Polyline = null;
   routeDetailSVM.on("update", (e) => {
-    const routeDetailGraphic = e.graphics[0];
-    const routeSimpleGraphic = liftGraphicGroups.find(
-      (group) => group.detailGraphic === routeDetailGraphic
-    )?.simpleGraphic;
-    const isValid = isRouteValid(routeDetailGraphic.geometry as Polyline, parcelGraphic.geometry as Polygon);
-    routeSimpleGraphic.symbol =
+    const detailGraphic = e.graphics[0];
+    const { simpleGraphic, displayGraphic } = liftGraphicGroups.find((group) => group.detailGraphic === detailGraphic);
+    const isValid = isRouteValid(detailGraphic.geometry as Polyline, parcelGraphic.geometry as Polygon);
+    simpleGraphic.symbol =
       isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-start") {
-      const path = (routeDetailGraphic.geometry as Polyline).paths[0];
+      const path = (detailGraphic.geometry as Polyline).paths[0];
       const start = path[0];
       const end = path[path.length - 1];
 
@@ -456,7 +480,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
 
       constraintGeometry = new Polyline({
         paths: [[start, end]],
-        spatialReference: routeDetailGraphic.geometry.spatialReference
+        spatialReference: detailGraphic.geometry.spatialReference
       });
     }
     if (e.toolEventInfo?.type === "reshape-stop") {
@@ -464,28 +488,29 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         routeDetailSVM.undo();
         return;
       }
-      const newGeometry = routeDetailGraphic.geometry.clone() as Polyline;
-      for (const vertex of newGeometry.paths[0]) {
+      const newDetailGeometry = detailGraphic.geometry.clone() as Polyline;
+      for (const vertex of newDetailGeometry.paths[0]) {
         const nearest = nearestCoordinate(
           constraintGeometry,
           new Point({
             x: vertex[0],
             y: vertex[1],
-            spatialReference: routeDetailGraphic.geometry.spatialReference
+            spatialReference: detailGraphic.geometry.spatialReference
           })
         );
         vertex[0] = nearest.coordinate.x;
         vertex[1] = nearest.coordinate.y;
       }
-      routeDetailGraphic.geometry = newGeometry;
-      placeTowers(routeDetailGraphic);
-
-      const routeSimpleGeometry = new Polyline({
-        hasZ: newGeometry.hasZ,
-        paths: [[newGeometry.paths[0][0], newGeometry.paths[0].at(-1)]],
-        spatialReference: newGeometry.spatialReference
+      detailGraphic.geometry = newDetailGeometry;
+      placeTowers(detailGraphic);
+      detailGeometryToDisplayGeometry(detailGraphic.geometry as Polyline).then((geometry) => {
+        displayGraphic.geometry = geometry;
       });
-      routeSimpleGraphic.geometry = routeSimpleGeometry;
+      simpleGraphic.geometry = new Polyline({
+        hasZ: newDetailGeometry.hasZ,
+        paths: [[newDetailGeometry.paths[0][0], newDetailGeometry.paths[0].at(-1)]],
+        spatialReference: newDetailGeometry.spatialReference
+      });
     }
   });
 
@@ -536,25 +561,26 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     };
     const completeGeometry = (vertices: number[][]) => {
       const geometry = setInitialTowerHeight(
-        new Polyline({
-          paths: [vertices],
-          spatialReference: view.spatialReference,
-          hasZ: true
-        })
+        new Polyline({ paths: [vertices], spatialReference: view.spatialReference, hasZ: true })
       );
       routeGraphic.geometry = geometry;
       routeGraphic.symbol = completeRouteSymbol;
 
-      const routeDetailGraphic = new Graphic({
-        geometry: densify(geometry, towerSeparation),
-        symbol: routeCableSymbol
-      });
+      const detailGeometry = densify(geometry, towerSeparation) as typeof geometry;
+      const routeDetailGraphic = new Graphic({ geometry: detailGeometry });
       routeDetailLayer.add(routeDetailGraphic);
+
+      const routeDisplayGraphic = new Graphic({ symbol: routeCableSymbol });
+      detailGeometryToDisplayGeometry(detailGeometry).then((geometry) => {
+        routeDisplayGraphic.geometry = geometry;
+      });
+      routeDisplayLayer.add(routeDisplayGraphic);
 
       const towerLayer = placeTowers(routeDetailGraphic);
       liftGraphicGroups.push({
         simpleGraphic: routeGraphic,
         detailGraphic: routeDetailGraphic,
+        displayGraphic: routeDisplayGraphic,
         towerLayer
       });
     };
