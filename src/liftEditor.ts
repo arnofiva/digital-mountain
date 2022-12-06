@@ -18,6 +18,8 @@ import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import { Point, Polyline, Polygon } from "@arcgis/core/geometry";
 
+import * as vec2 from "./vec2";
+
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
     new LineSymbol3DLayer({
@@ -241,19 +243,15 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const detailEnd = detailPath[detailPath.length - 1];
     const simpleStart = simplePath[0];
     const simpleEnd = simplePath[simplePath.length - 1];
-    const scale = (vec: number[], factor: number) => [vec[0] * factor, vec[1] * factor];
-    const add = (vecA: number[], vecB: number[]) => [vecA[0] + vecB[0], vecA[1] + vecB[1]];
-    const subtract = (vecA: number[], vecB: number[]) => [vecA[0] - vecB[0], vecA[1] - vecB[1]];
-    const length = (vec: number[]) => Math.sqrt(vec[0] ** 2 + vec[1] ** 2);
-    const simpleStartToEnd = subtract(simpleEnd, simpleStart);
-    const detailStartToEnd = subtract(detailEnd, detailStart);
-    const detailStartToEndLength = length(detailStartToEnd);
+    const simpleStartToEnd = vec2.subtract(simpleEnd, simpleStart);
+    const detailStartToEnd = vec2.subtract(detailEnd, detailStart);
+    const detailStartToEndLength = vec2.length(detailStartToEnd);
     const newPath = [];
     for (const vertex of detailPath) {
-      const relativeToStart = subtract(vertex, detailPath[0]);
-      const fraction = length(relativeToStart) / detailStartToEndLength;
-      const newVertexRelativeToStart = scale(simpleStartToEnd, fraction);
-      const newVertex = add(newVertexRelativeToStart, simplePath[0]);
+      const relativeToStart = vec2.subtract(vertex, detailPath[0]);
+      const fraction = vec2.length(relativeToStart) / detailStartToEndLength;
+      const newVertexRelativeToStart = vec2.scale(simpleStartToEnd, fraction);
+      const newVertex = vec2.add(newVertexRelativeToStart, simplePath[0]);
       newPath.push([newVertex[0], newVertex[1], vertex[2]]);
     }
     return new Polyline({
