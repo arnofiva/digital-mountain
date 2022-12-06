@@ -1,12 +1,10 @@
 import { watch } from "@arcgis/core/core/reactiveUtils";
 import Geometry from "@arcgis/core/geometry/Geometry";
-import { contains, densify, nearestCoordinate } from "@arcgis/core/geometry/geometryEngine";
-import Point from "@arcgis/core/geometry/Point";
-import Polyline from "@arcgis/core/geometry/Polyline";
+import { contains, densify, nearestCoordinate, planarLength } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import { LineSymbol3D, PathSymbol3DLayer } from "@arcgis/core/symbols";
+import { IconSymbol3DLayer, LineSymbol3D, PathSymbol3DLayer } from "@arcgis/core/symbols";
 import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
 import LineSymbol3DLayer from "@arcgis/core/symbols/LineSymbol3DLayer";
 import ObjectSymbol3DLayer from "@arcgis/core/symbols/ObjectSymbol3DLayer";
@@ -18,6 +16,7 @@ import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
+import { Point, Polyline, Polygon } from "@arcgis/core/geometry";
 
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -49,6 +48,26 @@ const invalidRouteSymbol = new LineSymbol3D({
         placement: "begin-end",
         color: "red"
       })
+    })
+  ]
+});
+
+const validMarkerSymbol = new PointSymbol3D({
+  symbolLayers: [
+    new IconSymbol3DLayer({
+      size: 2, // points
+      material: { color: "green" },
+      resource: { primitive: "circle" }
+    })
+  ]
+});
+
+const invalidMarkerSymbol = new PointSymbol3D({
+  symbolLayers: [
+    new IconSymbol3DLayer({
+      size: 2, // points
+      material: { color: "red" },
+      resource: { primitive: "circle" }
     })
   ]
 });
@@ -143,6 +162,8 @@ const parcelGraphic = Graphic.fromJSON({
   popupTemplate: null
 });
 
+const minLength = 100;
+const maxLength = 1000;
 const towerSeparation = 200;
 const initialTowerHeight = 10;
 
@@ -207,6 +228,12 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     }
   );
 
+  function isRouteValid(routeGeometry: Polyline, parcelGeometry: Polygon): boolean {
+    const isContained = contains(parcelGeometry, routeGeometry);
+    const length = planarLength(routeGeometry);
+    return isContained && (length === 0 || (length >= minLength && length <= maxLength));
+  }
+
   function matchRouteDetailGeometryToSimple(detailGeometry: Polyline, simpleGeometry: Polyline): Geometry {
     const detailPath = detailGeometry.paths[0];
     const simplePath = simpleGeometry.paths[0];
@@ -239,7 +266,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   routeSimpleSVM.on("update", (e) => {
     const routeSimpleGraphic = e.graphics[0];
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
-    const isValid = contains(parcelGraphic.geometry, routeSimpleGeometry);
+    const isValid = isRouteValid(routeSimpleGeometry, parcelGraphic.geometry as Polygon);
     routeSimpleGraphic.symbol =
       isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-stop") {
@@ -374,7 +401,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeDetailGraphic = e.graphics[0];
     const routeIdx = routeDetailLayer.graphics.indexOf(routeDetailGraphic);
     const routeSimpleGraphic = routeSimpleLayer.graphics.at(routeIdx);
-    const isValid = contains(parcelGraphic.geometry, routeDetailGraphic.geometry);
+    const isValid = isRouteValid(routeDetailGraphic.geometry as Polyline, parcelGraphic.geometry as Polygon);
     routeSimpleGraphic.symbol =
       isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
     if (e.toolEventInfo?.type === "reshape-start") {
@@ -427,7 +454,9 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   const draw = new Draw({ view: view as any });
   const drawHandles: IHandle[] = [];
   let routeGraphic: Graphic;
+  let markerGraphic: Graphic;
   function onDone() {
+    view.graphics.remove(markerGraphic);
     routeGraphic = null;
     addBtn.className = "hidden";
     cancelBtn.className = "hidden";
@@ -440,25 +469,32 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     addBtn.className = "hidden";
     cancelBtn.className = "";
 
-    routeGraphic = new Graphic({
-      geometry: null,
-      symbol: validRouteSymbol
-    });
+    routeGraphic = new Graphic();
     routeSimpleLayer.add(routeGraphic);
+
+    markerGraphic = new Graphic();
+    view.graphics.add(markerGraphic);
 
     let isValid = true;
     const updateGeometry = (vertices: number[][]) => {
       // TODO: use SVM.create, so that alignWithGround isn't necessary
       const geometry = setInitialTowerHeight(
         new Polyline({
-          paths: [vertices.length === 1 ? [vertices[0], [vertices[0][0] + 0.1, vertices[0][1] + 0.1, 0]] : vertices],
+          paths: [vertices.length === 1 ? [vertices[0], vertices[0]] : vertices],
           spatialReference: view.spatialReference,
           hasZ: true
         })
       );
-      isValid = contains(parcelGraphic.geometry, geometry);
+      isValid = isRouteValid(geometry, parcelGraphic.geometry as Polygon);
       routeGraphic.symbol = isValid ? validRouteSymbol : invalidRouteSymbol;
       routeGraphic.geometry = geometry;
+
+      markerGraphic.symbol = isValid ? validMarkerSymbol : invalidMarkerSymbol;
+      markerGraphic.geometry = new Point({
+        x: vertices[0][0],
+        y: vertices[0][1],
+        spatialReference: geometry.spatialReference
+      });
     };
     const completeGeometry = (vertices: number[][]) => {
       const geometry = setInitialTowerHeight(
