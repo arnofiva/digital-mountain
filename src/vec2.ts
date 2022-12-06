@@ -13,3 +13,7 @@ export function scale(vec: number[], factor: number) {
 export function length(vec: number[]) {
   return Math.sqrt(vec[0] ** 2 + vec[1] ** 2);
 }
+
+export function dot(vecA: number[], vecB: number[]) {
+  return vecA[0] * vecB[0] + vecA[1] * vecB[1];
+}

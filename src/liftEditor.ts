@@ -234,7 +234,36 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   );
 
   function isRouteValid(routeGeometry: Polyline, parcelGeometry: Polygon): boolean {
-    const isContained = contains(parcelGeometry, routeGeometry);
+    const path = routeGeometry.paths[0];
+    if (path.length > 1) {
+      // keep vertices in order
+      const start = path[0];
+      const end = path[path.length - 1];
+      const startToEnd = vec2.subtract(end, start);
+      let previous = start;
+      for (const vertex of path) {
+        if (vertex === start) {
+          continue;
+        }
+        const relativeToPrevious = vec2.subtract(vertex, previous);
+        previous = vertex;
+        const isVertexInOrder = vec2.dot(startToEnd, relativeToPrevious) > 0;
+        if (!isVertexInOrder) {
+          return false;
+        }
+      }
+    }
+    const isContained = contains(
+      parcelGeometry,
+      path.length > 1
+        ? routeGeometry
+        : new Point({
+            x: path[0][0],
+            y: path[0][1],
+            spatialReference: routeGeometry.spatialReference,
+            hasZ: false
+          })
+    );
     const length = planarLength(routeGeometry);
     return isContained && (length === 0 || (length >= minLength && length <= maxLength));
   }
@@ -481,7 +510,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       // TODO: use SVM.create, so that alignWithGround isn't necessary
       const geometry = setInitialTowerHeight(
         new Polyline({
-          paths: [vertices.length === 1 ? [vertices[0], vertices[0]] : vertices],
+          paths: [vertices],
           spatialReference: view.spatialReference,
           hasZ: true
         })
