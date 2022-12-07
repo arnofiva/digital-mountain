@@ -21,11 +21,13 @@ import RotationVariable from "@arcgis/core/renderers/visualVariables/RotationVar
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
+import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
+import ElevationProfileLineGround from "@arcgis/core/widgets/ElevationProfile/ElevationProfileLineGround";
+import ElevationProfileLineInput from "@arcgis/core/widgets/ElevationProfile/ElevationProfileLineInput";
 
 import * as vec2 from "./vec2";
 import { LiftType } from "./lifts/liftType";
 import { createSag, sagToSpanRatio } from "./lifts/sag";
-import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -195,18 +197,16 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   const elevationProfile = new ElevationProfile({
     view,
     profiles: [
-      {
-        // displays elevation values from Map.ground
-        type: "ground", //autocasts as new ElevationProfileLineGround()
+      new ElevationProfileLineGround({
         color: "#61d4a4",
-        title: "Ground elevation"
-      },
-      {
-        // displays elevation values from the input line graphic
-        type: "input", //autocasts as new ElevationProfileLineInput()
+        title: "Ground elevation",
+        viewVisualizationEnabled: false
+      }),
+      new ElevationProfileLineInput({
         color: "#f57e42",
-        title: "Line elevation"
-      }
+        title: "Line elevation",
+        viewVisualizationEnabled: false
+      })
     ]
   });
   view.ui.add(elevationProfile, "bottom-right");
