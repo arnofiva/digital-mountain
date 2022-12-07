@@ -180,6 +180,8 @@ const maxLength = 1000;
 const towerSeparation = 200;
 const minSeparation = 50;
 const initialTowerHeight = 10;
+const minHeight = 5;
+const maxHeight = 20;
 const createLiftType = LiftType.Chair;
 
 interface LiftGraphicGroup {
@@ -592,6 +594,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         );
         vertex[0] = nearest.coordinate.x;
         vertex[1] = nearest.coordinate.y;
+        vertex[2] = Math.max(minHeight, Math.min(maxHeight, vertex[2]));
       }
       detailGraphic.geometry = newDetailGeometry;
       placeTowers(detailGraphic);
