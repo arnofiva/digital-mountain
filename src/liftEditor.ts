@@ -1,4 +1,4 @@
-import { watch } from "@arcgis/core/core/reactiveUtils";
+import { watch, when } from "@arcgis/core/core/reactiveUtils";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import { contains, densify, nearestCoordinate, planarLength } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
@@ -16,7 +16,11 @@ import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
-import { Point, Polyline, Polygon } from "@arcgis/core/geometry";
+import { Point, Polyline, Polygon, SpatialReference } from "@arcgis/core/geometry";
+import RotationVariable from "@arcgis/core/renderers/visualVariables/RotationVariable";
+import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
+import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
+import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
 
 import * as vec2 from "./vec2";
 import { LiftType } from "./lifts/liftType";
@@ -78,6 +82,10 @@ const invalidMarkerSymbol = new PointSymbol3D({
 
 const completeRouteSymbol = new LineSymbol3D({
   symbolLayers: [new LineSymbol3DLayer({ size: 2 })]
+});
+
+const hiddenRouteSymbol = new LineSymbol3D({
+  symbolLayers: []
 });
 
 const routeCableSymbol = new LineSymbol3D({
@@ -187,19 +195,38 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   });
   view.map.layers.unshift(parcelLayer);
 
-  const routeSimpleLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
+  const routeSimpleLayer = new GraphicsLayer({
+    elevationInfo: { mode: "on-the-ground" },
+    listMode: "hide",
+    title: "Lift routes - simple"
+  });
   view.map.add(routeSimpleLayer);
 
-  const routeDetailLayer = new GraphicsLayer({ elevationInfo: { mode: "relative-to-ground" }, listMode: "hide" });
+  const routeDetailLayer = new GraphicsLayer({
+    elevationInfo: { mode: "relative-to-ground" },
+    listMode: "hide",
+    title: "Lift routes - detail"
+  });
   view.map.add(routeDetailLayer);
 
-  const markerLayer = new GraphicsLayer({ elevationInfo: { mode: "on-the-ground" }, listMode: "hide" });
+  const markerLayer = new GraphicsLayer({
+    elevationInfo: { mode: "on-the-ground" },
+    listMode: "hide",
+    title: "Lift routes - markers"
+  });
   view.map.add(markerLayer);
 
-  const routeDisplayLayer = new GraphicsLayer({ elevationInfo: { mode: "absolute-height" }, listMode: "hide" });
+  const routeDisplayLayer = new GraphicsLayer({
+    elevationInfo: { mode: "absolute-height" },
+    listMode: "hide",
+    title: "Lift routes - display"
+  });
   view.map.add(routeDisplayLayer);
 
   const liftGraphicGroups: LiftGraphicGroup[] = [];
+
+  let elevationSampler: ElevationSampler;
+  view.map.ground.createElevationSampler(parcelGraphic.geometry.extent).then((sampler) => (elevationSampler = sampler));
 
   const addBtn = document.getElementById("add-lift-button") as HTMLButtonElement;
   const cancelBtn = document.getElementById("cancel-lift-button") as HTMLButtonElement;
@@ -243,6 +270,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     }
   );
 
+  function vertexToPoint(vertex: number[], spatialReference: SpatialReference): Point {
+    return new Point({ x: vertex[0], y: vertex[1], z: vertex[2], spatialReference });
+  }
+
   function isRouteValid(routeGeometry: Polyline, parcelGeometry: Polygon): boolean {
     const path = routeGeometry.paths[0];
     if (path.length > 1) {
@@ -265,14 +296,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     }
     const isContained = contains(
       parcelGeometry,
-      path.length > 1
-        ? routeGeometry
-        : new Point({
-            x: path[0][0],
-            y: path[0][1],
-            spatialReference: routeGeometry.spatialReference,
-            hasZ: false
-          })
+      path.length > 1 ? routeGeometry : vertexToPoint(path[0], routeGeometry.spatialReference)
     );
     const length = planarLength(routeGeometry);
     return isContained && (length === 0 || (length >= minLength && length <= maxLength));
@@ -303,15 +327,19 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     });
   }
 
-  async function detailGeometryToDisplayGeometry(detailGeometry: Polyline): Promise<Polyline> {
-    const result = await view.map.ground.queryElevation(detailGeometry);
-    const resultGeometry = result.geometry as typeof detailGeometry;
-    resultGeometry.paths.forEach((path, pIdx) => {
+  function geometryToAbsoluteHeight(geometry: Polyline): Polyline {
+    const result = elevationSampler.queryElevation(geometry) as typeof geometry;
+    result.paths.forEach((path, pIdx) => {
       path.forEach((v, vIdx) => {
-        v[2] += detailGeometry.paths[pIdx][vIdx][2];
+        v[2] += geometry.paths[pIdx][vIdx][2];
       });
     });
-    return createSag(resultGeometry, sagToSpanRatio(createLiftType));
+    return result;
+  }
+
+  function detailGeometryToDisplayGeometry(detailGeometry: Polyline): Polyline {
+    const absoluteHeightGeometry = geometryToAbsoluteHeight(detailGeometry);
+    return createSag(absoluteHeightGeometry, sagToSpanRatio(createLiftType));
   }
 
   routeSimpleSVM.on("update", (e) => {
@@ -333,9 +361,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       );
       detailGraphic.geometry = routeDetailGeometry;
       placeTowers(detailGraphic);
-      detailGeometryToDisplayGeometry(routeDetailGeometry).then((geometry) => {
-        displayGraphic.geometry = geometry;
-      });
+      displayGraphic.geometry = detailGeometryToDisplayGeometry(routeDetailGeometry);
     }
   });
 
@@ -397,29 +423,52 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     });
   });
 
+  function computeTilt(v0: number[], v1: number[]): number {
+    return (-Math.atan2(vec2.distance(v0, v1), v1[2] - v0[2]) * 180) / Math.PI - 90;
+  }
+
   function placeTowers(routeDetailGraphic: Graphic): FeatureLayer {
-    const routeGeometry = routeDetailGraphic.geometry as Polyline;
+    const relativeZGeometry = routeDetailGraphic.geometry as Polyline;
     let objectID = 0;
+    const {
+      paths: [relativeZPath],
+      spatialReference
+    } = relativeZGeometry;
+    const start = webMercatorToGeographic(vertexToPoint(relativeZPath[0], spatialReference)) as Point;
+    const end = webMercatorToGeographic(
+      vertexToPoint(relativeZPath[relativeZPath.length - 1], spatialReference)
+    ) as Point;
+    const heading = geodesicDistance(start, end).azimuth;
+    const absoluteZGeometry = geometryToAbsoluteHeight(relativeZGeometry);
+    const absoluteZPath = absoluteZGeometry.paths[0];
     const newFeatures: Graphic[] = [];
-    for (const vertex of routeGeometry.paths[0]) {
-      const geometry = new Point({
-        x: vertex[0],
-        y: vertex[1],
-        spatialReference: routeGeometry.spatialReference,
-        hasZ: false
-      });
-      newFeatures.push(new Graphic({ attributes: { objectID, height: vertex[2] }, geometry }));
+    for (let i = 0; i < absoluteZPath.length; i++) {
+      const vertex = absoluteZPath[i];
+      const nextVertex = absoluteZPath[i + 1];
+      const previousVertex = absoluteZPath[i - 1];
+      const nextTilt = nextVertex ? computeTilt(vertex, nextVertex) : null;
+      const previousTilt = previousVertex ? computeTilt(previousVertex, vertex) : null;
+      const tilt = nextTilt != null && previousTilt != null ? (nextTilt + previousTilt) / 2 : nextTilt ?? previousTilt;
+      const geometry = vertexToPoint(vertex, relativeZGeometry.spatialReference);
+      newFeatures.push(new Graphic({ attributes: { objectID, height: relativeZPath[i][2], heading, tilt }, geometry }));
       objectID++;
     }
-
     let towerLayer = liftGraphicGroups.find((group) => group.detailGraphic === routeDetailGraphic)?.towerLayer;
     if (!towerLayer) {
       towerLayer = new FeatureLayer({
-        elevationInfo: { mode: "relative-to-ground" },
+        elevationInfo: { mode: "absolute-height" },
         fields: [
           {
             name: "objectID",
             type: "oid"
+          },
+          {
+            name: "tilt",
+            type: "double"
+          },
+          {
+            name: "heading",
+            type: "double"
           },
           {
             name: "height",
@@ -440,6 +489,8 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
             ]
           }),
           visualVariables: [
+            new RotationVariable({ axis: "heading", field: "heading" }),
+            new RotationVariable({ axis: "tilt", field: "tilt" }),
             new SizeVariable({ axis: "height", field: "height", valueUnit: "meters" }),
             new SizeVariable({ axis: "width-and-depth", useSymbolValue: true })
           ]
@@ -492,20 +543,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       for (const vertex of newDetailGeometry.paths[0]) {
         const nearest = nearestCoordinate(
           constraintGeometry,
-          new Point({
-            x: vertex[0],
-            y: vertex[1],
-            spatialReference: detailGraphic.geometry.spatialReference
-          })
+          vertexToPoint(vertex, detailGraphic.geometry.spatialReference)
         );
         vertex[0] = nearest.coordinate.x;
         vertex[1] = nearest.coordinate.y;
       }
       detailGraphic.geometry = newDetailGeometry;
       placeTowers(detailGraphic);
-      detailGeometryToDisplayGeometry(detailGraphic.geometry as Polyline).then((geometry) => {
-        displayGraphic.geometry = geometry;
-      });
+      displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGraphic.geometry as Polyline);
       simpleGraphic.geometry = new Polyline({
         hasZ: newDetailGeometry.hasZ,
         paths: [[newDetailGeometry.paths[0][0], newDetailGeometry.paths[0].at(-1)]],
@@ -553,11 +598,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       routeGraphic.geometry = geometry;
 
       markerGraphic.symbol = isValid ? validMarkerSymbol : invalidMarkerSymbol;
-      markerGraphic.geometry = new Point({
-        x: vertices[0][0],
-        y: vertices[0][1],
-        spatialReference: geometry.spatialReference
-      });
+      markerGraphic.geometry = vertexToPoint(vertices[0], geometry.spatialReference);
     };
     const completeGeometry = (vertices: number[][]) => {
       const geometry = setInitialTowerHeight(
@@ -567,13 +608,11 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       routeGraphic.symbol = completeRouteSymbol;
 
       const detailGeometry = densify(geometry, towerSeparation) as typeof geometry;
-      const routeDetailGraphic = new Graphic({ geometry: detailGeometry });
+      const routeDetailGraphic = new Graphic({ geometry: detailGeometry, symbol: hiddenRouteSymbol });
       routeDetailLayer.add(routeDetailGraphic);
 
       const routeDisplayGraphic = new Graphic({ symbol: routeCableSymbol });
-      detailGeometryToDisplayGeometry(detailGeometry).then((geometry) => {
-        routeDisplayGraphic.geometry = geometry;
-      });
+      routeDisplayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry);
       routeDisplayLayer.add(routeDisplayGraphic);
 
       const towerLayer = placeTowers(routeDetailGraphic);
