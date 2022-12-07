@@ -25,6 +25,7 @@ import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
 import * as vec2 from "./vec2";
 import { LiftType } from "./lifts/liftType";
 import { createSag, sagToSpanRatio } from "./lifts/sag";
+import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -188,6 +189,25 @@ interface LiftGraphicGroup {
 }
 
 export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
+  const elevationProfile = new ElevationProfile({
+    view,
+    profiles: [
+      {
+        // displays elevation values from Map.ground
+        type: "ground", //autocasts as new ElevationProfileLineGround()
+        color: "#61d4a4",
+        title: "Ground elevation"
+      },
+      {
+        // displays elevation values from the input line graphic
+        type: "input", //autocasts as new ElevationProfileLineInput()
+        color: "#f57e42",
+        title: "Line elevation"
+      }
+    ]
+  });
+  view.ui.add(elevationProfile, "bottom-right");
+
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],
     elevationInfo: { mode: "on-the-ground" },
@@ -368,6 +388,26 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   function updateEditMode(newEditMode: "simple" | "detail") {
     editToggleBtn.textContent = newEditMode === "simple" ? "Edit towers" : "Edit route";
   }
+
+  watch(
+    () => ({
+      simpleUpdateCount: routeSimpleSVM.updateGraphics.length,
+      detailUpdateCount: routeDetailSVM.updateGraphics.length
+    }),
+    ({ simpleUpdateCount, detailUpdateCount }) => {
+      let detailGraphic = null;
+      if (simpleUpdateCount > 0) {
+        const simpleGraphic = routeSimpleSVM.updateGraphics.getItemAt(0);
+        detailGraphic = liftGraphicGroups.find((group) => group.simpleGraphic === simpleGraphic)?.detailGraphic;
+      } else if (detailUpdateCount > 0) {
+        detailGraphic = routeDetailSVM.updateGraphics.getItemAt(0);
+      }
+      elevationProfile.input = detailGraphic;
+      // elevationProfile.visible = detailGraphic != null; // requires https://devtopia.esri.com/WebGIS/arcgis-js-api/issues/48588
+    },
+    { initial: true }
+  );
+
   watch(
     () => ({
       simpleUpdateCount: routeSimpleSVM.updateGraphics.length,
