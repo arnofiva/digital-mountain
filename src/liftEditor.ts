@@ -178,6 +178,7 @@ const parcelGraphic = Graphic.fromJSON({
 const minLength = 100;
 const maxLength = 1000;
 const towerSeparation = 200;
+const minSeparation = 50;
 const initialTowerHeight = 10;
 const createLiftType = LiftType.Chair;
 
@@ -308,6 +309,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         }
         const relativeToPrevious = vec2.subtract(vertex, previous);
         previous = vertex;
+        const distance = vec2.length(relativeToPrevious);
+        if (distance < minSeparation) {
+          return false;
+        }
         const isVertexInOrder = vec2.dot(startToEnd, relativeToPrevious) > 0;
         if (!isVertexInOrder) {
           return false;
