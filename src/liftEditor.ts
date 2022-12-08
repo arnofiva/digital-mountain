@@ -191,14 +191,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   const elevationProfile = new ElevationProfile({
     view,
     profiles: [
-      new ElevationProfileLineGround({
-        color: "#61d4a4",
-        title: "Ground elevation",
-        viewVisualizationEnabled: false
-      }),
       new ElevationProfileLineInput({
         color: "#f57e42",
         title: "Line elevation",
+        viewVisualizationEnabled: false
+      }),
+      new ElevationProfileLineGround({
+        color: "#61d4a4",
+        title: "Ground elevation",
         viewVisualizationEnabled: false
       })
     ]
