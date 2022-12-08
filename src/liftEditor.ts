@@ -299,12 +299,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   function isRouteValid(routeGeometry: Polyline, parcelGeometry: Polygon): boolean {
     const path = routeGeometry.paths[0];
     if (path.length > 1) {
-      // keep vertices in order
       const start = path[0];
       const end = path[path.length - 1];
       const startToEnd = vec2.subtract(end, start);
       let previous = start;
       for (const vertex of path) {
+        if (vertex[2] < minHeight || vertex[2] > maxHeight) {
+          return false;
+        }
         if (vertex === start) {
           continue;
         }
@@ -382,7 +384,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         routeSimpleGeometry
       );
       detailGraphic.geometry = routeDetailGeometry;
-      placeTowers(detailGraphic, e.toolEventInfo?.type === "reshape-stop");
+      placeTowers(group.towerLayer, routeDetailGeometry, { updateTilt: e.toolEventInfo?.type === "reshape-stop" });
       displayGraphic.geometry = detailGeometryToDisplayGeometry(routeDetailGeometry);
     }
   });
@@ -469,18 +471,11 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     return (-Math.atan2(vec2.distance(v0, v1), v1[2] - v0[2]) * 180) / Math.PI - 90;
   }
 
-  function placeTowers(routeDetailGraphic: Graphic, updateTilt = false): GraphicsLayer {
-    let towerLayer = liftGraphicGroups.find((group) => group.detailGraphic === routeDetailGraphic)?.towerLayer;
-    if (!towerLayer) {
-      towerLayer = new GraphicsLayer({
-        elevationInfo: { mode: "absolute-height" },
-        listMode: "hide",
-        title: "Tower layer"
-      });
-      view.map.add(towerLayer);
-    }
-
-    const relativeZGeometry = routeDetailGraphic.geometry as Polyline;
+  function placeTowers(
+    towerLayer: GraphicsLayer,
+    relativeZGeometry: Polyline,
+    options: { updateTilt: boolean }
+  ): GraphicsLayer {
     let objectID = 0;
     const {
       paths: [relativeZPath],
@@ -495,7 +490,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const absoluteZPath = absoluteZGeometry.paths[0];
     // reuse symbols if possible to avoid flickering
     // NB: this will cause the symbol tilt and heading to not be updated
-    const reuseSymbols = absoluteZPath.length === towerLayer.graphics.length && !updateTilt;
+    const reuseSymbols = absoluteZPath.length === towerLayer.graphics.length && !options.updateTilt;
     const newFeatures: Graphic[] = [];
     for (let i = 0; i < absoluteZPath.length; i++) {
       const vertex = absoluteZPath[i];
@@ -504,84 +499,76 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       const nextTilt = nextVertex ? computeTilt(vertex, nextVertex) : null;
       const previousTilt = previousVertex ? computeTilt(previousVertex, vertex) : null;
       const tilt = nextTilt != null && previousTilt != null ? (nextTilt + previousTilt) / 2 : nextTilt ?? previousTilt;
-      const height = relativeZPath[i][2];
       const geometry = vertexToPoint(vertex, relativeZGeometry.spatialReference);
-      newFeatures.push(
-        new Graphic({
-          attributes: { objectID, height, heading, tilt },
-          geometry,
-          symbol: reuseSymbols
-            ? towerLayer.graphics.getItemAt(i).symbol
-            : new PointSymbol3D({
-                symbolLayers: [
-                  new ObjectSymbol3DLayer({
-                    width: 2,
-                    depth: 2,
-                    height,
-                    heading,
-                    tilt,
-                    resource: { primitive: "cylinder" },
-                    material: { color: "black" }
-                  })
-                ]
+      const symbol = reuseSymbols
+        ? towerLayer.graphics.getItemAt(i).symbol
+        : new PointSymbol3D({
+            symbolLayers: [
+              new ObjectSymbol3DLayer({
+                width: 2,
+                depth: 2,
+                height: maxHeight,
+                heading,
+                tilt,
+                resource: { primitive: "cylinder" },
+                material: { color: "black" }
               })
-        })
-      );
+            ]
+          });
+      newFeatures.push(new Graphic({ attributes: { objectID, heading, tilt }, geometry, symbol }));
       objectID++;
     }
-
     towerLayer.graphics.removeAll();
     towerLayer.graphics.addMany(newFeatures);
     return towerLayer;
   }
 
   let constraintGeometry: Polyline = null;
+  let newDetailGeometry: Polyline = null;
   routeDetailSVM.on("update", (e) => {
     const detailGraphic = e.graphics[0];
-    const { simpleGraphic, displayGraphic } = liftGraphicGroups.find((group) => group.detailGraphic === detailGraphic);
-    const isValid = isRouteValid(detailGraphic.geometry as Polyline, parcelGraphic.geometry as Polygon);
-    simpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
+    const { simpleGraphic, displayGraphic, towerLayer } = liftGraphicGroups.find(
+      (group) => group.detailGraphic === detailGraphic
+    );
     if (e.toolEventInfo?.type === "reshape-start") {
       const path = (detailGraphic.geometry as Polyline).paths[0];
       const start = path[0];
       const end = path[path.length - 1];
-
       // extend line so that start and end points can be moved outwards
       const delta = [end[0] - start[0], end[1] - start[1]];
       start[0] -= delta[0];
       start[1] -= delta[1];
       end[0] += delta[0];
       end[1] += delta[1];
-
       constraintGeometry = new Polyline({
         paths: [[start, end]],
         spatialReference: detailGraphic.geometry.spatialReference
       });
     }
-    if (e.toolEventInfo?.type === "reshape-stop") {
-      if (!isValid) {
-        routeDetailSVM.undo();
-        return;
-      }
-      const newDetailGeometry = detailGraphic.geometry.clone() as Polyline;
-      for (const vertex of newDetailGeometry.paths[0]) {
-        const nearest = nearestCoordinate(
-          constraintGeometry,
-          vertexToPoint(vertex, detailGraphic.geometry.spatialReference)
-        );
-        vertex[0] = nearest.coordinate.x;
-        vertex[1] = nearest.coordinate.y;
-        vertex[2] = Math.max(minHeight, Math.min(maxHeight, vertex[2]));
-      }
-      detailGraphic.geometry = newDetailGeometry;
-      placeTowers(detailGraphic);
-      displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGraphic.geometry as Polyline);
+    const constrainedGeometry = detailGraphic.geometry.clone() as Polyline;
+    for (const vertex of constrainedGeometry.paths[0]) {
+      const nearest = nearestCoordinate(
+        constraintGeometry,
+        vertexToPoint(vertex, detailGraphic.geometry.spatialReference)
+      );
+      vertex[0] = nearest.coordinate.x;
+      vertex[1] = nearest.coordinate.y;
+    }
+    const isValid = isRouteValid(constrainedGeometry, parcelGraphic.geometry as Polygon);
+    simpleGraphic.symbol =
+      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
+    if (isValid) {
+      newDetailGeometry = constrainedGeometry;
+      placeTowers(towerLayer, newDetailGeometry, { updateTilt: e.toolEventInfo?.type === "reshape-stop" });
+      displayGraphic.geometry = detailGeometryToDisplayGeometry(newDetailGeometry);
       simpleGraphic.geometry = new Polyline({
         hasZ: newDetailGeometry.hasZ,
         paths: [[newDetailGeometry.paths[0][0], newDetailGeometry.paths[0].at(-1)]],
         spatialReference: newDetailGeometry.spatialReference
       });
+    }
+    if (e.toolEventInfo?.type === "reshape-stop" && newDetailGeometry) {
+      detailGraphic.geometry = newDetailGeometry;
     }
   });
 
@@ -641,7 +628,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       routeDisplayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry);
       routeDisplayLayer.add(routeDisplayGraphic);
 
-      const towerLayer = placeTowers(routeDetailGraphic);
+      const towerLayer = new GraphicsLayer({
+        elevationInfo: { mode: "absolute-height" },
+        listMode: "hide",
+        title: "Tower layer"
+      });
+      view.map.add(towerLayer);
+      placeTowers(towerLayer, detailGeometry, { updateTilt: true });
+
       liftGraphicGroups.push({
         simpleGraphic: routeGraphic,
         detailGraphic: routeDetailGraphic,
