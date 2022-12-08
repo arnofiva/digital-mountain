@@ -1,23 +1,22 @@
-import { watch, when } from "@arcgis/core/core/reactiveUtils";
-import Geometry from "@arcgis/core/geometry/Geometry";
+import { watch } from "@arcgis/core/core/reactiveUtils";
 import { contains, densify, nearestCoordinate, planarLength } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import { IconSymbol3DLayer, LineSymbol3D, PathSymbol3DLayer } from "@arcgis/core/symbols";
+import {
+  IconSymbol3DLayer,
+  LineSymbol3D,
+  ObjectSymbol3DLayer,
+  PathSymbol3DLayer,
+  LineSymbol3DLayer,
+  PointSymbol3D
+} from "@arcgis/core/symbols";
 import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
-import LineSymbol3DLayer from "@arcgis/core/symbols/LineSymbol3DLayer";
-import ObjectSymbol3DLayer from "@arcgis/core/symbols/ObjectSymbol3DLayer";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
-import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import Draw from "@arcgis/core/views/draw/Draw";
 import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
-import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
-import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import { Point, Polyline, Polygon, SpatialReference } from "@arcgis/core/geometry";
-import RotationVariable from "@arcgis/core/renderers/visualVariables/RotationVariable";
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
@@ -190,7 +189,7 @@ interface LiftGraphicGroup {
   simpleGraphic: Graphic;
   detailGraphic: Graphic;
   displayGraphic: Graphic;
-  towerLayer: FeatureLayer;
+  towerLayer: GraphicsLayer;
 }
 
 export function connect(view: SceneView, appState: AppState): SketchViewModel[] {
@@ -375,11 +374,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const isValid = isRouteValid(routeSimpleGeometry, parcelGraphic.geometry as Polygon);
     routeSimpleGraphic.symbol =
       isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
-    if (e.toolEventInfo?.type === "reshape-stop") {
-      if (!isValid) {
-        routeSimpleSVM.undo();
-        return;
-      }
+    if (isValid) {
       const group = liftGraphicGroups.find((group) => group.simpleGraphic === routeSimpleGraphic);
       const { detailGraphic, displayGraphic } = group;
       const routeDetailGeometry = matchRouteDetailGeometryToSimple(
@@ -387,7 +382,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         routeSimpleGeometry
       );
       detailGraphic.geometry = routeDetailGeometry;
-      placeTowers(detailGraphic);
+      placeTowers(detailGraphic, e.toolEventInfo?.type === "reshape-stop");
       displayGraphic.geometry = detailGeometryToDisplayGeometry(routeDetailGeometry);
     }
   });
@@ -474,7 +469,17 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     return (-Math.atan2(vec2.distance(v0, v1), v1[2] - v0[2]) * 180) / Math.PI - 90;
   }
 
-  function placeTowers(routeDetailGraphic: Graphic): FeatureLayer {
+  function placeTowers(routeDetailGraphic: Graphic, updateTilt = false): GraphicsLayer {
+    let towerLayer = liftGraphicGroups.find((group) => group.detailGraphic === routeDetailGraphic)?.towerLayer;
+    if (!towerLayer) {
+      towerLayer = new GraphicsLayer({
+        elevationInfo: { mode: "absolute-height" },
+        listMode: "hide",
+        title: "Tower layer"
+      });
+      view.map.add(towerLayer);
+    }
+
     const relativeZGeometry = routeDetailGraphic.geometry as Polyline;
     let objectID = 0;
     const {
@@ -488,6 +493,9 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const heading = geodesicDistance(start, end).azimuth;
     const absoluteZGeometry = geometryToAbsoluteHeight(relativeZGeometry);
     const absoluteZPath = absoluteZGeometry.paths[0];
+    // reuse symbols if possible to avoid flickering
+    // NB: this will cause the symbol tilt and heading to not be updated
+    const reuseSymbols = absoluteZPath.length === towerLayer.graphics.length && !updateTilt;
     const newFeatures: Graphic[] = [];
     for (let i = 0; i < absoluteZPath.length; i++) {
       const vertex = absoluteZPath[i];
@@ -496,64 +504,34 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       const nextTilt = nextVertex ? computeTilt(vertex, nextVertex) : null;
       const previousTilt = previousVertex ? computeTilt(previousVertex, vertex) : null;
       const tilt = nextTilt != null && previousTilt != null ? (nextTilt + previousTilt) / 2 : nextTilt ?? previousTilt;
+      const height = relativeZPath[i][2];
       const geometry = vertexToPoint(vertex, relativeZGeometry.spatialReference);
-      newFeatures.push(new Graphic({ attributes: { objectID, height: relativeZPath[i][2], heading, tilt }, geometry }));
+      newFeatures.push(
+        new Graphic({
+          attributes: { objectID, height, heading, tilt },
+          geometry,
+          symbol: reuseSymbols
+            ? towerLayer.graphics.getItemAt(i).symbol
+            : new PointSymbol3D({
+                symbolLayers: [
+                  new ObjectSymbol3DLayer({
+                    width: 2,
+                    depth: 2,
+                    height,
+                    heading,
+                    tilt,
+                    resource: { primitive: "cylinder" },
+                    material: { color: "black" }
+                  })
+                ]
+              })
+        })
+      );
       objectID++;
     }
-    let towerLayer = liftGraphicGroups.find((group) => group.detailGraphic === routeDetailGraphic)?.towerLayer;
-    if (!towerLayer) {
-      towerLayer = new FeatureLayer({
-        elevationInfo: { mode: "absolute-height" },
-        fields: [
-          {
-            name: "objectID",
-            type: "oid"
-          },
-          {
-            name: "tilt",
-            type: "double"
-          },
-          {
-            name: "heading",
-            type: "double"
-          },
-          {
-            name: "height",
-            type: "double"
-          }
-        ],
-        listMode: "hide",
-        objectIdField: "objectID",
-        renderer: new SimpleRenderer({
-          symbol: new PointSymbol3D({
-            symbolLayers: [
-              new ObjectSymbol3DLayer({
-                width: 2,
-                depth: 2,
-                resource: { primitive: "cylinder" },
-                material: { color: "black" }
-              })
-            ]
-          }),
-          visualVariables: [
-            new RotationVariable({ axis: "heading", field: "heading" }),
-            new RotationVariable({ axis: "tilt", field: "tilt" }),
-            new SizeVariable({ axis: "height", field: "height", valueUnit: "meters" }),
-            new SizeVariable({ axis: "width-and-depth", useSymbolValue: true })
-          ]
-        }),
-        source: newFeatures,
-        title: "Tower layer"
-      });
-      view.map.add(towerLayer);
-    } else {
-      towerLayer.queryFeatures().then(({ features: existingFeatures }) => {
-        towerLayer.applyEdits({
-          addFeatures: newFeatures,
-          deleteFeatures: existingFeatures
-        });
-      });
-    }
+
+    towerLayer.graphics.removeAll();
+    towerLayer.graphics.addMany(newFeatures);
     return towerLayer;
   }
 
