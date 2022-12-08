@@ -471,11 +471,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     return (-Math.atan2(vec2.distance(v0, v1), v1[2] - v0[2]) * 180) / Math.PI - 90;
   }
 
-  function placeTowers(
-    towerLayer: GraphicsLayer,
-    relativeZGeometry: Polyline,
-    options: { updateTilt: boolean }
-  ): GraphicsLayer {
+  function placeTowers(towerLayer: GraphicsLayer, relativeZGeometry: Polyline, options: { updateTilt: boolean }) {
     let objectID = 0;
     const {
       paths: [relativeZPath],
@@ -520,7 +516,6 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     }
     towerLayer.graphics.removeAll();
     towerLayer.graphics.addMany(newFeatures);
-    return towerLayer;
   }
 
   let constraintGeometry: Polyline = null;
