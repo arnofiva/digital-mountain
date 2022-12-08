@@ -82,13 +82,8 @@ const invalidMarkerSymbol = new PointSymbol3D({
   ]
 });
 
-const completeRouteSymbol = new LineSymbol3D({
-  symbolLayers: [new LineSymbol3DLayer({ size: 2 })]
-});
-
-const hiddenRouteSymbol = new LineSymbol3D({
-  symbolLayers: []
-});
+// used for graphics that must be editable by Sketch, but will not be otherwise be displayed
+const hiddenLineSymbol = new LineSymbol3D({ symbolLayers: [new LineSymbol3DLayer()] });
 
 const routeCableSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -379,7 +374,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
     const isValid = isRouteValid(routeSimpleGeometry, parcelGraphic.geometry as Polygon);
     const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
-    routeSimpleGraphic.symbol = isValid || isReshapeStop ? completeRouteSymbol : invalidRouteSymbol;
+    routeSimpleGraphic.symbol = isValid || isReshapeStop ? hiddenLineSymbol : invalidRouteSymbol;
     const { detailGraphic, displayGraphic, towerLayer } = liftGraphicGroups.find(
       (group) => group.simpleGraphic === routeSimpleGraphic
     );
@@ -572,7 +567,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     }
     const isValid = isRouteValid(constrainedGeometry, parcelGraphic.geometry as Polygon);
     const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
-    simpleGraphic.symbol = isValid || isReshapeStop ? completeRouteSymbol : invalidRouteSymbol;
+    simpleGraphic.symbol = isValid || isReshapeStop ? hiddenLineSymbol : invalidRouteSymbol;
     if (isValid) {
       newDetailGeometry = constrainedGeometry;
       displayGraphic.geometry = detailGeometryToDisplayGeometry(newDetailGeometry);
@@ -636,10 +631,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         new Polyline({ paths: [vertices], spatialReference: view.spatialReference, hasZ: true })
       );
       routeGraphic.geometry = geometry;
-      routeGraphic.symbol = completeRouteSymbol;
+      routeGraphic.symbol = hiddenLineSymbol;
 
       const detailGeometry = densify(geometry, towerSeparation) as typeof geometry;
-      const routeDetailGraphic = new Graphic({ geometry: detailGeometry, symbol: hiddenRouteSymbol });
+      const routeDetailGraphic = new Graphic({ geometry: detailGeometry, symbol: hiddenLineSymbol });
       routeDetailLayer.add(routeDetailGraphic);
 
       const routeDisplayGraphic = new Graphic({ symbol: routeCableSymbol });
