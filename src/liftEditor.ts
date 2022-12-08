@@ -370,22 +370,38 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     return createSag(absoluteHeightGeometry, sagToSpanRatio(createLiftType));
   }
 
+  let newSimpleGeometry: Polyline = null;
   routeSimpleSVM.on("update", (e) => {
+    if (e.tool !== "reshape" || e.state === "start") {
+      return;
+    }
     const routeSimpleGraphic = e.graphics[0];
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
     const isValid = isRouteValid(routeSimpleGeometry, parcelGraphic.geometry as Polygon);
-    routeSimpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
+    const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
+    routeSimpleGraphic.symbol = isValid || isReshapeStop ? completeRouteSymbol : invalidRouteSymbol;
+    const { detailGraphic, displayGraphic, towerLayer } = liftGraphicGroups.find(
+      (group) => group.simpleGraphic === routeSimpleGraphic
+    );
+    if (e.toolEventInfo?.type === "reshape-start") {
+      newSimpleGeometry = null;
+    }
     if (isValid) {
-      const group = liftGraphicGroups.find((group) => group.simpleGraphic === routeSimpleGraphic);
-      const { detailGraphic, displayGraphic } = group;
+      newSimpleGeometry = routeSimpleGeometry.clone() as Polyline;
       const routeDetailGeometry = matchRouteDetailGeometryToSimple(
         detailGraphic.geometry as Polyline,
         routeSimpleGeometry
       );
       detailGraphic.geometry = routeDetailGeometry;
-      placeTowers(group.towerLayer, routeDetailGeometry, { updateTilt: e.toolEventInfo?.type === "reshape-stop" });
       displayGraphic.geometry = detailGeometryToDisplayGeometry(routeDetailGeometry);
+    }
+    if (newSimpleGeometry) {
+      placeTowers(towerLayer, detailGraphic.geometry as Polyline, {
+        updateTilt: isReshapeStop
+      });
+      if (isReshapeStop) {
+        routeSimpleGraphic.geometry = newSimpleGeometry;
+      }
     }
   });
 
@@ -521,14 +537,19 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
   let constraintGeometry: Polyline = null;
   let newDetailGeometry: Polyline = null;
   routeDetailSVM.on("update", (e) => {
+    if (e.tool !== "reshape" || e.state === "start") {
+      return;
+    }
     const detailGraphic = e.graphics[0];
     const { simpleGraphic, displayGraphic, towerLayer } = liftGraphicGroups.find(
       (group) => group.detailGraphic === detailGraphic
     );
     if (e.toolEventInfo?.type === "reshape-start") {
+      constraintGeometry = null;
+      newDetailGeometry = null;
       const path = (detailGraphic.geometry as Polyline).paths[0];
-      const start = path[0];
-      const end = path[path.length - 1];
+      const start = [...path[0]];
+      const end = [...path[path.length - 1]];
       // extend line so that start and end points can be moved outwards
       const delta = [end[0] - start[0], end[1] - start[1]];
       start[0] -= delta[0];
@@ -550,11 +571,10 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       vertex[1] = nearest.coordinate.y;
     }
     const isValid = isRouteValid(constrainedGeometry, parcelGraphic.geometry as Polygon);
-    simpleGraphic.symbol =
-      isValid || e.toolEventInfo?.type === "reshape-stop" ? completeRouteSymbol : invalidRouteSymbol;
+    const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
+    simpleGraphic.symbol = isValid || isReshapeStop ? completeRouteSymbol : invalidRouteSymbol;
     if (isValid) {
       newDetailGeometry = constrainedGeometry;
-      placeTowers(towerLayer, newDetailGeometry, { updateTilt: e.toolEventInfo?.type === "reshape-stop" });
       displayGraphic.geometry = detailGeometryToDisplayGeometry(newDetailGeometry);
       simpleGraphic.geometry = new Polyline({
         hasZ: newDetailGeometry.hasZ,
@@ -562,8 +582,11 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
         spatialReference: newDetailGeometry.spatialReference
       });
     }
-    if (e.toolEventInfo?.type === "reshape-stop" && newDetailGeometry) {
-      detailGraphic.geometry = newDetailGeometry;
+    if (newDetailGeometry) {
+      placeTowers(towerLayer, newDetailGeometry, { updateTilt: isReshapeStop });
+      if (isReshapeStop) {
+        detailGraphic.geometry = newDetailGeometry;
+      }
     }
   });
 
