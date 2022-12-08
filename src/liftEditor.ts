@@ -372,21 +372,21 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     }
     const routeSimpleGraphic = e.graphics[0];
     const routeSimpleGeometry = routeSimpleGraphic.geometry as Polyline;
-    const isValid = isRouteValid(routeSimpleGeometry, parcelGraphic.geometry as Polygon);
-    const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
-    routeSimpleGraphic.symbol = isValid || isReshapeStop ? hiddenLineSymbol : invalidRouteSymbol;
     const { detailGraphic, displayGraphic, towerLayer } = liftGraphicGroups.find(
       (group) => group.simpleGraphic === routeSimpleGraphic
     );
     if (e.toolEventInfo?.type === "reshape-start") {
       newSimpleGeometry = null;
     }
+    const routeDetailGeometry = matchRouteDetailGeometryToSimple(
+      detailGraphic.geometry as Polyline,
+      routeSimpleGeometry
+    );
+    const isValid = isRouteValid(routeDetailGeometry, parcelGraphic.geometry as Polygon);
+    const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
+    routeSimpleGraphic.symbol = isValid || isReshapeStop ? hiddenLineSymbol : invalidRouteSymbol;
     if (isValid) {
       newSimpleGeometry = routeSimpleGeometry.clone() as Polyline;
-      const routeDetailGeometry = matchRouteDetailGeometryToSimple(
-        detailGraphic.geometry as Polyline,
-        routeSimpleGeometry
-      );
       detailGraphic.geometry = routeDetailGeometry;
       displayGraphic.geometry = detailGeometryToDisplayGeometry(routeDetailGeometry);
     }
