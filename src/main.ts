@@ -18,7 +18,7 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
-import { Polyline } from "@arcgis/core/geometry";
+import { Polyline, SpatialReference } from "@arcgis/core/geometry";
 import Graphic from "@arcgis/core/Graphic";
 import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
@@ -26,6 +26,7 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import StreamLayer from "@arcgis/core/layers/StreamLayer";
+import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
@@ -42,16 +43,19 @@ import {
 } from "@arcgis/core/symbols";
 import LineCallout3D from "@arcgis/core/symbols/callouts/LineCallout3D";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
+import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
+import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
 import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
 import { connect as connectLiftEditor } from "./liftEditor";
+import { LiftType } from "./lifts/liftType";
 import { createSag, sagToSpanRatio } from "./lifts/sag";
 import { connect as connectSlopeEditor } from "./slopeEditor";
+import { skiResortArea } from "./variables";
 import { sources as contourSources } from "./vector/contours";
 import { layers as topoLayers, sources as topoSources } from "./vector/topo";
-import { LiftType } from "./lifts/liftType";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -114,11 +118,14 @@ const snowCatStream = new StreamLayer({
     symbol: new PointSymbol3D({
       symbolLayers: [
         new ObjectSymbol3DLayer({
-          width: 5, // diameter of the object from east to west in meters
-          height: 10, // height of the object in meters
-          depth: 5, // diameter of the object from north to south in meters
-          resource: { primitive: "cylinder" },
-          material: { color: "red" }
+          resource: {
+            href: "https://static.arcgis.com/arcgis/styleItems/RealisticTransportation/gltf/resource/Backhoe.glb"
+          },
+          // width: 3.046784222126007,
+          height: 50,
+          heading: 220,
+          tilt: -10
+          // depth: 4.3906859159469604
         })
       ]
     })
@@ -259,7 +266,8 @@ const skiLifts = new FeatureLayer({
   },
   renderer: new SimpleRenderer({
     symbol: skiLiftSymbol
-  })
+  }),
+  visible: false,
 });
 
 const skiLiftsWithSag = new GraphicsLayer({
@@ -267,7 +275,6 @@ const skiLiftsWithSag = new GraphicsLayer({
   elevationInfo: {
     mode: "absolute-height"
   },
-  visible: false
 });
 
 const skiLiftPoles = new SceneLayer({
@@ -297,7 +304,7 @@ const skiLiftPoles = new SceneLayer({
 
 const skiSlopesArea = new FeatureLayer({
   portalItem: {
-    id: "7088346644a449648c06c393f57415fc"
+    id: "b99982e42ca04ffda9e2d6030449c1d2"
   },
   //visible: false,
   title: "Ski Slope Areas",
@@ -307,7 +314,7 @@ const skiSlopesArea = new FeatureLayer({
   minScale: 0,
   maxScale: 0,
   renderer: new UniqueValueRenderer({
-    field: "piste_diff",
+    field: "piste_difficulty",
     defaultLabel: "Other",
     uniqueValueInfos: [
       {
@@ -407,7 +414,7 @@ const skiSlopesArea = new FeatureLayer({
 
 const skiSlopes = new FeatureLayer({
   portalItem: {
-    id: "fa86abad6dc649719c60c6f1ed10b810"
+    id: "d6ae4391937d4f61975ea97d91960284"
   },
   //visible: false,
   title: "Ski Slopes",
@@ -630,7 +637,7 @@ const color = new Color("#3A4754");
 
 const hillshade = new TileLayer({
   portalItem: { id: "1b243539f4514b6ba35e7d995890db1d" }, // Light
-  blendMode: "multiply",
+  blendMode: "normal",
   listMode: "hide-children",
   visible: false,
   title: "World Hillshade (Blended)"
@@ -1016,12 +1023,12 @@ const view = new SceneView({
 
   camera: {
     position: {
-      longitude: 9.50898363,
-      latitude: 46.83073544,
-      z: 6112.11573
+      longitude: 9.34595657,
+      latitude: 46.74661722,
+      z: 6311.31201
     },
-    heading: 154.97,
-    tilt: 62.39
+    heading: 320.15,
+    tilt: 68.68
   },
 
   map: new Map({
@@ -1229,14 +1236,13 @@ window["view"] = view;
 
 view.when().then(async () => {
   const query = skiLifts.createQuery();
-  query.objectIds = [
-    // Urdenbahn
-    738, 774,
-    // Rothorn
-    737, 736, 2451, 926, 928, 911, 921, 554, 910, 929,
-    // Verbindung Obertor
-    2041
-  ];
+  // query.objectIds = [
+  //   738, 774, // Urdenbahn
+  //   737, 736, 2451, 926, 928, 911, 921, 554, 910, 929, // Rothorn
+  //   2041, // Verbindung Obertor
+  // ];
+  query.geometry = skiResortArea;
+  query.outSpatialReference = SpatialReference.WebMercator;
   query.outFields = ["*"];
   query.returnGeometry = true;
   query.returnZ = true;
@@ -1254,13 +1260,24 @@ view.when().then(async () => {
       case 5:
         return LiftType.TBar;
       default:
-        throw Error("Unknown lift type: " + objectArt + " " + f.getAttribute("NAME"));
+        return LiftType.Unknown;
+      // debugger;
+      // throw Error("Unknown lift type: " + objectArt + " " + f.getAttribute("NAME"));
     }
   };
 
   const sags = result.features
-    .filter((f) => f.geometry.type === "polyline")
-    .map((f) => createSag(f.geometry as Polyline, sagToSpanRatio(liftType(f))));
+    .filter(f => f.geometry.type === "polyline")
+    .map(f =>
+      createSag(f.geometry as Polyline, sagToSpanRatio(liftType(f)))
+    );
+
+  [skiLifts, trees, skiLiftPoles, skiSlopes, skiSlopesArea].forEach(async l => {
+    const lv = await view.whenLayerView(l) as FeatureLayerView | SceneLayerView;
+    lv.filter = new FeatureFilter({
+      geometry: skiResortArea
+    });
+  });
 
   skiLiftsWithSag.addMany(
     sags.map(

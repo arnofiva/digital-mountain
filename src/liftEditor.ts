@@ -1,32 +1,30 @@
 import { watch } from "@arcgis/core/core/reactiveUtils";
+import { Point, Polygon, Polyline, SpatialReference } from "@arcgis/core/geometry";
 import { contains, densify, nearestCoordinate, planarLength } from "@arcgis/core/geometry/geometryEngine";
+import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
+import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
 import {
   IconSymbol3DLayer,
-  LineSymbol3D,
-  ObjectSymbol3DLayer,
-  PathSymbol3DLayer,
-  LineSymbol3DLayer,
-  PointSymbol3D
+  LineSymbol3D, LineSymbol3DLayer, ObjectSymbol3DLayer,
+  PathSymbol3DLayer, PointSymbol3D
 } from "@arcgis/core/symbols";
 import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
 import Draw from "@arcgis/core/views/draw/Draw";
 import SceneView from "@arcgis/core/views/SceneView";
-import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
-import { AppState, EditMode } from "./appState";
-import { Point, Polyline, Polygon, SpatialReference } from "@arcgis/core/geometry";
-import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
-import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
-import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
 import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 import ElevationProfileLineGround from "@arcgis/core/widgets/ElevationProfile/ElevationProfileLineGround";
 import ElevationProfileLineInput from "@arcgis/core/widgets/ElevationProfile/ElevationProfileLineInput";
+import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
+import { AppState, EditMode } from "./appState";
 
-import * as vec2 from "./vec2";
 import { LiftType } from "./lifts/liftType";
 import { createSag, sagToSpanRatio } from "./lifts/sag";
+import { skiResortArea } from "./variables";
+import * as vec2 from "./vec2";
 
 const validRouteSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -170,6 +168,8 @@ const parcelGraphic = Graphic.fromJSON({
   attributes: {},
   popupTemplate: null
 });
+
+parcelGraphic.geometry = skiResortArea;
 
 const minLength = 100;
 const maxLength = 1000;
@@ -510,18 +510,18 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       const symbol = reuseSymbols
         ? towerLayer.graphics.getItemAt(i).symbol
         : new PointSymbol3D({
-            symbolLayers: [
-              new ObjectSymbol3DLayer({
-                width: 2,
-                depth: 2,
-                height: maxHeight,
-                heading,
-                tilt,
-                resource: { primitive: "cylinder" },
-                material: { color: "black" }
-              })
-            ]
-          });
+          symbolLayers: [
+            new ObjectSymbol3DLayer({
+              width: 2,
+              depth: 2,
+              height: maxHeight,
+              heading,
+              tilt,
+              resource: { primitive: "cylinder" },
+              material: { color: "black" }
+            })
+          ]
+        });
       newFeatures.push(new Graphic({ attributes: { objectID, heading, tilt }, geometry, symbol }));
       objectID++;
     }

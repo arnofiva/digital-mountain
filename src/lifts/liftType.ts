@@ -1,5 +1,6 @@
 export enum LiftType {
   CableCar,
   Chair,
-  TBar
+  TBar,
+  Unknown
 }

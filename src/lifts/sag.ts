@@ -127,6 +127,7 @@ const createSagLine = (from: Point, to: Point, sagToSpanRatio: number) => {
   const totalShearZ = lastElevDiff - firstElevDiff;
   const shearZIncrement = totalShearZ / count;
 
+
   // This is where we are calculating the line shape based on the known z-values determined above.
   // Start at fromPoint, and drop it by sag.
   const spatialReference = from.spatialReference;
@@ -139,7 +140,7 @@ const createSagLine = (from: Point, to: Point, sagToSpanRatio: number) => {
   const sagOriginPoint = addVectors(from, sagDropVector);
   const path: number[][] = [];
 
-  for (let index = 0; index < listT.length; index++) {
+  for (let index = 0; index < listT.length - 1; index++) {
     const xAlongSpanVector = setVectorMagnitude(spanVector2D, listT[index]);
     const shearZ = shearZIncrement * index; // shearZ is part of visual fix
     const zMoveUpValue = listZ[index] + firstFixZ + shearZ; // firstFixZ is part of visual fix.
@@ -160,11 +161,18 @@ const createSagLine = (from: Point, to: Point, sagToSpanRatio: number) => {
 export function createSag(line: Polyline, sagToSpanRatio: number) {
   const paths: number[][][] = [];
   line.paths.forEach((path, index) => {
-    for (let i = 0; i < path.length - 1; i++) {
+    const sagPath: number[][][] = [];
+    for (let i = 0; i < path.length; i++) {
+
       const fromPoint = line.getPoint(index, i);
-      const toPoint = line.getPoint(index, i + 1);
-      paths.push(createSagLine(fromPoint, toPoint, sagToSpanRatio));
+      if (i + 1 == path.length) {
+        sagPath.push([[fromPoint.x, fromPoint.y, fromPoint.z]]);
+      } else {
+        const toPoint = line.getPoint(index, i + 1);
+        sagPath.push(createSagLine(fromPoint, toPoint, sagToSpanRatio));
+      }
     }
+    paths.push(sagPath.flat(1));
   });
 
   return new Polyline({
@@ -181,5 +189,7 @@ export function sagToSpanRatio(liftType: LiftType): number {
       return 0.01;
     case LiftType.TBar:
       return 0.005;
+    case LiftType.Unknown:
+      return 1;
   }
 }
