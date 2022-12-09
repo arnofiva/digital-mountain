@@ -15,7 +15,7 @@ export const layers = [
     "layout": {},
     "paint": {
       "fill-opacity": 1,
-      "fill-color": "#aaaaaa",
+      "fill-color": "#dcd7d6",
       "fill-antialias": true,
       "fill-translate": [0, 0],
       "fill-translate-anchor": "map"
@@ -47,8 +47,8 @@ export const layers = [
     "minzoom": 9,
     "layout": {},
     "paint": {
-      "fill-color": "#2d4c04",
-      "fill-opacity": 0.25,
+      "fill-color": "#a8bfb6",
+      "fill-opacity": 1,
       "fill-antialias": false
     }
   },
@@ -62,8 +62,8 @@ export const layers = [
     "minzoom": 11,
     "layout": {},
     "paint": {
-      "fill-color": "#87d6f2",
-      "fill-outline-color": "#87d6f2"
+      "fill-color": "#a6bfdb",
+      "fill-outline-color": "#a6bfdb"
     }
   }
 ];

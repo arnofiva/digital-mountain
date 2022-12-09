@@ -558,7 +558,7 @@ const buildings = new SceneLayer({
       symbolLayers: [
         new FillSymbol3DLayer({
           material: {
-            color: [80, 80, 80],
+            color: [170, 170, 170],
             colorMixMode: "replace"
           }
         })
@@ -637,14 +637,14 @@ const color = new Color("#3A4754");
 
 const hillshade = new TileLayer({
   portalItem: { id: "1b243539f4514b6ba35e7d995890db1d" }, // Light
-  blendMode: "normal",
-  listMode: "hide-children",
+  // url: "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer",
+  blendMode: "luminosity",
   visible: false,
   title: "World Hillshade (Blended)"
 });
 
 hillshade.load().then(() => {
-  console.log({ hillshade });
+  // console.log({ hillshade });
 
   const lods = hillshade.tileInfo.lods.slice(0, 15);
   hillshade.tileInfo.lods = lods;
@@ -1042,8 +1042,9 @@ const view = new SceneView({
       //
       new GroupLayer({
         title: "Basemap",
-        layers: [rocks, hillshade, swisstopoSlope, trees, buildings]
+        layers: [rocks, swisstopoSlope, trees, buildings]
       }),
+      hillshade,
       new GroupLayer({
         title: "Winter Resort Context",
         layers: [
@@ -1095,6 +1096,8 @@ const view = new SceneView({
   }
 });
 
+view.map.ground.surfaceColor = new Color([240, 245, 255]);
+
 view.ui.add(
   new Home({
     view
@@ -1115,8 +1118,6 @@ view.ui.add(
   }),
   "top-left"
 );
-
-view.map.ground.surfaceColor = new Color("white");
 
 view.popup.autoOpenEnabled = true;
 view.popup.defaultPopupTemplateEnabled = true;
