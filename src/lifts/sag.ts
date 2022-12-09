@@ -189,7 +189,5 @@ export function sagToSpanRatio(liftType: LiftType): number {
       return 0.01;
     case LiftType.TBar:
       return 0.005;
-    case LiftType.Unknown:
-      return 1;
   }
 }

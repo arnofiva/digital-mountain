@@ -401,7 +401,7 @@ const skiSlopesArea = new FeatureLayer({
           symbolLayers: [
             new FillSymbol3DLayer({
               material: {
-                color: [181, 230, 180, 1]
+                color: [230, 230, 180, 1]
               }
             })
           ]
@@ -535,7 +535,7 @@ const skiSlopes = new FeatureLayer({
           symbolLayers: [
             new LineSymbol3DLayer({
               material: {
-                color: [22, 130, 18, 1]
+                color: [230, 230, 18, 1]
               },
               join: "bevel",
               cap: "round",
@@ -958,6 +958,12 @@ const swisstopoBasemap = new Basemap({
   ]
 });
 
+const swisstopoSlope = new WebTileLayer({
+  title: "swisstopo Slope",
+  urlTemplate: "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.hangneigung-ueber_30/default/current/3857/{z}/{x}/{y}.png",
+  visible: false
+});
+
 const osmFeatures = new VectorTileLayer({
   title: "OSM Features",
   style: osmStyle
@@ -1036,7 +1042,7 @@ const view = new SceneView({
       //
       new GroupLayer({
         title: "Basemap",
-        layers: [rocks, hillshade, trees, buildings]
+        layers: [rocks, hillshade, swisstopoSlope, trees, buildings]
       }),
       new GroupLayer({
         title: "Winter Resort Context",
@@ -1260,9 +1266,7 @@ view.when().then(async () => {
       case 5:
         return LiftType.TBar;
       default:
-        return LiftType.Unknown;
-      // debugger;
-      // throw Error("Unknown lift type: " + objectArt + " " + f.getAttribute("NAME"));
+        throw Error("Unknown lift type: " + objectArt + " " + f.getAttribute("NAME"));
     }
   };
 
