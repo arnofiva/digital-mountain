@@ -49,6 +49,7 @@ import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 import Home from "@arcgis/core/widgets/Home";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
+import winter from "./basemaps/winter";
 import { connect as connectLiftEditor } from "./liftEditor";
 import { LiftType } from "./lifts/liftType";
 import { createSag, sagToSpanRatio } from "./lifts/sag";
@@ -1107,7 +1108,7 @@ view.ui.add(
 
 const basemapList = new BasemapGallery({
   view,
-  source: [vectorBasemap, summerBasemap, winterBasemap, swisstopoBasemap]
+  source: [vectorBasemap, summerBasemap, winterBasemap, swisstopoBasemap, winter]
 });
 
 view.ui.add(
