@@ -1,10 +1,10 @@
-export const sources = {
+export const topoSources = {
   type: "vector",
   url: "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer",
   tiles: ["https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"]
 };
 
-export const layers = [
+export const topoLayers = [
   {
     "id": "Special area of interest/Rock or gravel",
     "type": "fill",
@@ -67,3 +67,4 @@ export const layers = [
     }
   }
 ];
+

@@ -54,7 +54,7 @@ const layer = new ImageryTileLayer({
 });
 
 
-export default new Basemap({
+const winterBasemap = new Basemap({
   title: "Winter (ImageryTileLayer)",
   baseLayers: [
     new ImageryTileLayer({
@@ -68,4 +68,6 @@ export default new Basemap({
       //subDomains: ["a", "b", "c", "d"]
     })
   ]
-})
+});
+
+export default winterBasemap;
