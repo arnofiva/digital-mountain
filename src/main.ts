@@ -25,6 +25,7 @@ import swisstopoBasemap from "./basemaps/swisstopo";
 import vectorBasemap from "./basemaps/vector";
 import winterBasemap from "./basemaps/winter";
 import winterImageryBasemap from "./basemaps/winterImagery";
+import accidents from "./layers/accidents";
 import hillshade from "./layers/hillshade";
 import { snowCatLive, snowCatStream, visitorCountStream } from "./layers/live";
 import { rocks, trees } from "./layers/nature";
@@ -91,6 +92,10 @@ const view = new SceneView({
           skiLiftPoles,
           osmFeatures
         ]
+      }),
+      new GroupLayer({
+        title: "Winter Resort Data",
+        layers: [accidents]
       })
     ],
     basemap: vectorBasemap,
