@@ -1,4 +1,5 @@
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import GroupLayer from "@arcgis/core/layers/GroupLayer";
 
 const accidents = new FeatureLayer({
   portalItem: {
@@ -9,4 +10,9 @@ const accidents = new FeatureLayer({
   }
 });
 
-export default accidents;
+const dataLayers = new GroupLayer({
+  title: "Winter Resort Data",
+  layers: [accidents]
+})
+
+export default dataLayers;
