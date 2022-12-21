@@ -111,14 +111,14 @@ const scatterchart = new Chart(accidentsChart.getContext("2d"), {
       data,
       backgroundColor(c) {
         const value = data[c.dataIndex].accidents.length;
-        const alpha = Math.min(1, value * 1.5 / maxAccidents);
+        const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
         const color = isWeekend(data[c.dataIndex].x) ?  new Color("blue") : new Color("green");
         color.a = alpha;
         return `rgba(${color.toRgba().join(",")})`;
       },
       borderColor(c) {
         const value = data[c.dataIndex].accidents.length;
-        const alpha = Math.min(1, value * 1.5 / maxAccidents);
+        const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
         const color = isWeekend(data[c.dataIndex].x) ?  new Color("dark-blue") : new Color("dark-green");
         color.a = alpha;
         return `rgba(${color.toRgba().join(",")})`;
