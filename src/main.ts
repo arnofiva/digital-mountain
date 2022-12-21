@@ -16,8 +16,8 @@ import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
 import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
-import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 import Home from "@arcgis/core/widgets/Home";
+import Legend from "@arcgis/core/widgets/Legend";
 import Weather from "@arcgis/core/widgets/Weather";
 import { AppState } from "./appState";
 import summerImageryBasemap from "./basemaps/summerImagery";
@@ -25,7 +25,7 @@ import swisstopoBasemap from "./basemaps/swisstopo";
 import vectorBasemap from "./basemaps/vector";
 import winterBasemap from "./basemaps/winter";
 import winterImageryBasemap from "./basemaps/winterImagery";
-import dataLayers from "./layers/data";
+import dataLayers, { accidentsChart } from "./layers/data";
 import hillshade from "./layers/hillshade";
 import { snowCatLive, snowCatStream, visitorCountStream } from "./layers/live";
 import { rocks, trees } from "./layers/nature";
@@ -170,7 +170,7 @@ const operationalLayers = new GroupLayer({
 
 const addAuthLayers = (userId: string) => {
   view.map.add(operationalLayers);
-  view.map.add(dataLayers);
+  view.map.add(dataLayers, 0);
   loginButton.style.display = "none";
   logoutButton.innerText = "Logout " + userId;
   logoutButton.style.display = null;
@@ -221,19 +221,27 @@ view.ui.add(
 
 view.ui.add(
   new Expand({
-    content: new ElevationProfile({
-      view,
-      profiles: [{ type: "input" }, { type: "ground" }]
-    }),
+    content: accidentsChart,
     view,
-    group: "environment"
+    // group: "environment"
   }),
   "top-right"
 );
 
+
+
 view.ui.add(
   new Expand({
     content: new LayerList({ view }),
+    view,
+    expanded: false,
+    group: "layers"
+  }),
+  "top-left"
+);
+view.ui.add(
+  new Expand({
+    content: new Legend({ view }),
     view,
     expanded: false,
     group: "layers"
@@ -270,4 +278,10 @@ view.when().then(async () => {
       geometry: skiResortArea
     });
   });
+
+  view.popup.dockEnabled = true;
+  view.popup.dockOptions = {
+    position: "top-left"
+  };
+
 });
