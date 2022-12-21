@@ -72,7 +72,7 @@ export const skiLiftPoles = new SceneLayer({
 
 export const skiSlopesArea = new FeatureLayer({
   portalItem: {
-    id: "b99982e42ca04ffda9e2d6030449c1d2"
+    id: "4929a1da6e7c4b689d0d7ddee6949b22"
   },
   //visible: false,
   title: "Ski Slope Areas",
@@ -82,101 +82,45 @@ export const skiSlopesArea = new FeatureLayer({
   minScale: 0,
   maxScale: 0,
   renderer: new UniqueValueRenderer({
-    field: "piste_difficulty",
+    field: "Schwierigkeitsgrad",
     defaultLabel: "Other",
-    uniqueValueInfos: [
-      {
-        label: "novice",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [167, 209, 234, 1]
-              }
-            })
-          ]
-        }),
-        value: "novice"
-      },
-      {
-        label: "easy",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [167, 209, 234, 1]
-              }
-            })
-          ]
-        }),
-        value: "easy"
-      },
-      {
-        label: "intermediate",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [243, 194, 198, 1]
-              }
-            })
-          ]
-        }),
-        value: "intermediate"
-      },
-      {
-        label: "advanced",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [210, 209, 209, 1]
-              }
-            })
-          ]
-        }),
-        value: "advanced"
-      },
-      {
-        label: "expert",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [210, 209, 209, 1]
-              }
-            })
-          ]
-        }),
-        value: "expert"
-      },
-      {
-        label: "extreme",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [210, 209, 209, 1]
-              }
-            })
-          ]
-        }),
-        value: "extreme"
-      },
-      {
-        label: "freeride",
-        symbol: new PolygonSymbol3D({
-          symbolLayers: [
-            new FillSymbol3DLayer({
-              material: {
-                color: [230, 230, 180, 1]
-              }
-            })
-          ]
-        }),
-        value: "freeride"
-      }
-    ]
+    defaultSymbol: new PolygonSymbol3D({
+      symbolLayers: [
+        new FillSymbol3DLayer({
+          material: {
+            color: [237, 237, 80, 0.25]
+          },
+          outline: {
+            size: 1.2,
+            color: [237, 237, 80]
+          }
+        })
+      ]
+    }),
+    uniqueValueInfos:
+      [
+        {value: "Blau", color: [20, 158, 206]},
+        {value: "Rot", color: [237, 81, 81]},
+        {value: "Orange", color: [237, 166, 80]},
+        {value: "Schwarz", color: [80, 80, 80]}
+      ].map(({value, color}) => (
+        {
+          label: value,
+          symbol: new PolygonSymbol3D({
+            symbolLayers: [
+              new FillSymbol3DLayer({
+            material: {
+              color: [...color, 0.25]
+            },
+            outline: {
+              size: 1.2,
+              color
+            }
+            })]
+          }),
+          value,
+        }
+      ))
   })
 });
 
@@ -184,7 +128,7 @@ export const skiSlopes = new FeatureLayer({
   portalItem: {
     id: "d6ae4391937d4f61975ea97d91960284"
   },
-  //visible: false,
+  visible: false,
   title: "Ski Slopes",
   elevationInfo: {
     mode: "on-the-ground"
