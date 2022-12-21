@@ -18,6 +18,7 @@ import SceneView from "@arcgis/core/views/SceneView";
 import ElevationProfile from "@arcgis/core/widgets/ElevationProfile";
 import ElevationProfileLineGround from "@arcgis/core/widgets/ElevationProfile/ElevationProfileLineGround";
 import ElevationProfileLineInput from "@arcgis/core/widgets/ElevationProfile/ElevationProfileLineInput";
+import Expand from "@arcgis/core/widgets/Expand";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 
@@ -203,7 +204,11 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       })
     ]
   });
-  view.ui.add(elevationProfile, "bottom-right");
+  view.ui.add(new Expand({
+    view,
+    content: elevationProfile,
+    expanded: false
+  }), "bottom-right");
 
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],
