@@ -208,7 +208,7 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
     view,
     content: elevationProfile,
     expanded: false
-  }), "bottom-right");
+  }), "top-right");
 
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],

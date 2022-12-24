@@ -25,7 +25,7 @@ import swisstopoBasemap from "./basemaps/swisstopo";
 import vectorBasemap from "./basemaps/vector";
 import winterBasemap from "./basemaps/winter";
 import winterImageryBasemap from "./basemaps/winterImagery";
-import dataLayers, { accidentsChart } from "./layers/data";
+import AccidentsChart from "./layers/data";
 import hillshade from "./layers/hillshade";
 import { snowCatLive, snowCatStream, visitorCountStream } from "./layers/live";
 import { rocks, trees } from "./layers/nature";
@@ -116,6 +116,8 @@ const view = new SceneView({
   }
 });
 
+const accidentsChart = new AccidentsChart(view);
+
 view.map.ground.surfaceColor = new Color([240, 245, 255]);
 
 view.ui.add(
@@ -170,7 +172,7 @@ const operationalLayers = new GroupLayer({
 
 const addAuthLayers = (userId: string) => {
   view.map.add(operationalLayers);
-  view.map.add(dataLayers, 0);
+  accidentsChart.addLayers();
   loginButton.style.display = "none";
   logoutButton.innerText = "Logout " + userId;
   logoutButton.style.display = null;
@@ -178,7 +180,7 @@ const addAuthLayers = (userId: string) => {
 
 const removeAuthLayers = () => {
   view.map.remove(operationalLayers);
-  view.map.remove(dataLayers);
+  accidentsChart.removeLayers();
   loginButton.style.display = null;
   logoutButton.style.display = "none";
   logoutButton.innerText = "Logout";
@@ -215,15 +217,6 @@ view.ui.add(
     content: new Daylight({ view }),
     view,
     group: "environment"
-  }),
-  "top-right"
-);
-
-view.ui.add(
-  new Expand({
-    content: accidentsChart,
-    view,
-    // group: "environment"
   }),
   "top-right"
 );

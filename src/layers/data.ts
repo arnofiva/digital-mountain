@@ -1,5 +1,4 @@
 import Color from "@arcgis/core/Color";
-import * as promiseUtils from "@arcgis/core/core/promiseUtils";
 import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GroupLayer from "@arcgis/core/layers/GroupLayer";
@@ -10,6 +9,8 @@ import differenceInDays from "date-fns/differenceInDays";
 
 import { whenOnce } from "@arcgis/core/core/reactiveUtils";
 import { HeatmapRenderer } from "@arcgis/core/renderers";
+import SceneView from "@arcgis/core/views/SceneView";
+import Expand from "@arcgis/core/widgets/Expand";
 import 'chartjs-adapter-date-fns';
 import { addDays, isWeekend } from "date-fns";
 
@@ -28,206 +29,243 @@ const colorStops = [
   { ratio: 12 / 12, color: "rgba(158, 255, 233, 1)" }
 ];
 
-const accidents = new FeatureLayer({
-  portalItem: {
-    id: "f13721858ab1466381da1045ed1b121a"
-  },
-  elevationInfo: {
-    mode: "on-the-ground"
-  },
-  visible: false,
-  renderer: new HeatmapRenderer({
-    colorStops,
-    maxDensity: 0.0035,
-    radius: 35,
-    minDensity: 0,
-    referenceScale: 20000
-  }),
-  opacity: 0.7
-});
-
-const dataLayers = new GroupLayer({
-  title: "Winter Resort Data",
-  layers: [accidents]
-});
-
-export const accidentsChart = document.createElement("canvas");
-accidentsChart.classList.add("accidents-chart");
-
 Chart.register(MatrixController, MatrixElement);
 
+export default class AccidentsChart {
 
-const drawChart = promiseUtils.debounce(async () => {
+  private accidentsHeat = new FeatureLayer({
+    title: "Accidents (Heatmap)",
+    portalItem: {
+      id: "f13721858ab1466381da1045ed1b121a"
+    },
+    elevationInfo: {
+      mode: "on-the-ground"
+    },
+    visible: false,
+    renderer: new HeatmapRenderer({
+      colorStops,
+      maxDensity: 0.0035,
+      radius: 35,
+      minDensity: 0,
+      referenceScale: 20000
+    }),
+    opacity: 0.7,
+    popupEnabled: false
+  });
   
-  const field = "Alarmzeit";
-
-  await accidents.load();
-  const query = accidents.createQuery();
-  query.outFields = ["*"];
-  query.returnGeometry = false;
-  const result = await accidents.queryFeatures(query);
-
-
-  const START = new Date(2021, 11, 1, 0, 0, 0, 0);
-  const END = new Date(2022, 2, 10, 0, 0, 0, 0);
-
-  const days = differenceInDays(END, START);
-  const hours = [10, 11, 12, 13, 14, 15, 16, 17, 18, 24];
+  private accidents = new FeatureLayer({
+    title: "Accidents (Location)",
+    portalItem: {
+      id: "f13721858ab1466381da1045ed1b121a"
+    },
+    elevationInfo: {
+      mode: "on-the-ground"
+    },
+    opacity: 0.7
+  });
   
-  const bins = [...Array(days).keys()].map(day =>
-    hours.map(hour => ({
-      x: addDays(START, day),
-      y: hour.toString(),
-      accidents: [] as Graphic[]
-    })));
-
-  let maxAccidents = 0;
-  result.features.forEach(f => {
-    const alarmTS = f.getAttribute(field);
-    const alarm = new Date(alarmTS);
-    const dayIdx = differenceInDays(alarmTS, START);
-    if (dayIdx < 0 || days <= dayIdx) {
-      console.log("OOB", {alarm, objID: f.getObjectId()});
-      return;
-    }
-
-    const hourIdx = hours.findIndex((hour) => alarm.getHours() < hour);
-
-    if (hourIdx < 0 || hours.length <= hourIdx) {
-      debugger;
-      throw new Error("Invalid hour " + hourIdx);
-    }
-    bins[dayIdx][hourIdx].accidents.push(f);
-    maxAccidents = Math.max(maxAccidents, bins[dayIdx][hourIdx].accidents.length);
+  public dataLayers = new GroupLayer({
+    title: "Winter Resort Data",
+    visible: false,
+    layers: [this.accidentsHeat, this.accidents]
   });
 
-const data = bins.flat();
-
-const scatterchart = new Chart(accidentsChart.getContext("2d"), {
-  type: 'matrix',
-  data: {
-    datasets: [{
-      label: 'Accidents 21/22',
-      data,
-      backgroundColor(c) {
-        const value = data[c.dataIndex].accidents.length;
-        const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
-        const color = isWeekend(data[c.dataIndex].x) ?  new Color("blue") : new Color("green");
-        color.a = alpha;
-        return `rgba(${color.toRgba().join(",")})`;
-      },
-      borderColor(c) {
-        const value = data[c.dataIndex].accidents.length;
-        const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
-        const color = isWeekend(data[c.dataIndex].x) ?  new Color("dark-blue") : new Color("dark-green");
-        color.a = alpha;
-        return `rgba(${color.toRgba().join(",")})`;
-      },
-      borderWidth: 1,
-      hoverBackgroundColor: 'yellow',
-      hoverBorderColor: 'yellowgreen',
-      width(c) {
-        const a = c.chart.chartArea || {right: 0, left: 0};
-        
-        return (a.right - a.left) / days - 1;
-      },
-      height(c) {
-        const a = c.chart.chartArea || {bottom: 0, top: 0};
-        return (a.bottom - a.top) / hours.length - 1;
-      }
-    }]
-  },
-  options: {
-    aspectRatio: 8,
-    plugins: {
-      // legend: false,
-      tooltip: {
-        displayColors: false,
-        callbacks: {
-          title() {
-            return '';
-          },
-          label(context) {
-            const v = data[context.dataIndex];
-            const iso = v.x.toString().substring(0, 10);
-            return ['day: ' + iso, 'hours: ' + v.y, 'accidents: ' + v.accidents.length, 'max: ' + maxAccidents];
-          }
-        }
-      },
-    },
-    scales: {
-      y: {
-        type: 'category',
-        offset: true,
-        labels: hours.map(h => h.toString()),
-        // time: {
-        //   unit: 'hour',
-        //   round: 'hour',
-        //   isoWeekday: 1,
-        //   // parser: 'HH',
-        //   displayFormats: {
-        //     day: 'MMM dd iiiiii'
-        //   }
-        // },
-        reverse: false,
-        position: 'right',
-        ticks: {
-          maxRotation: 0,
-          autoSkip: true,
-          padding: 1,
-          font: {
-            size: 9
-          }
-        },
-        grid: {
-          display: false,
-          // drawBorder: false,
-          tickLength: 0
-        }
-      },
-      x: {
-        type: 'time',
-        position: 'bottom',
-        offset: true,
-        time: {
-          unit: 'day',
-          round: 'day',
-          isoWeekday: 1,
-          displayFormats: {
-            week: 'MMM dd'
-          }
-        },
-        ticks: {
-          maxRotation: 0,
-          autoSkip: true,
-          font: {
-            size: 9
-          }
-        },
-        grid: {
-          display: false,
-          // drawBorder: false,
-          tickLength: 0,
-        }
-      }
-    },
-    layout: {
-      padding: {
-        top: 10
-      },
-    }
+  private accidentsChart = document.createElement("canvas");
+  
+  constructor(public view: SceneView) {
+    
+    whenOnce(() => this.dataLayers.visible).then(() => this.addChart());
   }
-});
 
-  scatterchart.resize(1000, 200);
+  public addLayers() {
+    this.view.map.add(this.dataLayers, 0);
+  }
 
-  console.log("updated-chart");
-});
+  public removeLayers() {
+    this.view.map.remove(this.dataLayers);
+  }
 
-whenOnce(() => accidents.visible).then(() => {
+  private addChart() {
+    this.accidentsChart.classList.add("accidents-chart");
 
-  drawChart();
+    this.view.ui.add(
+      new Expand({
+        content: this.accidentsChart,
+        view: this.view,
+        expandIconClass: "esri-icon-chart"
+        // group: "environment"
+      }),
+      "bottom-right"
+    );
 
-});
+    this.updateChart();
+  }
 
-export default dataLayers;
+  private async updateChart() {
+    const field = "Alarmzeit";
+
+    await this.accidents.load();
+    const query = this.accidents.createQuery();
+    query.outFields = ["*"];
+    query.returnGeometry = false;
+    const result = await this.accidents.queryFeatures(query);
+
+    const START = new Date(2021, 11, 1, 0, 0, 0, 0);
+    const END = new Date(2022, 2, 10, 0, 0, 0, 0);
+
+    const days = differenceInDays(END, START);
+    const hours = [10, 11, 12, 13, 14, 15, 16, 17, 18, 24];
+    
+    const bins = [...Array(days).keys()].map(day =>
+      hours.map(hour => ({
+        x: addDays(START, day),
+        y: hour.toString(),
+        accidents: [] as Graphic[]
+      })));
+
+    let maxAccidents = 0;
+    result.features.forEach(f => {
+      const alarmTS = f.getAttribute(field);
+      const alarm = new Date(alarmTS);
+      const dayIdx = differenceInDays(alarmTS, START);
+      if (dayIdx < 0 || days <= dayIdx) {
+        console.log("OOB", {alarm, objID: f.getObjectId()});
+        return;
+      }
+
+      const hourIdx = hours.findIndex((hour) => alarm.getHours() < hour);
+
+      if (hourIdx < 0 || hours.length <= hourIdx) {
+        debugger;
+        throw new Error("Invalid hour " + hourIdx);
+      }
+      bins[dayIdx][hourIdx].accidents.push(f);
+      maxAccidents = Math.max(maxAccidents, bins[dayIdx][hourIdx].accidents.length);
+    });
+
+    const data = bins.flat();
+
+    const scatterchart = new Chart(this.accidentsChart.getContext("2d"), {
+      type: 'matrix',
+      data: {
+        datasets: [{
+          label: 'Accidents 21/22',
+          data,
+          backgroundColor(c) {
+            const value = data[c.dataIndex].accidents.length;
+            const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
+            const color = isWeekend(data[c.dataIndex].x) ?  new Color("blue") : new Color("green");
+            color.a = alpha;
+            return `rgba(${color.toRgba().join(",")})`;
+          },
+          borderColor(c) {
+            const value = data[c.dataIndex].accidents.length;
+            const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
+            const color = isWeekend(data[c.dataIndex].x) ?  new Color("dark-blue") : new Color("dark-green");
+            color.a = alpha;
+            return `rgba(${color.toRgba().join(",")})`;
+          },
+          borderWidth: 1,
+          hoverBackgroundColor: 'yellow',
+          hoverBorderColor: 'yellowgreen',
+          width(c) {
+            const a = c.chart.chartArea || {right: 0, left: 0};
+            
+            return (a.right - a.left) / days - 1;
+          },
+          height(c) {
+            const a = c.chart.chartArea || {bottom: 0, top: 0};
+            return (a.bottom - a.top) / hours.length - 1;
+          }
+        }]
+      },
+      options: {
+        aspectRatio: 8,
+        plugins: {
+          // legend: false,
+          tooltip: {
+            displayColors: false,
+            callbacks: {
+              title() {
+                return '';
+              },
+              label(context) {
+                const v = data[context.dataIndex];
+                const iso = v.x.toString().substring(0, 10);
+                return ['day: ' + iso, 'hours: ' + v.y, 'accidents: ' + v.accidents.length, 'max: ' + maxAccidents];
+              }
+            }
+          },
+        },
+        scales: {
+          y: {
+            type: 'category',
+            offset: true,
+            labels: hours.map(h => h.toString()),
+            // time: {
+            //   unit: 'hour',
+            //   round: 'hour',
+            //   isoWeekday: 1,
+            //   // parser: 'HH',
+            //   displayFormats: {
+            //     day: 'MMM dd iiiiii'
+            //   }
+            // },
+            reverse: false,
+            position: 'right',
+            ticks: {
+              maxRotation: 0,
+              autoSkip: true,
+              padding: 1,
+              font: {
+                size: 9
+              }
+            },
+            grid: {
+              display: false,
+              // drawBorder: false,
+              tickLength: 0
+            }
+          },
+          x: {
+            type: 'time',
+            position: 'bottom',
+            offset: true,
+            time: {
+              unit: 'day',
+              round: 'day',
+              isoWeekday: 1,
+              displayFormats: {
+                week: 'MMM dd'
+              }
+            },
+            ticks: {
+              maxRotation: 0,
+              autoSkip: true,
+              font: {
+                size: 9
+              }
+            },
+            grid: {
+              display: false,
+              // drawBorder: false,
+              tickLength: 0,
+            }
+          }
+        },
+        layout: {
+          padding: {
+            top: 10
+          },
+        }
+      }
+    });
+
+    scatterchart.resize(1000, 200);
+
+    console.log("updated-chart");
+  }
+
+
+}
+
