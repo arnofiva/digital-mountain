@@ -70,25 +70,64 @@ export default class AccidentsChart {
     portalItem: {
       id: "f13721858ab1466381da1045ed1b121a"
     },
+    hasZ: false,
     elevationInfo: {
-      mode: "on-the-ground"
+      mode: "relative-to-scene",
+      featureExpressionInfo: {
+        expression: "0"
+      }
     },
+    screenSizePerspectiveEnabled: true,
+    // featureReduction: {
+    //   type: "selection"
+    // },
     renderer: new SimpleRenderer({
+      // symbol: new WebStyleSymbol({
+      //   name: "Hospital",
+      //   styleName: "EsriIconsStyle"
+      // }),
       symbol: new PointSymbol3D({
+        verticalOffset: {
+          screenLength: 25,
+          maxWorldLength: 200,
+          minWorldLength: 1
+        },
+    
+        callout: {
+          type: "line", // autocasts as new LineCallout3D()
+          color: [0, 100, 0],
+          size: 1.2,
+          // border: {
+          //   color: [50, 50, 50]
+          // }
+        }, 
         symbolLayers: [
           new IconSymbol3DLayer({
             resource: {
               primitive: "circle"
             },
-            size: 6,
+            size: 12,
             material: {
-              color: [120, 240, 30]
+              color: [0, 100, 0],
+            },
+            // outline: {
+            //   color: "black",
+            //   size: 1
+            // }
+          }),
+          new IconSymbol3DLayer({
+            resource: {
+              href: "https://static.arcgis.com/arcgis/styleItems/Icons/web/resource/Hospital.svg"
+            },
+            material: {
+              color: "white"
             },
             outline: {
               color: "black",
-              size: 1
-            }
-          })
+              size: 5
+            },
+            size: 8,
+          }),
         ]
       })
     })
