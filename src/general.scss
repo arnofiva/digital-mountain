@@ -29,8 +29,12 @@ body {
   display: none;
 }
 
-.accidents-chart {
-  width: 500px;
+.accidents-widget {
+  width: 1000px;
   height: 250px;
   background-color: white;
+}
+
+esri-time-slider__row > .esri-time-slider__layout--compact {
+  display:none; 
 }

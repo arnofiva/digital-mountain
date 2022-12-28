@@ -8,9 +8,11 @@ import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 import differenceInDays from "date-fns/differenceInDays";
 
 import { whenOnce } from "@arcgis/core/core/reactiveUtils";
-import { HeatmapRenderer } from "@arcgis/core/renderers";
+import { HeatmapRenderer, SimpleRenderer } from "@arcgis/core/renderers";
+import { IconSymbol3DLayer, PointSymbol3D } from "@arcgis/core/symbols";
 import SceneView from "@arcgis/core/views/SceneView";
 import Expand from "@arcgis/core/widgets/Expand";
+import TimeSlider from "@arcgis/core/widgets/TimeSlider";
 import 'chartjs-adapter-date-fns';
 import { addDays, isWeekend } from "date-fns";
 
@@ -31,6 +33,22 @@ const colorStops = [
 
 Chart.register(MatrixController, MatrixElement);
 
+const START = new Date(2021, 11, 1, 0, 0, 0, 0);
+const END = new Date(2022, 2, 10, 0, 0, 0, 0);
+
+const HOURS = [/*10, 11,*/ 12, 13, 14, 15, 16, 17, 24];
+
+const heatmapRenderer = new HeatmapRenderer({
+  colorStops,
+  maxDensity: 0.0035,
+  radius: 25,
+  minDensity: 0,
+  // referenceScale: 20000,
+  referenceScale: 65000
+});
+
+
+
 export default class AccidentsChart {
 
   private accidentsHeat = new FeatureLayer({
@@ -42,13 +60,7 @@ export default class AccidentsChart {
       mode: "on-the-ground"
     },
     visible: false,
-    renderer: new HeatmapRenderer({
-      colorStops,
-      maxDensity: 0.0035,
-      radius: 35,
-      minDensity: 0,
-      referenceScale: 20000
-    }),
+    renderer: heatmapRenderer,
     opacity: 0.7,
     popupEnabled: false
   });
@@ -61,16 +73,33 @@ export default class AccidentsChart {
     elevationInfo: {
       mode: "on-the-ground"
     },
-    opacity: 0.7
+    renderer: new SimpleRenderer({
+      symbol: new PointSymbol3D({
+        symbolLayers: [
+          new IconSymbol3DLayer({
+            resource: {
+              primitive: "circle"
+            },
+            size: 6,
+            material: {
+              color: [120, 240, 30]
+            },
+            outline: {
+              color: "black",
+              size: 1
+            }
+          })
+        ]
+      })
+    })
+    // opacity: 0.7
   });
   
   public dataLayers = new GroupLayer({
     title: "Winter Resort Data",
-    visible: false,
+    visible: true,
     layers: [this.accidentsHeat, this.accidents]
   });
-
-  private accidentsChart = document.createElement("canvas");
   
   constructor(public view: SceneView) {
     
@@ -86,22 +115,53 @@ export default class AccidentsChart {
   }
 
   private addChart() {
-    this.accidentsChart.classList.add("accidents-chart");
+
+    const accidentsChart = document.createElement("canvas");
+    accidentsChart.classList.add("accidents-chart");
+
+    const timeSLiderDiv = document.createElement("div");
+    const timeSlider = new TimeSlider({
+      view: this.view,
+      container: timeSLiderDiv,
+      mode: "time-window",
+      layout: "compact",
+      stops: {
+        interval: {
+          value: 1,
+          unit: "days"
+        } as any
+      },
+      fullTimeExtent: {
+        start: START,
+        end: END
+      },
+      timeExtent: {
+        start: START,
+        end: END
+      },
+      labelFormatFunction: () => {},
+    });
+
+    const accidentsWidget = document.createElement("div");
+    accidentsWidget.classList.add("accidents-widget");
+    accidentsWidget.appendChild(accidentsChart);
+    accidentsWidget.appendChild(timeSLiderDiv);
 
     this.view.ui.add(
       new Expand({
-        content: this.accidentsChart,
+        content: accidentsWidget,
         view: this.view,
+        expanded: true,
         expandIconClass: "esri-icon-chart"
         // group: "environment"
       }),
       "bottom-right"
     );
 
-    this.updateChart();
+    this.updateChart(accidentsChart);
   }
 
-  private async updateChart() {
+  private async updateChart(accidentsChart: HTMLCanvasElement) {
     const field = "Alarmzeit";
 
     await this.accidents.load();
@@ -110,14 +170,10 @@ export default class AccidentsChart {
     query.returnGeometry = false;
     const result = await this.accidents.queryFeatures(query);
 
-    const START = new Date(2021, 11, 1, 0, 0, 0, 0);
-    const END = new Date(2022, 2, 10, 0, 0, 0, 0);
-
     const days = differenceInDays(END, START);
-    const hours = [10, 11, 12, 13, 14, 15, 16, 17, 18, 24];
     
     const bins = [...Array(days).keys()].map(day =>
-      hours.map(hour => ({
+      HOURS.map(hour => ({
         x: addDays(START, day),
         y: hour.toString(),
         accidents: [] as Graphic[]
@@ -133,9 +189,9 @@ export default class AccidentsChart {
         return;
       }
 
-      const hourIdx = hours.findIndex((hour) => alarm.getHours() < hour);
+      const hourIdx = HOURS.findIndex((hour) => alarm.getHours() < hour);
 
-      if (hourIdx < 0 || hours.length <= hourIdx) {
+      if (hourIdx < 0 || HOURS.length <= hourIdx) {
         debugger;
         throw new Error("Invalid hour " + hourIdx);
       }
@@ -145,7 +201,7 @@ export default class AccidentsChart {
 
     const data = bins.flat();
 
-    const scatterchart = new Chart(this.accidentsChart.getContext("2d"), {
+    const scatterchart = new Chart(accidentsChart.getContext("2d"), {
       type: 'matrix',
       data: {
         datasets: [{
@@ -175,7 +231,7 @@ export default class AccidentsChart {
           },
           height(c) {
             const a = c.chart.chartArea || {bottom: 0, top: 0};
-            return (a.bottom - a.top) / hours.length - 1;
+            return (a.bottom - a.top) / HOURS.length - 1;
           }
         }]
       },
@@ -201,7 +257,7 @@ export default class AccidentsChart {
           y: {
             type: 'category',
             offset: true,
-            labels: hours.map(h => h.toString()),
+            labels: HOURS.map(h => h.toString()),
             // time: {
             //   unit: 'hour',
             //   round: 'hour',

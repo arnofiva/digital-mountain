@@ -75,6 +75,7 @@ export const skiSlopesArea = new FeatureLayer({
     id: "4929a1da6e7c4b689d0d7ddee6949b22"
   },
   //visible: false,
+  popupEnabled: false,
   title: "Ski Slope Areas",
   elevationInfo: {
     mode: "on-the-ground"
