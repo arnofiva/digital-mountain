@@ -7,14 +7,20 @@ import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 
 import differenceInDays from "date-fns/differenceInDays";
 
-import { whenOnce } from "@arcgis/core/core/reactiveUtils";
+import Accessor from "@arcgis/core/core/Accessor";
+import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import * as promiseUtils from "@arcgis/core/core/promiseUtils";
+import { watch, whenOnce } from "@arcgis/core/core/reactiveUtils";
+import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import { HeatmapRenderer, SimpleRenderer } from "@arcgis/core/renderers";
 import { IconSymbol3DLayer, PointSymbol3D } from "@arcgis/core/symbols";
+import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
 import SceneView from "@arcgis/core/views/SceneView";
 import Expand from "@arcgis/core/widgets/Expand";
 import TimeSlider from "@arcgis/core/widgets/TimeSlider";
 import 'chartjs-adapter-date-fns';
 import { addDays, isWeekend } from "date-fns";
+import { skiSlopesArea } from "./resort";
 
 const colorStops = [
   { ratio: 0 / 12, color: "rgba(25, 43, 51, 0.6)" },
@@ -47,6 +53,207 @@ const heatmapRenderer = new HeatmapRenderer({
   referenceScale: 65000
 });
 
+type SlopeFilterProps = {
+  view: SceneView;
+}
+
+const accidents = new FeatureLayer({
+  title: "Accidents (Location)",
+  portalItem: {
+    id: "f13721858ab1466381da1045ed1b121a"
+  },
+  hasZ: false,
+  elevationInfo: {
+    mode: "relative-to-scene",
+    featureExpressionInfo: {
+      expression: "0"
+    }
+  },
+  outFields: ["*"],
+  screenSizePerspectiveEnabled: true,
+  // featureReduction: {
+  //   type: "selection"
+  // },
+  renderer: new SimpleRenderer({
+    // symbol: new WebStyleSymbol({
+    //   name: "Hospital",
+    //   styleName: "EsriIconsStyle"
+    // }),
+    symbol: new PointSymbol3D({
+      verticalOffset: {
+        screenLength: 25,
+        maxWorldLength: 200,
+        minWorldLength: 1
+      },
+  
+      callout: {
+        type: "line", // autocasts as new LineCallout3D()
+        color: [0, 100, 0],
+        size: 1.2,
+        // border: {
+        //   color: [50, 50, 50]
+        // }
+      }, 
+      symbolLayers: [
+        new IconSymbol3DLayer({
+          resource: {
+            primitive: "circle"
+          },
+          size: 12,
+          material: {
+            color: [0, 100, 0],
+          },
+          // outline: {
+          //   color: "black",
+          //   size: 1
+          // }
+        }),
+        new IconSymbol3DLayer({
+          resource: {
+            href: "https://static.arcgis.com/arcgis/styleItems/Icons/web/resource/Hospital.svg"
+          },
+          material: {
+            color: "white"
+          },
+          outline: {
+            color: "black",
+            size: 5
+          },
+          size: 8,
+        }),
+      ]
+    })
+  })
+  // opacity: 0.7
+});
+
+@subclass()
+class SlopeFilter extends Accessor {
+
+  @property()
+  enabled = false;
+
+  @property({
+    constructOnly: true
+  })
+  view: SceneView;
+
+  @property()
+  slopeId: string;
+
+  @property()
+  slopes: Graphic[];
+
+  @property()
+  accidentIds: number[];
+
+  @property()
+  private slopeHighlight = {remove: () => {}};
+
+  @property()
+  private accidentHighlight = {remove: () => {}};
+
+  constructor(props: SlopeFilterProps) {
+    super(props);
+
+    let viewHandle: {remove: () => void} | undefined;
+
+    watch(() => this.enabled, () => {
+      if (viewHandle) {
+        viewHandle.remove();
+      }
+
+      viewHandle = this.view.on("pointer-move", (e) => this.updateFilter(e));
+    });
+  }
+
+  private parseSlopeId(slope: Graphic) {
+    const IDENT = slope.getAttribute("IDENT");
+    const IDENTNO = Number.parseInt(IDENT);
+    if (Number.isNaN(IDENTNO)) {
+      return `${IDENT}`;
+    } else {
+      return `${IDENTNO}`;
+    }
+  }
+
+  private async queryAccidentsByGeometry(lv: FeatureLayerView) {
+    if (this.slopes) {
+      const geometry = geometryEngine.union(this.slopes.map(slope => slope.geometry));
+      const query = lv.createQuery();
+      query.geometry = geometry;
+      return await lv.queryObjectIds(query);
+    } else {
+      return [];
+    }
+  }
+
+  private async queryAccidentsBySlopeId(lv: FeatureLayerView) {
+    if (this.slopeId) {
+      const query = lv.createQuery();
+      query.where = `Pistennummer LIKE '${this.slopeId}'`;
+      return await lv.queryObjectIds(query);
+    } else {
+      return [];
+    }
+  }
+
+  private async highlightAccidents() {
+    const lv = await this.view.whenLayerView(accidents);
+    
+    const [ids1, ids2] = await Promise.all([
+      this.queryAccidentsByGeometry(lv),
+      this.queryAccidentsBySlopeId(lv)
+    ]);
+
+    const accidentIds = [...ids1, ...ids2];
+    this.accidentIds = accidentIds;
+    this.accidentHighlight = lv.highlight(accidentIds);
+  }
+
+  private updateFilter = promiseUtils.debounce(async (e: __esri.ViewPointerMoveEvent) =>   {
+    if (this.view.popup.visible) {
+      this.deselect();
+      return;
+    }
+    const hitTest = await this.view.hitTest(e);
+    const slopeHit = hitTest.results.find(result => result.layer === skiSlopesArea);
+
+    if (slopeHit && slopeHit.type === "graphic") {
+      const slope = slopeHit.graphic;
+
+      const slopeId = this.parseSlopeId(slope);
+
+      if (slopeId !== this.slopeId) {
+        const lv = await this.view.whenLayerView(skiSlopesArea);
+
+        const query = lv.createQuery();
+        query.where = `IDENT LIKE '${slopeId}' OR IDENT LIKE '${slopeId}.%'`;
+        const queryResult = await lv.queryFeatures(query);
+        const slopes = queryResult.features;
+
+        this.deselect();
+        this.slopeId = slopeId;
+        this.slopes = slopes;
+        this.slopeHighlight = lv.highlight(slopes);
+        this.highlightAccidents();
+        console.log("HIGHTLIGHT", {slopeId});
+      }
+    } else {
+      this.deselect();
+    }
+  })
+
+  private deselect() {
+    this.slopeId = undefined;
+    this.slopes = null;
+    this.accidentIds = null;
+    this.slopeHighlight.remove();
+    this.accidentHighlight.remove();
+  }
+
+
+}
 
 
 export default class AccidentsChart {
@@ -64,85 +271,22 @@ export default class AccidentsChart {
     opacity: 0.7,
     popupEnabled: false
   });
-  
-  private accidents = new FeatureLayer({
-    title: "Accidents (Location)",
-    portalItem: {
-      id: "f13721858ab1466381da1045ed1b121a"
-    },
-    hasZ: false,
-    elevationInfo: {
-      mode: "relative-to-scene",
-      featureExpressionInfo: {
-        expression: "0"
-      }
-    },
-    screenSizePerspectiveEnabled: true,
-    // featureReduction: {
-    //   type: "selection"
-    // },
-    renderer: new SimpleRenderer({
-      // symbol: new WebStyleSymbol({
-      //   name: "Hospital",
-      //   styleName: "EsriIconsStyle"
-      // }),
-      symbol: new PointSymbol3D({
-        verticalOffset: {
-          screenLength: 25,
-          maxWorldLength: 200,
-          minWorldLength: 1
-        },
-    
-        callout: {
-          type: "line", // autocasts as new LineCallout3D()
-          color: [0, 100, 0],
-          size: 1.2,
-          // border: {
-          //   color: [50, 50, 50]
-          // }
-        }, 
-        symbolLayers: [
-          new IconSymbol3DLayer({
-            resource: {
-              primitive: "circle"
-            },
-            size: 12,
-            material: {
-              color: [0, 100, 0],
-            },
-            // outline: {
-            //   color: "black",
-            //   size: 1
-            // }
-          }),
-          new IconSymbol3DLayer({
-            resource: {
-              href: "https://static.arcgis.com/arcgis/styleItems/Icons/web/resource/Hospital.svg"
-            },
-            material: {
-              color: "white"
-            },
-            outline: {
-              color: "black",
-              size: 5
-            },
-            size: 8,
-          }),
-        ]
-      })
-    })
-    // opacity: 0.7
-  });
+
+  private filter: SlopeFilter;
+
+  private chart: Chart;
   
   public dataLayers = new GroupLayer({
     title: "Winter Resort Data",
     visible: true,
-    layers: [this.accidentsHeat, this.accidents]
+    layers: [this.accidentsHeat, accidents]
   });
   
   constructor(public view: SceneView) {
     
     whenOnce(() => this.dataLayers.visible).then(() => this.addChart());
+
+    this.filter = new SlopeFilter({view});
   }
 
   public addLayers() {
@@ -186,28 +330,48 @@ export default class AccidentsChart {
     accidentsWidget.appendChild(accidentsChart);
     accidentsWidget.appendChild(timeSLiderDiv);
 
+    const expand = new Expand({
+      content: accidentsWidget,
+      view: this.view,
+      expanded: false,
+      expandIconClass: "esri-icon-chart"
+      // group: "environment"
+    });
+
+    watch(() => expand.expanded, (expanded) => {
+      this.filter.enabled = expanded;
+    });
+
     this.view.ui.add(
-      new Expand({
-        content: accidentsWidget,
-        view: this.view,
-        expanded: true,
-        expandIconClass: "esri-icon-chart"
-        // group: "environment"
-      }),
+      expand,
       "bottom-right"
     );
 
-    this.updateChart(accidentsChart);
+    const updateChart = promiseUtils.debounce(() => this.updateChart(accidentsChart));
+
+    updateChart();
+    watch(() => this.filter.accidentIds, () => {
+      updateChart();
+    });
+    watch(() => timeSlider.timeExtent, () => {
+      updateChart();
+    });
   }
+
 
   private async updateChart(accidentsChart: HTMLCanvasElement) {
     const field = "Alarmzeit";
 
-    await this.accidents.load();
-    const query = this.accidents.createQuery();
+    await accidents.load();
+    const lv = await this.view.whenLayerView(accidents);
+    const query = lv.createQuery();
+    const accidentIds = this.filter.accidentIds;
+    if (accidentIds && accidentIds.length) {
+      query.objectIds = accidentIds;
+    }
     query.outFields = ["*"];
     query.returnGeometry = false;
-    const result = await this.accidents.queryFeatures(query);
+    const result = await lv.queryFeatures(query);
 
     const days = differenceInDays(END, START);
     
@@ -240,7 +404,10 @@ export default class AccidentsChart {
 
     const data = bins.flat();
 
-    const scatterchart = new Chart(accidentsChart.getContext("2d"), {
+    if (this.chart) {
+      this.chart.destroy();
+    }
+    this.chart = new Chart(accidentsChart.getContext("2d"), {
       type: 'matrix',
       data: {
         datasets: [{
@@ -276,6 +443,9 @@ export default class AccidentsChart {
       },
       options: {
         aspectRatio: 8,
+        animation: {
+          duration: 0
+        },
         plugins: {
           // legend: false,
           tooltip: {
@@ -356,7 +526,7 @@ export default class AccidentsChart {
       }
     });
 
-    scatterchart.resize(1000, 200);
+    this.chart.resize(1000, 200);
 
     console.log("updated-chart");
   }
