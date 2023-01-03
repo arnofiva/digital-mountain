@@ -13,7 +13,7 @@ const hillshade = new TileLayer({
   portalItem: { id: "1b243539f4514b6ba35e7d995890db1d" }, // Light
   // url: "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer",
   blendMode: "multiply",
-  visible: true,
+  visible: false,
   opacity: 0.5,
   title: "World Hillshade (Blended)"
 });

@@ -31,6 +31,7 @@ import { snowCatLive, snowCatStream, visitorCountStream } from "./layers/live";
 import { rocks, trees } from "./layers/nature";
 import osmFeatures from "./layers/osm";
 import { buildings, skiLiftPoles, skiLifts, skiLiftsWithSag, skiSlopes, skiSlopesArea } from "./layers/resort";
+import ReliefLayer from "./layers/slope";
 import swisstopoSlope from "./layers/swisstopoSlope";
 import { connect as connectLiftEditor } from "./liftEditor";
 import { connect as connectSlopeEditor } from "./slopeEditor";
@@ -57,6 +58,11 @@ IdentityManager.registerOAuthInfos([oAuthInfo]);
 // esriConfig.apiKey =
 // "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
 
+const relief = new ReliefLayer();
+relief.url = "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer/tile/{z}/{y}/{x}";
+relief.shade = true;
+relief.shadeDirection = -1;
+
 const view = new SceneView({
   qualityProfile: "high",
   container: "viewDiv",
@@ -78,6 +84,7 @@ const view = new SceneView({
         title: "Basemap",
         layers: [rocks, swisstopoSlope, trees, buildings]
       }),
+      relief,
       hillshade,
       new GroupLayer({
         title: "Winter Resort Context",

@@ -5,22 +5,22 @@ export const topoSources = {
 };
 
 export const topoLayers = [
-  {
-    "id": "Special area of interest/Rock or gravel",
-    "type": "fill",
-    "source": "esri",
-    "source-layer": "Special area of interest",
-    "filter": ["==", "_symbol", 16],
-    // minzoom: 10,
-    "layout": {},
-    "paint": {
-      "fill-opacity": 1,
-      "fill-color": "#dcd7d6",
-      "fill-antialias": true,
-      "fill-translate": [0, 0],
-      "fill-translate-anchor": "map"
-    }
-  },
+  // {
+  //   "id": "Special area of interest/Rock or gravel",
+  //   "type": "fill",
+  //   "source": "esri",
+  //   "source-layer": "Special area of interest",
+  //   "filter": ["==", "_symbol", 16],
+  //   // minzoom: 10,
+  //   "layout": {},
+  //   "paint": {
+  //     "fill-opacity": 1,
+  //     "fill-color": "#dcd7d6",
+  //     "fill-antialias": true,
+  //     "fill-translate": [0, 0],
+  //     "fill-translate-anchor": "map"
+  //   }
+  // },
   // Sand
   // {
   //   "id": "Special area of interest/Rock or gravel",
