@@ -349,13 +349,9 @@ export default class AccidentsChart {
 
     const updateChart = promiseUtils.debounce(() => this.updateChart(accidentsChart));
 
-    updateChart();
-    watch(() => this.filter.accidentIds, () => {
-      updateChart();
-    });
-    watch(() => timeSlider.timeExtent, () => {
-      updateChart();
-    });
+    watch(() => accidents.loaded, () => updateChart());
+    watch(() => this.filter.accidentIds, () => updateChart());
+    watch(() => timeSlider.timeExtent, () => updateChart());
   }
 
 
