@@ -186,13 +186,15 @@ const removeAuthLayers = () => {
   logoutButton.innerText = "Logout";
 };
 
-IdentityManager.checkSignInStatus(snowCatStream.url).then((credentials) => {
+const authUrl = "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Unfaelle_TimeEnabled/FeatureServer";
+
+IdentityManager.checkSignInStatus(authUrl).then((credentials) => {
   addAuthLayers(credentials.userId);
   return credentials;
 });
 
 loginButton.onclick = () => {
-  IdentityManager.getCredential(snowCatStream.url).then((credentials) => {
+  IdentityManager.getCredential(authUrl).then((credentials) => {
     addAuthLayers(credentials.userId);
     return credentials;
   });
