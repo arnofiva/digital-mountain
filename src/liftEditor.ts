@@ -7,12 +7,11 @@ import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
 import {
+  FillSymbol3DLayer,
   IconSymbol3DLayer,
-  LineSymbol3D,
-  LineSymbol3DLayer,
-  ObjectSymbol3DLayer,
-  PathSymbol3DLayer,
-  PointSymbol3D
+
+  LineSymbol3D, LineSymbol3DLayer, ObjectSymbol3DLayer,
+  PathSymbol3DLayer, PointSymbol3D, PolygonSymbol3D
 } from "@arcgis/core/symbols";
 import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
@@ -27,7 +26,7 @@ import { AppState, EditMode } from "./appState";
 
 import { LiftType } from "./lifts/liftType";
 import { createSag, sagToSpanRatio } from "./lifts/sag";
-import { skiResortArea } from "./variables";
+import { skiResortArea } from "./skiResortArea";
 import * as vec2 from "./vec2";
 
 const validRouteSymbol = new LineSymbol3D({
@@ -100,80 +99,23 @@ const routeCableSymbol = new LineSymbol3D({
   ]
 });
 
-const parcelGraphic = Graphic.fromJSON({
+const parcelGraphic = new Graphic({
   aggregateGeometries: null,
-  geometry: {
-    hasZ: true,
-    spatialReference: {
-      latestWkid: 3857,
-      wkid: 102100
-    },
-    rings: [
-      [
-        [1066803.8754035952, 5904337.974413049, 0],
-        [1066914.8132661835, 5904296.975074255, 0],
-        [1066952.1857847571, 5904207.165021481, 0],
-        [1066938.254483737, 5904116.941761387, 0],
-        [1066910.5195472448, 5904021.257584308, 0],
-        [1066841.8365712694, 5903914.666690362, 0],
-        [1066823.9988050284, 5903802.494579739, 0],
-        [1066784.7419476176, 5903703.438331386, 0],
-        [1066667.3019431601, 5903602.887730739, 0],
-        [1066523.5497015894, 5903517.04124232, 0],
-        [1066385.0636797776, 5903467.46561698, 0],
-        [1066273.7410229554, 5903447.533528962, 0],
-        [1066177.219819657, 5903437.0739442315, 0],
-        [1066073.2706964412, 5903439.02175548, 0],
-        [1065947.0264826564, 5903416.325213373, 0],
-        [1065847.3211492447, 5903378.385087472, 0],
-        [1065729.910806138, 5903298.522168893, 0],
-        [1065622.3715428326, 5903192.660514935, 0],
-        [1065528.7566176471, 5903063.243229664, 0],
-        [1065497.7386251506, 5902961.120908267, 0],
-        [1065483.162055282, 5902879.123345913, 0],
-        [1065461.711596472, 5902839.791589561, 0],
-        [1065435.5999100334, 5902811.766835864, 0],
-        [1065386.1563132985, 5902784.320980731, 0],
-        [1065320.963017309, 5902778.96658901, 0],
-        [1065221.3692016064, 5902802.41310695, 0],
-        [1065149.8182162014, 5902846.996065546, 0],
-        [1065093.5038349961, 5902918.996078735, 0],
-        [1065070.2361456961, 5903007.555922019, 0],
-        [1065060.290640366, 5903076.200002834, 0],
-        [1065079.1665239574, 5903141.926321395, 0],
-        [1065117.8294191472, 5903190.744147733, 0],
-        [1065162.8269508074, 5903231.814170228, 0],
-        [1065219.075689077, 5903324.218476607, 0],
-        [1065250.3028637217, 5903413.372259424, 0],
-        [1065292.974312427, 5903523.94586606, 0],
-        [1065361.9659193454, 5903647.109744019, 0],
-        [1065457.9144804557, 5903769.951869273, 0],
-        [1065607.5760899817, 5903855.642637354, 0],
-        [1065799.3919939857, 5903962.800021219, 0],
-        [1065991.3370166183, 5904070.227711181, 0],
-        [1066242.33952652, 5904169.038762329, 0],
-        [1066456.974288633, 5904258.732514352, 0],
-        [1066648.6848976812, 5904321.827340563, 0],
-        [1066803.8754035952, 5904337.974413049, 0]
-      ]
+  geometry: skiResortArea,
+  symbol: new PolygonSymbol3D({
+    symbolLayers: [
+      new FillSymbol3DLayer({
+        outline: {
+          size: 2,
+          color: [50, 50, 50, 255]
+        },
+        material: {
+          color: [0, 0, 0, 0]
+        }
+      })
     ]
-  },
-  symbol: {
-    type: "esriSFS",
-    color: [150, 150, 150, 51],
-    outline: {
-      type: "esriSLS",
-      color: [50, 50, 50, 255],
-      width: 2,
-      style: "esriSLSSolid"
-    },
-    style: "esriSFSSolid"
-  },
-  attributes: {},
-  popupTemplate: null
+  })
 });
-
-parcelGraphic.geometry = skiResortArea;
 
 const minLength = 100;
 const maxLength = 10000;

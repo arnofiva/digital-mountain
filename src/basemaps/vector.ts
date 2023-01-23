@@ -1,6 +1,6 @@
 import Basemap from "@arcgis/core/Basemap";
 import VectorTileLayer from "@arcgis/core/layers/VectorTileLayer";
-import { contourSources } from "./vector/contours";
+import ReliefLayer from "../layers/slope";
 import { topoLayers, topoSources } from "./vector/topo";
 
 const topoVTL = new VectorTileLayer({
@@ -12,7 +12,7 @@ const topoVTL = new VectorTileLayer({
       "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/resources/fonts/{fontstack}/{range}.pbf",
     sources: {
       esri: topoSources,
-      contours: contourSources
+      // contours: contourSources
     },
     layers: [
       // Gravel
@@ -28,9 +28,12 @@ const topoVTL = new VectorTileLayer({
   }
 });
 
+const relief = new ReliefLayer();
+relief.url = "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer/tile/{z}/{y}/{x}";
+
 const vectorBasemap = new Basemap({
   title: "Winter (Vector)",
-  baseLayers: [topoVTL]
+  baseLayers: [relief, topoVTL]
   // referenceLayers: [vtl]
 });
 

@@ -10,6 +10,7 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
+import { SpatialReference } from "@arcgis/core/geometry";
 import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import GroupLayer from "@arcgis/core/layers/GroupLayer";
@@ -34,8 +35,8 @@ import { buildings, skiLiftPoles, skiLifts, skiLiftsWithSag, skiSlopes, skiSlope
 import ReliefLayer from "./layers/slope";
 import swisstopoSlope from "./layers/swisstopoSlope";
 import { connect as connectLiftEditor } from "./liftEditor";
+import { skiResortArea } from "./skiResortArea";
 import { connect as connectSlopeEditor } from "./slopeEditor";
-import { skiResortArea } from "./variables";
 
 // setAssetPath("https://js.arcgis.com/calcite-components/1.0.0-beta.77/assets");
 
@@ -64,16 +65,14 @@ relief.url =
 relief.shade = true;
 relief.shadeDirection = -1;
 
+
 const view = new SceneView({
   qualityProfile: "high",
   container: "viewDiv",
 
   camera: {
     position: {
-      spatialReference: {
-        latestWkid: 3857,
-        wkid: 102100
-      },
+      spatialReference: SpatialReference.WebMercator,
       x: 1032463.595299433,
       y: 5915222.80974206,
       z: 2586.840745277703
@@ -89,7 +88,6 @@ const view = new SceneView({
         title: "Basemap",
         layers: [rocks, swisstopoSlope, trees, buildings]
       }),
-      relief,
       hillshade,
       new GroupLayer({
         title: "Winter Resort Context",

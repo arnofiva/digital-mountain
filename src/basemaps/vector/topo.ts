@@ -47,7 +47,7 @@ export const topoLayers = [
     "minzoom": 9,
     "layout": {},
     "paint": {
-      "fill-color": "#a8bfb6",
+      "fill-color": "#d3dbd5",
       "fill-opacity": 1,
       "fill-antialias": false
     }

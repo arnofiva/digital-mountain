@@ -18,7 +18,7 @@ import {
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
 import { LiftType } from "../lifts/liftType";
 import { createSag, sagToSpanRatio } from "../lifts/sag";
-import { skiResortArea } from "../variables";
+import { skiResortArea } from "../skiResortArea";
 
 const skiLiftSymbol = new LineSymbol3D({
   symbolLayers: [
@@ -121,7 +121,7 @@ export const skiSlopesArea = new FeatureLayer({
               color: [...color, 0.25]
             },
             outline: {
-              size: 1.2,
+              size: 2.4,
               color
             }
           })

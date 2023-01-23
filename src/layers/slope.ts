@@ -142,9 +142,9 @@ class ReliefLayer extends BaseTileLayer {
         // data[i * 4 + 2] = 214;
         // data[i * 4 + 3] = 255; // * (slope - 45) / 5;
 
-        data[i * 4] = 255;
-        data[i * 4 + 1] = 255;
-        data[i * 4 + 2] = 255;
+        data[i * 4] = 189;
+        data[i * 4 + 1] = 195;
+        data[i * 4 + 2] = 199;
         data[i * 4 + 3] = 255;
 
         // else if (slope > 40) {
@@ -163,10 +163,10 @@ class ReliefLayer extends BaseTileLayer {
         //   data[i * 4 + 2] = 0;
         // }
       } else {
-        data[i * 4] = 220; //slope * 10;
-        data[i * 4 + 1] = 215;
-        data[i * 4 + 2] = 214;
-        data[i * 4 + 3] = 0; // /*pixels[i] === noDataValue ||*/ slope < 30 ? 0 : 128;
+        data[i * 4] = 255; //slope * 10;
+        data[i * 4 + 1] = 255;
+        data[i * 4 + 2] = 255;
+        data[i * 4 + 3] = 255; // /*pixels[i] === noDataValue ||*/ slope < 30 ? 0 : 128;
       }
 
       // if (this.shade && shade && slope < 30) {

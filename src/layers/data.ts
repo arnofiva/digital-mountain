@@ -69,6 +69,7 @@ const accidents = new FeatureLayer({
       expression: "0"
     }
   },
+  visible: false,
   outFields: ["*"],
   screenSizePerspectiveEnabled: true,
   // featureReduction: {
@@ -283,8 +284,9 @@ export default class AccidentsChart {
     this.filter = new SlopeFilter({ view });
   }
 
-  public addLayers() {
+  public async addLayers() {
     this.view.map.add(this.dataLayers, 0);
+
   }
 
   public removeLayers() {
