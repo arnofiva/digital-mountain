@@ -9,18 +9,7 @@ import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { AppState, EditMode } from "./appState";
 
-const validRouteSymbol = new LineSymbol3D({
-  symbolLayers: [
-    new LineSymbol3DLayer({
-      material: {
-        color: [0, 122, 194, 1]
-      },
-      join: "bevel",
-      cap: "round",
-      size: 2
-    })
-  ]
-});
+const validRouteSymbol = new LineSymbol3D({ symbolLayers: [new LineSymbol3DLayer()] });
 
 const invalidRouteSymbol = new LineSymbol3D({
   symbolLayers: [
