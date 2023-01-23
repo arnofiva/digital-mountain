@@ -70,12 +70,16 @@ const view = new SceneView({
 
   camera: {
     position: {
-      longitude: 9.34595657,
-      latitude: 46.74661722,
-      z: 6311.31201
+      spatialReference: {
+        latestWkid: 3857,
+        wkid: 102100
+      },
+      x: 1032463.595299433,
+      y: 5915222.80974206,
+      z: 2586.840745277703
     },
-    heading: 320.15,
-    tilt: 68.68
+    heading: 333.24798512295325,
+    tilt: 60.465554086330535
   },
 
   map: new Map({
