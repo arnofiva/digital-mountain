@@ -1,4 +1,3 @@
-
 // const swisstopoUrl =
 //   "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg";
 

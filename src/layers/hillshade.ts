@@ -20,7 +20,6 @@ const hillshade = new TileLayer({
 
 hillshade.load().then(() => {
   // console.log({ hillshade });
-
   // const lods = hillshade.tileInfo.lods.slice(0, 15);
   // hillshade.tileInfo.lods = lods;
 });

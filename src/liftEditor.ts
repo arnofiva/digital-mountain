@@ -8,8 +8,11 @@ import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
 import {
   IconSymbol3DLayer,
-  LineSymbol3D, LineSymbol3DLayer, ObjectSymbol3DLayer,
-  PathSymbol3DLayer, PointSymbol3D
+  LineSymbol3D,
+  LineSymbol3DLayer,
+  ObjectSymbol3DLayer,
+  PathSymbol3DLayer,
+  PointSymbol3D
 } from "@arcgis/core/symbols";
 import LineStyleMarker3D from "@arcgis/core/symbols/LineStyleMarker3D";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
@@ -204,11 +207,14 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       })
     ]
   });
-  view.ui.add(new Expand({
-    view,
-    content: elevationProfile,
-    expanded: false
-  }), "top-right");
+  view.ui.add(
+    new Expand({
+      view,
+      content: elevationProfile,
+      expanded: false
+    }),
+    "top-right"
+  );
 
   const parcelLayer = new GraphicsLayer({
     graphics: [parcelGraphic],
@@ -515,18 +521,18 @@ export function connect(view: SceneView, appState: AppState): SketchViewModel[] 
       const symbol = reuseSymbols
         ? towerLayer.graphics.getItemAt(i).symbol
         : new PointSymbol3D({
-          symbolLayers: [
-            new ObjectSymbol3DLayer({
-              width: 2,
-              depth: 2,
-              height: maxHeight,
-              heading,
-              tilt,
-              resource: { primitive: "cylinder" },
-              material: { color: "black" }
-            })
-          ]
-        });
+            symbolLayers: [
+              new ObjectSymbol3DLayer({
+                width: 2,
+                depth: 2,
+                height: maxHeight,
+                heading,
+                tilt,
+                resource: { primitive: "cylinder" },
+                material: { color: "black" }
+              })
+            ]
+          });
       newFeatures.push(new Graphic({ attributes: { objectID, heading, tilt }, geometry, symbol }));
       objectID++;
     }

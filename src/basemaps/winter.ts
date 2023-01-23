@@ -1,21 +1,18 @@
-
-
 import Basemap from "@arcgis/core/Basemap";
 import ImageryTileLayer from "@arcgis/core/layers/ImageryTileLayer";
 import WebTileLayer from "@arcgis/core/layers/WebTileLayer";
 import { RasterShadedReliefRenderer } from "@arcgis/core/rasterRenderers";
 import MultipartColorRamp from "@arcgis/core/rest/support/MultipartColorRamp";
 
-const url =
-  "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer";
+const url = "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer";
 
-  const winterColors = [
-    // [49, 130, 189],
-    // [107, 174, 214],
-    [189, 215, 231],
-    [189, 190, 231],
-    [255, 255, 255]
-  ];
+const winterColors = [
+  // [49, 130, 189],
+  // [107, 174, 214],
+  [189, 215, 231],
+  [189, 190, 231],
+  [255, 255, 255]
+];
 
 const createColorRamps = (colors: number[][]) => {
   const colorRamps: any[] = [];
@@ -34,7 +31,6 @@ const createColorRamps = (colors: number[][]) => {
   });
 };
 
-
 const renderer = new RasterShadedReliefRenderer({
   // const renderer = new RasterStretchRenderer({
   colorRamp: createColorRamps(winterColors),
@@ -52,7 +48,6 @@ const layer = new ImageryTileLayer({
   renderer: renderer,
   opacity: 1
 });
-
 
 const winterBasemap = new Basemap({
   title: "Winter (ImageryTileLayer)",

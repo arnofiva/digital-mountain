@@ -1,7 +1,6 @@
 import Basemap from "@arcgis/core/Basemap";
 import WebTileLayer from "@arcgis/core/layers/WebTileLayer";
 
-
 const winterImageryBasemap = new Basemap({
   title: "Winter (Imagery)",
   baseLayers: [

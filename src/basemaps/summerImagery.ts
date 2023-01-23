@@ -1,8 +1,6 @@
 import Basemap from "@arcgis/core/Basemap";
 import TileLayer from "@arcgis/core/layers/TileLayer";
 
-
-
 const summerImageryBasemap = new Basemap({
   title: "Summer (Imagery)",
   baseLayers: [

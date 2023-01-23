@@ -3,7 +3,7 @@ import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import { Chart } from "chart.js/auto"; // https://www.chartjs.org/docs/latest/getting-started/integration.html
-import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
+import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 
 import differenceInDays from "date-fns/differenceInDays";
 
@@ -18,7 +18,7 @@ import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
 import SceneView from "@arcgis/core/views/SceneView";
 import Expand from "@arcgis/core/widgets/Expand";
 import TimeSlider from "@arcgis/core/widgets/TimeSlider";
-import 'chartjs-adapter-date-fns';
+import "chartjs-adapter-date-fns";
 import { addDays, isWeekend } from "date-fns";
 import { skiSlopesArea } from "./resort";
 
@@ -55,7 +55,7 @@ const heatmapRenderer = new HeatmapRenderer({
 
 type SlopeFilterProps = {
   view: SceneView;
-}
+};
 
 const accidents = new FeatureLayer({
   title: "Accidents (Location)",
@@ -85,15 +85,15 @@ const accidents = new FeatureLayer({
         maxWorldLength: 200,
         minWorldLength: 1
       },
-  
+
       callout: {
         type: "line", // autocasts as new LineCallout3D()
         color: [0, 100, 0],
-        size: 1.2,
+        size: 1.2
         // border: {
         //   color: [50, 50, 50]
         // }
-      }, 
+      },
       symbolLayers: [
         new IconSymbol3DLayer({
           resource: {
@@ -101,8 +101,8 @@ const accidents = new FeatureLayer({
           },
           size: 12,
           material: {
-            color: [0, 100, 0],
-          },
+            color: [0, 100, 0]
+          }
           // outline: {
           //   color: "black",
           //   size: 1
@@ -119,8 +119,8 @@ const accidents = new FeatureLayer({
             color: "black",
             size: 5
           },
-          size: 8,
-        }),
+          size: 8
+        })
       ]
     })
   })
@@ -129,7 +129,6 @@ const accidents = new FeatureLayer({
 
 @subclass()
 class SlopeFilter extends Accessor {
-
   @property()
   enabled = false;
 
@@ -148,23 +147,26 @@ class SlopeFilter extends Accessor {
   accidentIds: number[];
 
   @property()
-  private slopeHighlight = {remove: () => {}};
+  private slopeHighlight = { remove: () => {} };
 
   @property()
-  private accidentHighlight = {remove: () => {}};
+  private accidentHighlight = { remove: () => {} };
 
   constructor(props: SlopeFilterProps) {
     super(props);
 
-    let viewHandle: {remove: () => void} | undefined;
+    let viewHandle: { remove: () => void } | undefined;
 
-    watch(() => this.enabled, () => {
-      if (viewHandle) {
-        viewHandle.remove();
+    watch(
+      () => this.enabled,
+      () => {
+        if (viewHandle) {
+          viewHandle.remove();
+        }
+
+        viewHandle = this.view.on("pointer-move", (e) => this.updateFilter(e));
       }
-
-      viewHandle = this.view.on("pointer-move", (e) => this.updateFilter(e));
-    });
+    );
   }
 
   private parseSlopeId(slope: Graphic) {
@@ -179,7 +181,7 @@ class SlopeFilter extends Accessor {
 
   private async queryAccidentsByGeometry(lv: FeatureLayerView) {
     if (this.slopes) {
-      const geometry = geometryEngine.union(this.slopes.map(slope => slope.geometry));
+      const geometry = geometryEngine.union(this.slopes.map((slope) => slope.geometry));
       const query = lv.createQuery();
       query.geometry = geometry;
       return await lv.queryObjectIds(query);
@@ -200,24 +202,21 @@ class SlopeFilter extends Accessor {
 
   private async highlightAccidents() {
     const lv = await this.view.whenLayerView(accidents);
-    
-    const [ids1, ids2] = await Promise.all([
-      this.queryAccidentsByGeometry(lv),
-      this.queryAccidentsBySlopeId(lv)
-    ]);
+
+    const [ids1, ids2] = await Promise.all([this.queryAccidentsByGeometry(lv), this.queryAccidentsBySlopeId(lv)]);
 
     const accidentIds = [...ids1, ...ids2];
     this.accidentIds = accidentIds;
     this.accidentHighlight = lv.highlight(accidentIds);
   }
 
-  private updateFilter = promiseUtils.debounce(async (e: __esri.ViewPointerMoveEvent) =>   {
+  private updateFilter = promiseUtils.debounce(async (e: __esri.ViewPointerMoveEvent) => {
     if (this.view.popup.visible) {
       this.deselect();
       return;
     }
     const hitTest = await this.view.hitTest(e);
-    const slopeHit = hitTest.results.find(result => result.layer === skiSlopesArea);
+    const slopeHit = hitTest.results.find((result) => result.layer === skiSlopesArea);
 
     if (slopeHit && slopeHit.type === "graphic") {
       const slope = slopeHit.graphic;
@@ -237,12 +236,12 @@ class SlopeFilter extends Accessor {
         this.slopes = slopes;
         this.slopeHighlight = lv.highlight(slopes);
         this.highlightAccidents();
-        console.log("HIGHTLIGHT", {slopeId});
+        console.log("HIGHTLIGHT", { slopeId });
       }
     } else {
       this.deselect();
     }
-  })
+  });
 
   private deselect() {
     this.slopeId = undefined;
@@ -251,13 +250,9 @@ class SlopeFilter extends Accessor {
     this.slopeHighlight.remove();
     this.accidentHighlight.remove();
   }
-
-
 }
 
-
 export default class AccidentsChart {
-
   private accidentsHeat = new FeatureLayer({
     title: "Accidents (Heatmap)",
     portalItem: {
@@ -275,18 +270,17 @@ export default class AccidentsChart {
   private filter: SlopeFilter;
 
   private chart: Chart;
-  
+
   public dataLayers = new GroupLayer({
     title: "Winter Resort Data",
     visible: true,
     layers: [this.accidentsHeat, accidents]
   });
-  
+
   constructor(public view: SceneView) {
-    
     whenOnce(() => this.dataLayers.visible).then(() => this.addChart());
 
-    this.filter = new SlopeFilter({view});
+    this.filter = new SlopeFilter({ view });
   }
 
   public addLayers() {
@@ -298,7 +292,6 @@ export default class AccidentsChart {
   }
 
   private addChart() {
-
     const accidentsChart = document.createElement("canvas");
     accidentsChart.classList.add("accidents-chart");
 
@@ -322,7 +315,7 @@ export default class AccidentsChart {
         start: START,
         end: END
       },
-      labelFormatFunction: () => {},
+      labelFormatFunction: () => {}
     });
 
     const accidentsWidget = document.createElement("div");
@@ -338,22 +331,30 @@ export default class AccidentsChart {
       // group: "environment"
     });
 
-    watch(() => expand.expanded, (expanded) => {
-      this.filter.enabled = expanded;
-    });
-
-    this.view.ui.add(
-      expand,
-      "bottom-right"
+    watch(
+      () => expand.expanded,
+      (expanded) => {
+        this.filter.enabled = expanded;
+      }
     );
+
+    this.view.ui.add(expand, "bottom-right");
 
     const updateChart = promiseUtils.debounce(() => this.updateChart(accidentsChart));
 
-    watch(() => accidents.loaded, () => updateChart());
-    watch(() => this.filter.accidentIds, () => updateChart());
-    watch(() => timeSlider.timeExtent, () => updateChart());
+    watch(
+      () => accidents.loaded,
+      () => updateChart()
+    );
+    watch(
+      () => this.filter.accidentIds,
+      () => updateChart()
+    );
+    watch(
+      () => timeSlider.timeExtent,
+      () => updateChart()
+    );
   }
-
 
   private async updateChart(accidentsChart: HTMLCanvasElement) {
     const field = "Alarmzeit";
@@ -370,21 +371,22 @@ export default class AccidentsChart {
     const result = await lv.queryFeatures(query);
 
     const days = differenceInDays(END, START);
-    
-    const bins = [...Array(days).keys()].map(day =>
-      HOURS.map(hour => ({
+
+    const bins = [...Array(days).keys()].map((day) =>
+      HOURS.map((hour) => ({
         x: addDays(START, day),
         y: hour.toString(),
         accidents: [] as Graphic[]
-      })));
+      }))
+    );
 
     let maxAccidents = 0;
-    result.features.forEach(f => {
+    result.features.forEach((f) => {
       const alarmTS = f.getAttribute(field);
       const alarm = new Date(alarmTS);
       const dayIdx = differenceInDays(alarmTS, START);
       if (dayIdx < 0 || days <= dayIdx) {
-        console.log("OOB", {alarm, objID: f.getObjectId()});
+        console.log("OOB", { alarm, objID: f.getObjectId() });
         return;
       }
 
@@ -404,38 +406,40 @@ export default class AccidentsChart {
       this.chart.destroy();
     }
     this.chart = new Chart(accidentsChart.getContext("2d"), {
-      type: 'matrix',
+      type: "matrix",
       data: {
-        datasets: [{
-          label: 'Accidents 21/22',
-          data,
-          backgroundColor(c) {
-            const value = data[c.dataIndex].accidents.length;
-            const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
-            const color = isWeekend(data[c.dataIndex].x) ?  new Color("blue") : new Color("green");
-            color.a = alpha;
-            return `rgba(${color.toRgba().join(",")})`;
-          },
-          borderColor(c) {
-            const value = data[c.dataIndex].accidents.length;
-            const alpha = Math.min(1, Math.pow(value * 1.5 / maxAccidents, 1.2));
-            const color = isWeekend(data[c.dataIndex].x) ?  new Color("dark-blue") : new Color("dark-green");
-            color.a = alpha;
-            return `rgba(${color.toRgba().join(",")})`;
-          },
-          borderWidth: 1,
-          hoverBackgroundColor: 'yellow',
-          hoverBorderColor: 'yellowgreen',
-          width(c) {
-            const a = c.chart.chartArea || {right: 0, left: 0};
-            
-            return (a.right - a.left) / days - 1;
-          },
-          height(c) {
-            const a = c.chart.chartArea || {bottom: 0, top: 0};
-            return (a.bottom - a.top) / HOURS.length - 1;
+        datasets: [
+          {
+            label: "Accidents 21/22",
+            data,
+            backgroundColor(c) {
+              const value = data[c.dataIndex].accidents.length;
+              const alpha = Math.min(1, Math.pow((value * 1.5) / maxAccidents, 1.2));
+              const color = isWeekend(data[c.dataIndex].x) ? new Color("blue") : new Color("green");
+              color.a = alpha;
+              return `rgba(${color.toRgba().join(",")})`;
+            },
+            borderColor(c) {
+              const value = data[c.dataIndex].accidents.length;
+              const alpha = Math.min(1, Math.pow((value * 1.5) / maxAccidents, 1.2));
+              const color = isWeekend(data[c.dataIndex].x) ? new Color("dark-blue") : new Color("dark-green");
+              color.a = alpha;
+              return `rgba(${color.toRgba().join(",")})`;
+            },
+            borderWidth: 1,
+            hoverBackgroundColor: "yellow",
+            hoverBorderColor: "yellowgreen",
+            width(c) {
+              const a = c.chart.chartArea || { right: 0, left: 0 };
+
+              return (a.right - a.left) / days - 1;
+            },
+            height(c) {
+              const a = c.chart.chartArea || { bottom: 0, top: 0 };
+              return (a.bottom - a.top) / HOURS.length - 1;
+            }
           }
-        }]
+        ]
       },
       options: {
         aspectRatio: 8,
@@ -448,21 +452,21 @@ export default class AccidentsChart {
             displayColors: false,
             callbacks: {
               title() {
-                return '';
+                return "";
               },
               label(context) {
                 const v = data[context.dataIndex];
                 const iso = v.x.toString().substring(0, 10);
-                return ['day: ' + iso, 'hours: ' + v.y, 'accidents: ' + v.accidents.length, 'max: ' + maxAccidents];
+                return ["day: " + iso, "hours: " + v.y, "accidents: " + v.accidents.length, "max: " + maxAccidents];
               }
             }
-          },
+          }
         },
         scales: {
           y: {
-            type: 'category',
+            type: "category",
             offset: true,
-            labels: HOURS.map(h => h.toString()),
+            labels: HOURS.map((h) => h.toString()),
             // time: {
             //   unit: 'hour',
             //   round: 'hour',
@@ -473,7 +477,7 @@ export default class AccidentsChart {
             //   }
             // },
             reverse: false,
-            position: 'right',
+            position: "right",
             ticks: {
               maxRotation: 0,
               autoSkip: true,
@@ -489,15 +493,15 @@ export default class AccidentsChart {
             }
           },
           x: {
-            type: 'time',
-            position: 'bottom',
+            type: "time",
+            position: "bottom",
             offset: true,
             time: {
-              unit: 'day',
-              round: 'day',
+              unit: "day",
+              round: "day",
               isoWeekday: 1,
               displayFormats: {
-                week: 'MMM dd'
+                week: "MMM dd"
               }
             },
             ticks: {
@@ -510,14 +514,14 @@ export default class AccidentsChart {
             grid: {
               display: false,
               // drawBorder: false,
-              tickLength: 0,
+              tickLength: 0
             }
           }
         },
         layout: {
           padding: {
             top: 10
-          },
+          }
         }
       }
     });
@@ -526,7 +530,4 @@ export default class AccidentsChart {
 
     console.log("updated-chart");
   }
-
-
 }
-

@@ -3,14 +3,13 @@ import BaseTileLayer from "@arcgis/core/layers/BaseTileLayer";
 
 import request from "@arcgis/core/request";
 
-import * as Lerc from 'lerc';
+import * as Lerc from "lerc";
 
 // esri
 // esri.core.accessorSupport
 // esri.layers
 @subclass()
 class ReliefLayer extends BaseTileLayer {
-
   @property({
     type: String
   })
@@ -19,27 +18,25 @@ class ReliefLayer extends BaseTileLayer {
   @property({
     type: Boolean
   })
-  shade: boolean = false;
+  shade = false;
 
   @property({
     type: Number
   })
-  shadeDirection: number = 1;
+  shadeDirection = 1;
 
   // generate the tile url for a given level, row and column
   public getTileUrl(level: number, row: number, col: number) {
-    return this.url.replace("{z}", `${level}`).replace("{x}",
-      `${col}`).replace("{y}", `${row}`);
+    return this.url.replace("{z}", `${level}`).replace("{x}", `${col}`).replace("{y}", `${row}`);
   }
 
   // This method fetches tiles for the specified level and size.
   // Override this method to process the data returned from the server.
-  public async fetchTile(level: number, row: number, col: number, options: {signal?: AbortSignal}) {
-
+  public async fetchTile(level: number, row: number, col: number, options: { signal?: AbortSignal }) {
     await Lerc.load();
 
     const levelDelta = 1;
-    let uLevel = level > levelDelta ? level - levelDelta : 0;
+    const uLevel = level > levelDelta ? level - levelDelta : 0;
 
     // if (level > 16) {
     //   uLevel = 14;
@@ -54,7 +51,7 @@ class ReliefLayer extends BaseTileLayer {
 
     // call getTileUrl() method to construct the URL to tiles
     // for a given level, row and col provided by the LayerView
-    var url = this.getTileUrl(uLevel, uRow, uCol);
+    const url = this.getTileUrl(uLevel, uRow, uCol);
 
     // request for tiles based on the generated url
     // set allowImageDataAccess to true to allow
@@ -81,7 +78,6 @@ class ReliefLayer extends BaseTileLayer {
 
     //const noDataValue = stats.noDataValue;
 
-
     const imageData = context.createImageData(width, height);
     const data = imageData.data;
 
@@ -89,11 +85,11 @@ class ReliefLayer extends BaseTileLayer {
     const sTop = Math.floor((row - uRow * uFactor) * height);
 
     const kernel = [
-      { x: -1, y:  0 },
-      { x:  1, y:  0 },
-      { x:  0, y: -1 },
-      { x:  0, y:  1 }
-    ]
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+      { x: 0, y: -1 },
+      { x: 0, y: 1 }
+    ];
 
     const lengthPerPixel = 40075000 / lerc.width / (1 << uLevel) / 2; //(1 << (uLevel + 1));
 
@@ -101,15 +97,14 @@ class ReliefLayer extends BaseTileLayer {
     let center, sample, slope, sMax, sMin;
     let shade;
 
-    for (var i = 0; i < width * height; i++) {
+    for (let i = 0; i < width * height; i++) {
       x = i % width;
       y = Math.floor(i / width);
 
       if (sLeft === 0 && x === 0) {
-          x = 1;
-      }
-      else if (sTop === 0 && y === 0) {
-          y = 1;
+        x = 1;
+      } else if (sTop === 0 && y === 0) {
+        y = 1;
       }
 
       j = sLeft + x + (sTop + y) * lerc.width;
@@ -133,16 +128,15 @@ class ReliefLayer extends BaseTileLayer {
           sMax = Math.max(sMax, sample);
           sMin = Math.min(sMin, sample);
 
-          if (sample > 0 && center > 0 && sample - center < 0 && (c.x === this.shadeDirection)) {
+          if (sample > 0 && center > 0 && sample - center < 0 && c.x === this.shadeDirection) {
             shade = true;
           }
         }
       }
 
-      slope = Math.atan((sMax - sMin) / 3 / lengthPerPixel) / Math.PI * 180;
+      slope = (Math.atan((sMax - sMin) / 3 / lengthPerPixel) / Math.PI) * 180;
 
       if (slope >= 45) {
-
         // data[i * 4] = 220;
         // data[i * 4 + 1] = 215;
         // data[i * 4 + 2] = 214;
@@ -153,28 +147,27 @@ class ReliefLayer extends BaseTileLayer {
         data[i * 4 + 2] = 255;
         data[i * 4 + 3] = 255;
 
-      // else if (slope > 40) {
-      //   data[i * 4] = 255;
-      //   data[i * 4 + 1] = 0;
-      //   data[i * 4 + 2] = 0;
-      // }
-      // else if (slope > 35) {
-      //   data[i * 4] = 255;
-      //   data[i * 4 + 1] = 128;
-      //   data[i * 4 + 2] = 0;
-      // }
-      // else if (slope > 30) {
-      //   data[i * 4] = 255;
-      //   data[i * 4 + 1] = 255;
-      //   data[i * 4 + 2] = 0;
-      // }
+        // else if (slope > 40) {
+        //   data[i * 4] = 255;
+        //   data[i * 4 + 1] = 0;
+        //   data[i * 4 + 2] = 0;
+        // }
+        // else if (slope > 35) {
+        //   data[i * 4] = 255;
+        //   data[i * 4 + 1] = 128;
+        //   data[i * 4 + 2] = 0;
+        // }
+        // else if (slope > 30) {
+        //   data[i * 4] = 255;
+        //   data[i * 4 + 1] = 255;
+        //   data[i * 4 + 2] = 0;
+        // }
       } else {
         data[i * 4] = 220; //slope * 10;
         data[i * 4 + 1] = 215;
         data[i * 4 + 2] = 214;
         data[i * 4 + 3] = 0; // /*pixels[i] === noDataValue ||*/ slope < 30 ? 0 : 128;
       }
-
 
       // if (this.shade && shade && slope < 30) {
 
@@ -207,9 +200,6 @@ class ReliefLayer extends BaseTileLayer {
 
     return canvas;
   }
-
-
-
 }
 
 export default ReliefLayer;

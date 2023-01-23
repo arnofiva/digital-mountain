@@ -59,7 +59,8 @@ IdentityManager.registerOAuthInfos([oAuthInfo]);
 // "AAPK4021da52134346b7bb16aaaef2e378e7jSoa-zYBTpm8627wfHulkfMJMm9QwSGgQdAvuFSATu9YLReA58rrEhtnRpf8zXKm";
 
 const relief = new ReliefLayer();
-relief.url = "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer/tile/{z}/{y}/{x}";
+relief.url =
+  "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer/tile/{z}/{y}/{x}";
 relief.shade = true;
 relief.shadeDirection = -1;
 
@@ -193,7 +194,8 @@ const removeAuthLayers = () => {
   logoutButton.innerText = "Logout";
 };
 
-const authUrl = "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Unfaelle_TimeEnabled/FeatureServer";
+const authUrl =
+  "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Unfaelle_TimeEnabled/FeatureServer";
 
 IdentityManager.checkSignInStatus(authUrl).then((credentials) => {
   addAuthLayers(credentials.userId);
@@ -229,8 +231,6 @@ view.ui.add(
   }),
   "top-right"
 );
-
-
 
 view.ui.add(
   new Expand({
@@ -274,8 +274,8 @@ loader?.parentElement?.removeChild(loader);
 window["view"] = view;
 
 view.when().then(async () => {
-  [skiLifts, trees, skiLiftPoles, skiSlopes, skiSlopesArea].forEach(async l => {
-    const lv = await view.whenLayerView(l) as FeatureLayerView | SceneLayerView;
+  [skiLifts, trees, skiLiftPoles, skiSlopes, skiSlopesArea].forEach(async (l) => {
+    const lv = (await view.whenLayerView(l)) as FeatureLayerView | SceneLayerView;
     lv.filter = new FeatureFilter({
       geometry: skiResortArea
     });
@@ -285,5 +285,4 @@ view.when().then(async () => {
   view.popup.dockOptions = {
     position: "top-left"
   };
-
 });

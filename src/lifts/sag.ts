@@ -127,7 +127,6 @@ const createSagLine = (from: Point, to: Point, sagToSpanRatio: number) => {
   const totalShearZ = lastElevDiff - firstElevDiff;
   const shearZIncrement = totalShearZ / count;
 
-
   // This is where we are calculating the line shape based on the known z-values determined above.
   // Start at fromPoint, and drop it by sag.
   const spatialReference = from.spatialReference;
@@ -163,7 +162,6 @@ export function createSag(line: Polyline, sagToSpanRatio: number) {
   line.paths.forEach((path, index) => {
     const sagPath: number[][][] = [];
     for (let i = 0; i < path.length; i++) {
-
       const fromPoint = line.getPoint(index, i);
       if (i + 1 == path.length) {
         sagPath.push([[fromPoint.x, fromPoint.y, fromPoint.z]]);

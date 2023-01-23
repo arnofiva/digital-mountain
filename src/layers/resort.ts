@@ -5,7 +5,16 @@ import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import { UniqueValueRenderer } from "@arcgis/core/rasterRenderers";
 import { SimpleRenderer } from "@arcgis/core/renderers";
-import { FillSymbol3DLayer, LineSymbol3D, LineSymbol3DLayer, MeshSymbol3D, ObjectSymbol3DLayer, PathSymbol3DLayer, PointSymbol3D, PolygonSymbol3D } from "@arcgis/core/symbols";
+import {
+  FillSymbol3DLayer,
+  LineSymbol3D,
+  LineSymbol3DLayer,
+  MeshSymbol3D,
+  ObjectSymbol3DLayer,
+  PathSymbol3DLayer,
+  PointSymbol3D,
+  PolygonSymbol3D
+} from "@arcgis/core/symbols";
 import LineStylePattern3D from "@arcgis/core/symbols/patterns/LineStylePattern3D";
 import { LiftType } from "../lifts/liftType";
 import { createSag, sagToSpanRatio } from "../lifts/sag";
@@ -35,14 +44,14 @@ export const skiLifts = new FeatureLayer({
   renderer: new SimpleRenderer({
     symbol: skiLiftSymbol
   }),
-  visible: false,
+  visible: false
 });
 
 export const skiLiftsWithSag = new GraphicsLayer({
   title: "With Sag",
   elevationInfo: {
     mode: "absolute-height"
-  },
+  }
 });
 
 export const skiLiftPoles = new SceneLayer({
@@ -98,18 +107,16 @@ export const skiSlopesArea = new FeatureLayer({
         })
       ]
     }),
-    uniqueValueInfos:
-      [
-        {value: "Blau", color: [20, 158, 206]},
-        {value: "Rot", color: [237, 81, 81]},
-        {value: "Orange", color: [237, 166, 80]},
-        {value: "Schwarz", color: [80, 80, 80]}
-      ].map(({value, color}) => (
-        {
-          label: value,
-          symbol: new PolygonSymbol3D({
-            symbolLayers: [
-              new FillSymbol3DLayer({
+    uniqueValueInfos: [
+      { value: "Blau", color: [20, 158, 206] },
+      { value: "Rot", color: [237, 81, 81] },
+      { value: "Orange", color: [237, 166, 80] },
+      { value: "Schwarz", color: [80, 80, 80] }
+    ].map(({ value, color }) => ({
+      label: value,
+      symbol: new PolygonSymbol3D({
+        symbolLayers: [
+          new FillSymbol3DLayer({
             material: {
               color: [...color, 0.25]
             },
@@ -117,11 +124,11 @@ export const skiSlopesArea = new FeatureLayer({
               size: 1.2,
               color
             }
-            })]
-          }),
-          value,
-        }
-      ))
+          })
+        ]
+      }),
+      value
+    }))
   })
 });
 
@@ -280,7 +287,6 @@ export const buildings = new SceneLayer({
   })
 });
 
-
 (async () => {
   const query = skiLifts.createQuery();
   // query.objectIds = [
@@ -312,10 +318,8 @@ export const buildings = new SceneLayer({
   };
 
   const sags = result.features
-    .filter(f => f.geometry.type === "polyline")
-    .map(f =>
-      createSag(f.geometry as Polyline, sagToSpanRatio(liftType(f)))
-    );
+    .filter((f) => f.geometry.type === "polyline")
+    .map((f) => createSag(f.geometry as Polyline, sagToSpanRatio(liftType(f))));
 
   skiLiftsWithSag.addMany(
     sags.map(
