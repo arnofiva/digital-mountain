@@ -176,7 +176,7 @@ const parcelGraphic = Graphic.fromJSON({
 parcelGraphic.geometry = skiResortArea;
 
 const minLength = 100;
-const maxLength = 1000;
+const maxLength = 10000;
 const towerSeparation = 200;
 const minSeparation = 50;
 const initialTowerHeight = 10;

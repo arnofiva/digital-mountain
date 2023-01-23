@@ -250,17 +250,8 @@ view.ui.add(
   }),
   "top-left"
 );
-view.ui.add(
-  new Expand({
-    view,
-    content: document.getElementById("edit-buttons"),
-    expandIconClass: "esri-icon-edit"
-    // expanded: true,
-    // group: "top-left"
-  }),
+view.ui.add("edit-buttons-wrapper", "manual");
 
-  "bottom-left"
-);
 const appState = new AppState({ skiSlopes });
 
 connectSlopeEditor(view, appState);
