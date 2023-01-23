@@ -15,7 +15,7 @@ const skiLiftSymbol = new LineSymbol3D({
   symbolLayers: [
     new PathSymbol3DLayer({
       profile: "quad", // creates a rectangular shape
-      width: 5, // path width in meters
+      width: 4, // path width in meters
       height: 0.1, // path height in meters
       material: { color: [0, 0, 0, 1] },
       cap: "butt",
