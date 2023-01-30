@@ -18,29 +18,9 @@
 </head>
 
 <body>
-  <div id="viewDiv">
-  </div>
-
-  <calcite-button id="loginButton">Login</calcite-button>
-  <calcite-button id="logoutButton">Logout</calcite-button>
-
-  <calcite-loader scale="l" id="loader" active></calcite-loader>
+  <div id="view"></div>
+  <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
-
-  <div id="edit-buttons-wrapper">
-    <calcite-card id="edit-buttons" disable-spacing="true">
-      <div id="slope-buttons">
-        <calcite-button id="add-slope-button">New Slope</calcite-button>
-        <calcite-button id="done-slope-button" class="hidden">Done</calcite-button>
-        <calcite-button id="edit-slope-toggle-button" class="hidden"></calcite-button>
-      </div>
-      <div id="lift-buttons">
-        <calcite-button id="add-lift-button">New Lift</calcite-button>
-        <calcite-button id="cancel-lift-button" class="hidden">Cancel</calcite-button>
-        <calcite-button id="edit-lift-toggle-button" class="hidden"></calcite-button>
-      </div>
-    </calcite-card>
-  </div>
 </body>
 
 </html>
