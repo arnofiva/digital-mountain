@@ -28,13 +28,14 @@ body {
 #edit-buttons-wrapper {
   width: 100%;
   height: 120px;
-  pointer-events: painted;
   bottom: 0;
+  pointer-events: none;
 }
 
 #edit-buttons {
   width: 220px;
   margin: auto;
+  pointer-events: auto;
 }
 
 #edit-buttons .hidden {
