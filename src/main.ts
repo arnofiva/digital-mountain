@@ -3,6 +3,4 @@ import "@esri/calcite-components/dist/components/calcite-loader";
 
 import App from "./components/App";
 
-const container = document.createElement("div");
-document.getElementById("app").appendChild(container);
-new App({ container });
+new App({ container: document.getElementById("app") });
