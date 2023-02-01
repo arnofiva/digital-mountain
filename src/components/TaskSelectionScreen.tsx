@@ -15,13 +15,17 @@ class TaskSelectionScreen extends Widget<ConstructProperties> {
   render() {
     return (
       <div class="screen task-selection">
-        <TaskSelectionButton
-          actions={this.actions}
-          text="Monitoring"
-          taskScreen={TaskScreen.Monitor}
-        />
-        <TaskSelectionButton actions={this.actions} text="Planning" taskScreen={TaskScreen.Plan} />
-        <TaskSelectionButton actions={this.actions} text="Visiting" taskScreen={TaskScreen.Visit} />
+        <h1 class="title">Digital Mountain</h1>
+        <h3 class="subtitle">What's your job today?</h3>
+        <div class="tasks">
+          <TaskSelectionButton
+            actions={this.actions}
+            text="Monitoring"
+            taskScreen={TaskScreen.Monitor}
+          />
+          <TaskSelectionButton actions={this.actions} text="Planning" taskScreen={TaskScreen.Plan} />
+          <TaskSelectionButton actions={this.actions} text="Visiting" taskScreen={TaskScreen.Visit} />
+        </div>
       </div>
     );
   }

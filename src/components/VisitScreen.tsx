@@ -15,7 +15,7 @@ class VisitScreen extends Widget<ConstructProperties> {
   render() {
     return (
       <div class="screen">
-        <Header actions={this.actions} title="Visiting" />
+        <Header actions={this.actions} subtitle="Visiting" />
       </div>
     );
   }

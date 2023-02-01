@@ -15,7 +15,7 @@ class PlanScreen extends Widget<ConstructProperties> {
   render() {
     return (
       <div class="screen">
-        <Header actions={this.actions} title="Planning" />
+        <Header actions={this.actions} subtitle="Planning" />
       </div>
     );
   }
