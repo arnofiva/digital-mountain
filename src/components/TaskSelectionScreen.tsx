@@ -1,20 +1,16 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
-import Widget from "@arcgis/core/widgets/Widget";
 
 import TaskSelectionButton from "./TaskSelectionButton";
-import { TaskScreen, UIActions, WidgetProperties } from "./interfaces";
+import { TaskScreen, UIActions } from "./interfaces";
+import { Widget } from "./Widget";
 
-type Properties = Pick<TaskSelectionButton, "actions"> & WidgetProperties;
+type ConstructProperties = Pick<TaskSelectionButton, "actions">;
 
 @subclass("digital-mountain.TaskSelectionScreen")
-class TaskSelectionScreen extends Widget {
+class TaskSelectionScreen extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
-
-  constructor(properties: Properties) {
-    super(properties);
-  }
 
   render() {
     return (

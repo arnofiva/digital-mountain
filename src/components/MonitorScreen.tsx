@@ -1,20 +1,16 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
-import Widget from "@arcgis/core/widgets/Widget";
 
 import Header from "./Header";
-import { UIActions, WidgetProperties } from "./interfaces";
+import { UIActions } from "./interfaces";
+import { Widget } from "./Widget";
 
-type Properties = Pick<MonitorScreen, "actions"> & WidgetProperties;
+type ConstructProperties = Pick<MonitorScreen, "actions">;
 
 @subclass("digital-mountain.MonitorScreen")
-class MonitorScreen extends Widget {
+class MonitorScreen extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
-
-  constructor(properties: Properties) {
-    super(properties);
-  }
 
   render() {
     return (

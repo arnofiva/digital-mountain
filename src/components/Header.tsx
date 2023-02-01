@@ -1,22 +1,18 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
-import Widget from "@arcgis/core/widgets/Widget";
 
-import { UIActions, WidgetProperties } from "./interfaces";
+import { UIActions } from "./interfaces";
+import { Widget } from "./Widget";
 
-type Properties = Pick<Header, "actions" | "title"> & WidgetProperties;
+type ConstructProperties = Pick<Header, "actions" | "title">;
 
 @subclass("digital-mountain.Header")
-class Header extends Widget {
+class Header extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
 
   @property()
   title: string;
-
-  constructor(properties: Properties) {
-    super(properties);
-  }
 
   render() {
     return (

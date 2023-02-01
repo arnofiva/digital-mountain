@@ -5,6 +5,7 @@ import { TaskScreen, UIActions } from "./components/interfaces";
 
 @subclass("digital-mountain.Store")
 class Store extends Accessor implements UIActions {
+  @property()
   get taskScreen(): TaskScreen | null {
     return this._taskScreen;
   }
