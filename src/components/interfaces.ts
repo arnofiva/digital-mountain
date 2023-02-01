@@ -1,6 +1,6 @@
 export interface UIActions {
   openTaskScreen(v: TaskScreen): void;
-  openTaskSelectionScreen(): void;
+  openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void;
 }
 
 export enum TaskScreen {

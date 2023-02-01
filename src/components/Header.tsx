@@ -17,7 +17,11 @@ class Header extends Widget<ConstructProperties> {
   render() {
     return (
       <div class="header">
-        <calcite-button onclick={() => this.actions.openTaskSelectionScreen()}>Back</calcite-button>
+        <calcite-button
+          onclick={() => this.actions.openTaskSelectionScreen({ animateCameraToStart: true })}
+        >
+          Back
+        </calcite-button>
         <div class="title">{this.title}</div>
       </div>
     );

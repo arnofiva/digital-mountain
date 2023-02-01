@@ -1,10 +1,33 @@
 @import '@arcgis/core/assets/esri/themes/light/main.css';
 
+$header-height: 100px;
+
 html, body, #app, .screen {
   padding: 0;
   margin: 0;
   height: 100%;
   width: 100%;
+}
+
+#app {
+  position: absolute;
+  top: 0;
+
+  .task-screen & {
+    pointer-events: none; // pass pointer events to view on task screens
+  }
+}
+
+#view {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  .task-screen & {
+    margin-top: $header-height;
+  }
 }
 
 .screen {
@@ -15,6 +38,12 @@ html, body, #app, .screen {
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .task-screen & * {
+    pointer-events: auto; // catch pointer events for elements on task screens
   }
 }
 
@@ -29,6 +58,8 @@ html, body, #app, .screen {
   flex-direction: row;
   padding: 20px;
   background: #ccc;
+  box-sizing: border-box;
+  height: $header-height;
 
   .title {
     flex-grow: 1;

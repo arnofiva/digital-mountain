@@ -1,18 +1,20 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
-import Widget from "@arcgis/core/widgets/Widget";
 
 import Store from "../Store";
 import { TaskScreen } from "./interfaces";
 import MonitorScreen from "./MonitorScreen";
 import PlanScreen from "./PlanScreen";
-import VisitScreen from "./VisitScreen";
 import TaskSelectionScreen from "./TaskSelectionScreen";
+import VisitScreen from "./VisitScreen";
+import { Widget } from "./Widget";
+
+type ConstructProperties = Pick<App, "store">;
 
 @subclass("digital-mountain.App")
-class App extends Widget {
-  @property()
-  store = new Store();
+class App extends Widget<ConstructProperties> {
+  @property({ constructOnly: true })
+  readonly store: Store;
 
   render() {
     return <div>{this._screenComponent()}</div>;
