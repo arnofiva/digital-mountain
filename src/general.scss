@@ -83,3 +83,17 @@ h1, h3 {
     font-weight: normal;
   }
 }
+
+.plan-actions {
+  align-self: center;
+  margin-top: auto;
+  position: relative;
+  bottom: 30px;
+
+  calcite-button {
+    width: 100px;
+    &:first-child {
+      margin-right: 10px;
+    }
+  }
+}

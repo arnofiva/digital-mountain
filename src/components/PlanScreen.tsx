@@ -3,6 +3,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import Header from "./Header";
 import { UIActions } from "./interfaces";
+import PlanActions from "./PlanActions";
 import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<PlanScreen, "actions">;
@@ -16,6 +17,7 @@ class PlanScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Planning" />
+        <PlanActions actions={this.actions} />
       </div>
     );
   }

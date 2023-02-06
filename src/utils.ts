@@ -10,3 +10,17 @@ export async function ignoreAbortErrors<T>(promise: Promise<T>): Promise<T | und
     return undefined;
   }
 }
+
+export function abortNullable<T extends { abort: () => void }>(obj: T | null): null {
+  if (obj) {
+    obj.abort();
+  }
+  return null;
+}
+
+export function removeNullable<T extends { remove: () => void }>(obj: T | null): null {
+  if (obj) {
+    obj.remove();
+  }
+  return null;
+}
