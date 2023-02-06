@@ -1,10 +1,24 @@
 export interface UIActions {
-  openTaskScreen(v: TaskScreen): void;
+  openTaskScreen(taskScreenType: TaskScreenType): void;
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void;
 }
 
-export enum TaskScreen {
+export enum TaskScreenType {
   Monitor,
   Plan,
   Visit
+}
+
+export type TaskScreen = TaskScreenMonitor | TaskScreenPlan | TaskScreenVisit;
+
+interface TaskScreenMonitor {
+  type: TaskScreenType.Monitor;
+}
+
+interface TaskScreenPlan {
+  type: TaskScreenType.Plan;
+}
+
+interface TaskScreenVisit {
+  type: TaskScreenType.Visit;
 }

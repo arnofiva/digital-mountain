@@ -1,10 +1,10 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import { TaskScreen, UIActions } from "./interfaces";
+import { TaskScreenType, UIActions } from "./interfaces";
 import { Widget } from "./Widget";
 
-type ConstructProperties = Pick<TaskSelectionButton, "actions" | "text" | "taskScreen">;
+type ConstructProperties = Pick<TaskSelectionButton, "actions" | "text" | "taskScreenType">;
 
 @subclass("digital-mountain.TaskSelectionButton")
 class TaskSelectionButton extends Widget<ConstructProperties> {
@@ -15,12 +15,12 @@ class TaskSelectionButton extends Widget<ConstructProperties> {
   text: string;
 
   @property()
-  taskScreen: TaskScreen;
+  taskScreenType: TaskScreenType;
 
   render() {
     return (
       <div>
-        <calcite-button onclick={() => this.actions.openTaskScreen(this.taskScreen)} scale="l">
+        <calcite-button onclick={() => this.actions.openTaskScreen(this.taskScreenType)} scale="l">
           {this.text}
         </calcite-button>
       </div>

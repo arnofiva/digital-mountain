@@ -2,7 +2,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import TaskSelectionButton from "./TaskSelectionButton";
-import { TaskScreen, UIActions } from "./interfaces";
+import { TaskScreenType, UIActions } from "./interfaces";
 import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<TaskSelectionButton, "actions">;
@@ -21,10 +21,18 @@ class TaskSelectionScreen extends Widget<ConstructProperties> {
           <TaskSelectionButton
             actions={this.actions}
             text="Monitoring"
-            taskScreen={TaskScreen.Monitor}
+            taskScreenType={TaskScreenType.Monitor}
           />
-          <TaskSelectionButton actions={this.actions} text="Planning" taskScreen={TaskScreen.Plan} />
-          <TaskSelectionButton actions={this.actions} text="Visiting" taskScreen={TaskScreen.Visit} />
+          <TaskSelectionButton
+            actions={this.actions}
+            text="Planning"
+            taskScreenType={TaskScreenType.Plan}
+          />
+          <TaskSelectionButton
+            actions={this.actions}
+            text="Visiting"
+            taskScreenType={TaskScreenType.Visit}
+          />
         </div>
       </div>
     );

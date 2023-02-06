@@ -2,7 +2,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import Store from "../Store";
-import { TaskScreen } from "./interfaces";
+import { TaskScreenType } from "./interfaces";
 import MonitorScreen from "./MonitorScreen";
 import PlanScreen from "./PlanScreen";
 import TaskSelectionScreen from "./TaskSelectionScreen";
@@ -21,14 +21,16 @@ class App extends Widget<ConstructProperties> {
   }
 
   private _screenComponent(): tsx.JSX.Element {
-    switch (this.store.taskScreen) {
-      case null:
-        return <TaskSelectionScreen actions={this.store} />;
-      case TaskScreen.Monitor:
+    const taskScreenType = this.store.taskScreen?.type;
+    if (taskScreenType == null) {
+      return <TaskSelectionScreen actions={this.store} />;
+    }
+    switch (taskScreenType) {
+      case TaskScreenType.Monitor:
         return <MonitorScreen actions={this.store} />;
-      case TaskScreen.Plan:
+      case TaskScreenType.Plan:
         return <PlanScreen actions={this.store} />;
-      case TaskScreen.Visit:
+      case TaskScreenType.Visit:
         return <VisitScreen actions={this.store} />;
     }
   }

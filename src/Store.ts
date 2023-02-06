@@ -3,7 +3,8 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import SceneView from "@arcgis/core/views/SceneView";
 
 import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
-import { TaskScreen, UIActions } from "./components/interfaces";
+import { TaskScreen, TaskScreenType, UIActions } from "./components/interfaces";
+import LiftEditor from "./LiftEditor";
 import { ignoreAbortErrors } from "./utils";
 
 /**
@@ -40,11 +41,11 @@ class Store extends Accessor implements UIActions {
    * UI actions
    *************/
 
-  openTaskScreen(v: TaskScreen): void {
+  openTaskScreen(taskScreenType: TaskScreenType): void {
     this._stopBackgroundCameraAnimation();
     this._view.goTo(taskScreenStartCamera, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor });
     document.body.classList.add(taskScreenClass);
-    this._taskScreen = v;
+    this._taskScreen = { type: taskScreenType };
   }
 
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void {
