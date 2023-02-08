@@ -104,11 +104,7 @@ class SlopeEditor extends Accessor {
    * Start the interactive creation of a new slope.
    */
   create({ signal }: { signal: AbortSignal }): void {
-    const bufferGraphic = new Graphic({
-      geometry: null,
-      symbol: bufferSymbol
-    });
-    this._bufferLayer.add(bufferGraphic);
+    let bufferGraphic: Graphic | null = null;
     let routeGraphic: Graphic | null = null;
 
     let createHandle: IHandle | null = null;
@@ -152,7 +148,15 @@ class SlopeEditor extends Accessor {
       if (e.toolEventInfo?.type === "cursor-update" || e.toolEventInfo?.type === "vertex-add") {
         let bufferGeometry = buffer(routeGraphic.geometry, slopeBufferDistance) as Polygon;
         bufferGeometry = bufferGeometry ? (generalize(bufferGeometry, slopeMaxDeviation) as Polygon) : null;
-        bufferGraphic.geometry = bufferGeometry;
+        if (bufferGraphic) {
+          bufferGraphic.geometry = bufferGeometry;
+        } else if (bufferGeometry) {
+          bufferGraphic = new Graphic({
+            geometry: bufferGeometry,
+            symbol: bufferSymbol
+          });
+          this._bufferLayer.add(bufferGraphic);
+        }
       }
     });
     this._simpleSVM.create("polyline", { mode: "hybrid" });
