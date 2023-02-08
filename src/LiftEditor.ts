@@ -95,6 +95,19 @@ class LiftEditor extends Accessor {
       },
       updateOnGraphicClick: false
     });
+    this._detailSVM = new SketchViewModel({
+      layer: this._detailLayer,
+      view,
+      defaultUpdateOptions: {
+        tool: "reshape",
+        reshapeOptions: { shapeOperation: "none" },
+        toggleToolOnClick: false
+      },
+      tooltipOptions: {
+        enabled: true
+      },
+      updateOnGraphicClick: false
+    });
     this._elevationSamplerPromise = view.map.ground.createElevationSampler(skiResortArea.extent);
   }
 
@@ -141,9 +154,14 @@ class LiftEditor extends Accessor {
   private readonly _graphicGroups: LiftGraphicGroup[] = [];
 
   /**
-   * SketchViewModel used to create and update the start and end points of lifts.
+   * SketchViewModel used to create the start and end points of lifts.
    */
   private readonly _simpleSVM: SketchViewModel;
+
+  /**
+   * SketchViewModel used to update the towers of lifts.
+   */
+  private readonly _detailSVM: SketchViewModel;
 
   private readonly _elevationSamplerPromise: Promise<ElevationSampler>;
 
@@ -305,7 +323,7 @@ class LiftEditor extends Accessor {
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
-      this._simpleSVM.cancel();
+      this._detailSVM.cancel();
       cleanup();
     };
     signal.addEventListener("abort", onAbort, { once: true });
@@ -313,44 +331,51 @@ class LiftEditor extends Accessor {
     // while updating, display the area within which lifts can be updated
     this._parcelLayer.visible = true;
 
-    // store the initial geometry on reshape start so that we can revert back to it
-    let initialSimpleGeometry: Geometry;
-
     const elevationSampler = await this._elevationSamplerPromise;
-    updateHandle = this._simpleSVM.on("update", (e) => {
-      if (e.tool !== "reshape") {
+    let initialDetailGeometry: Polyline | null = null;
+    updateHandle = this._detailSVM.on("update", (e) => {
+      if (e.tool !== "reshape" || e.state === "start") {
         return;
       }
-      switch (e.state) {
-        case "start":
-          return;
-        case "complete":
-          cleanup();
-          return;
+      if (e.state === "complete") {
+        cleanup();
+        return;
       }
 
-      // align the detailed geometry with the updated simple geometry
-      const detailGeometry = alignRouteDetailGeometryWithSimple(
-        detailGraphic.geometry as Polyline,
-        simpleGraphic.geometry as Polyline
-      );
+      if (e.toolEventInfo?.type === "reshape-start") {
+        initialDetailGeometry = detailGraphic.geometry.clone() as Polyline;
+      }
 
-      const isValid = isRouteValid(detailGeometry, skiResortArea);
-      switch (e.toolEventInfo?.type) {
-        case "reshape-start":
-          initialSimpleGeometry = simpleGraphic.geometry.clone();
-          break;
-        case "reshape-stop":
-          if (isValid) {
-            // if the new geometry is valid, update the display graphics
-            displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry, elevationSampler);
-            placeTowers(towerLayer, detailGeometry, elevationSampler);
-          } else {
-            // otherwise revert back to the initial geometry
-            simpleGraphic.geometry = initialSimpleGeometry;
-          }
-          hidePreviewLayer();
-          return;
+      /**
+       * If we are reshaping the start vertex, to constrain points to a line we must measure their
+       * distances relative to the end vertex. If we measured relative to the start vertex in this
+       * case we would be measuring relative to its unconstrained position.
+       */
+      const detailGeometry = detailGraphic.geometry as Polyline;
+      const reshapingStart = !vec2.equals(detailGeometry.paths[0][0], initialDetailGeometry.paths[0][0]);
+      const newDetailGeometry = constrainRouteDetailGeometry(detailGraphic.geometry as Polyline, {
+        relativeToStart: !reshapingStart
+      });
+
+      const isValid = isRouteValid(newDetailGeometry, skiResortArea);
+      if (e.toolEventInfo?.type === "reshape-stop") {
+        if (isValid) {
+          // if the new geometry is valid, update the display graphics
+          const path = (detailGraphic.geometry as Polyline).paths[0];
+          const start = [...path[0]];
+          const end = [...path[path.length - 1]];
+          simpleGraphic.geometry = new Polyline({
+            paths: [[start, end]],
+            spatialReference: detailGraphic.geometry.spatialReference
+          });
+          detailGraphic.geometry = newDetailGeometry;
+          displayGraphic.geometry = detailGeometryToDisplayGeometry(newDetailGeometry, elevationSampler);
+          placeTowers(towerLayer, newDetailGeometry, elevationSampler);
+        } else {
+          detailGraphic.geometry = initialDetailGeometry;
+        }
+        hidePreviewLayer();
+        return;
       }
 
       // while reshaping, hide the display graphics and show less detailed preview graphics instead
@@ -358,20 +383,20 @@ class LiftEditor extends Accessor {
       towerLayer.visible = false;
 
       this._updatePreviewLayer.removeAll();
-      for (const vertex of detailGeometry.paths[0]) {
+      for (const vertex of newDetailGeometry.paths[0]) {
         const routeTowerPreviewGraphic = new Graphic({
-          geometry: vertexToPoint(vertex, detailGeometry.spatialReference),
+          geometry: vertexToPoint(vertex, newDetailGeometry.spatialReference),
           symbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
         });
         this._updatePreviewLayer.add(routeTowerPreviewGraphic);
       }
       const routeCablePreviewGraphic = new Graphic({
-        geometry: detailGeometry,
+        geometry: newDetailGeometry,
         symbol: isValid ? routeCableSymbol : invalidRouteCableSymbol
       });
       this._updatePreviewLayer.add(routeCablePreviewGraphic);
     });
-    this._simpleSVM.update(simpleGraphic);
+    this._detailSVM.update(detailGraphic);
   }
 
   /**
@@ -448,23 +473,22 @@ function isRouteValid(detailGeometry: Polyline, parcelGeometry: Polygon): boolea
   return isContained && (length === 0 || (length >= minCableLength && length <= maxCableLength));
 }
 
-function alignRouteDetailGeometryWithSimple(detailGeometry: Polyline, simpleGeometry: Polyline): Polyline {
-  const detailPath = detailGeometry.paths[0];
-  const simplePath = simpleGeometry.paths[0];
-  const detailStart = detailPath[0];
-  const detailEnd = detailPath[detailPath.length - 1];
-  const simpleStart = simplePath[0];
-  const simpleEnd = simplePath[simplePath.length - 1];
-  const simpleStartToEnd = vec2.subtract(simpleEnd, simpleStart);
-  const detailStartToEnd = vec2.subtract(detailEnd, detailStart);
-  const detailStartToEndLength = vec2.length(detailStartToEnd);
+function constrainRouteDetailGeometry(detailGeometry: Polyline, options: { relativeToStart: boolean }): Polyline {
+  const path = detailGeometry.paths[0];
+  const start = path[0];
+  const end = path[path.length - 1];
+  const startToEnd = vec2.subtract(end, start);
+  const length = vec2.length(startToEnd);
   const newPath = [];
-  for (const vertex of detailPath) {
-    const relativeToStart = vec2.subtract(vertex, detailPath[0]);
-    const fraction = vec2.length(relativeToStart) / detailStartToEndLength;
-    const newVertexRelativeToStart = vec2.scale(simpleStartToEnd, fraction);
-    const newVertex = vec2.add(newVertexRelativeToStart, simplePath[0]);
-    newPath.push([newVertex[0], newVertex[1], vertex[2]]);
+  const v0 = options.relativeToStart ? start : end;
+  const v1 = options.relativeToStart ? end : start;
+  for (const vertex of path) {
+    const relativeToV0 = vec2.subtract(vertex, v0);
+    const fraction = vec2.length(relativeToV0) / length;
+    const newVertexRelativeToV0 = vec2.scale(vec2.subtract(v1, v0), fraction);
+    const [x, y] = vec2.add(newVertexRelativeToV0, v0);
+    const z = vertex[2];
+    newPath.push([x, y, z]);
   }
   return new Polyline({
     hasZ: true,
