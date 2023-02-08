@@ -191,7 +191,7 @@ class SlopeEditor extends Accessor {
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
-      this._centerlineSVM.cancel();
+      this._bufferSVM.cancel();
       cleanup();
     };
     signal.addEventListener("abort", onAbort, { once: true });
