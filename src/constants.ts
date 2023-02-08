@@ -1,4 +1,10 @@
 /**
+ * Slope editor
+ */
+export const slopeBufferDistance = 15;
+export const slopeMaxDeviation = 5;
+
+/**
  * Lift editor
  */
 export const initialTowerHeight = 10;

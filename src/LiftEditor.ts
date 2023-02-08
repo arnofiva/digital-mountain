@@ -72,7 +72,7 @@ class LiftEditor extends Accessor {
     for (const layer of this._layers) {
       view.map.add(layer);
     }
-    this._routeSimpleSVM = new SketchViewModel({
+    this._simpleSVM = new SketchViewModel({
       layer: this._simpleLayer,
       view,
       defaultUpdateOptions: {
@@ -89,7 +89,6 @@ class LiftEditor extends Accessor {
     this._elevationSamplerPromise = view.map.ground.createElevationSampler(skiResortArea.extent);
   }
 
-  @property()
   private readonly _view: SceneView;
 
   /**
@@ -128,9 +127,9 @@ class LiftEditor extends Accessor {
   private readonly _graphicGroups: LiftGraphicGroup[] = [];
 
   /**
-   * SketchViewModel Used to update the start and end points of lifts.
+   * SketchViewModel used to create and update the start and end points of lifts.
    */
-  private readonly _routeSimpleSVM: SketchViewModel;
+  private readonly _simpleSVM: SketchViewModel;
 
   private readonly _elevationSamplerPromise: Promise<ElevationSampler>;
 
@@ -203,7 +202,7 @@ class LiftEditor extends Accessor {
       const towerLayer = new GraphicsLayer({
         elevationInfo: { mode: "absolute-height" },
         listMode: "hide",
-        title: "Tower layer"
+        title: "Lift towers"
       });
       this._towerDisplayLayers.push(towerLayer);
       this._view.map.add(towerLayer);
@@ -223,14 +222,13 @@ class LiftEditor extends Accessor {
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
-      this._routeSimpleSVM.cancel();
+      this._simpleSVM.cancel();
       cleanup();
     };
     signal.addEventListener("abort", onAbort, { once: true });
 
     const validVertices: number[][] = [];
-    this._routeSimpleSVM.create("polyline", { mode: "click" });
-    createHandle = this._routeSimpleSVM.on("create", (e) => {
+    createHandle = this._simpleSVM.on("create", (e) => {
       switch (e.state) {
         case "cancel":
           cleanup();
@@ -238,13 +236,9 @@ class LiftEditor extends Accessor {
         case "complete":
           // remove graphic created by SVM, we will create our own
           this._simpleLayer.remove(e.graphic);
-          if (validVertices.length === 2) {
-            const { simpleGraphic } = completeGeometry(validVertices);
-            cleanup();
-            this.update(simpleGraphic, { signal });
-          } else {
-            cleanup();
-          }
+          const { simpleGraphic } = completeGeometry(validVertices);
+          cleanup();
+          this.update(simpleGraphic, { signal });
           return;
       }
       switch (e.toolEventInfo?.type) {
@@ -259,25 +253,24 @@ class LiftEditor extends Accessor {
            */
           if (!isValid) {
             // remove the invalid vertex in the next tick
-            Promise.resolve().then(() => this._routeSimpleSVM.undo());
+            Promise.resolve().then(() => this._simpleSVM.undo());
             return;
           }
           validVertices.push(e.toolEventInfo.vertices.at(-1).coordinates);
           if (validVertices.length === 2) {
-            this._routeSimpleSVM.complete();
+            this._simpleSVM.complete();
           }
           break;
       }
     });
+    this._simpleSVM.create("polyline", { mode: "click" });
   }
 
   /**
    * Start the interactive update of an existing lift.
    */
   async update(graphic: Graphic, { signal }: { signal: AbortSignal }): Promise<void> {
-    const group = this._graphicGroups.find(
-      (group) => graphic === group.simpleGraphic || graphic === group.detailGraphic || graphic === group.displayGraphic
-    );
+    const group = this._findGraphicGroup(graphic);
     if (!group) {
       return;
     }
@@ -297,7 +290,7 @@ class LiftEditor extends Accessor {
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
-      this._routeSimpleSVM.cancel();
+      this._simpleSVM.cancel();
       cleanup();
     };
     signal.addEventListener("abort", onAbort, { once: true });
@@ -309,8 +302,7 @@ class LiftEditor extends Accessor {
     let initialSimpleGeometry: Geometry;
 
     const elevationSampler = await this._elevationSamplerPromise;
-    this._routeSimpleSVM.update(simpleGraphic);
-    updateHandle = this._routeSimpleSVM.on("update", (e) => {
+    updateHandle = this._simpleSVM.on("update", (e) => {
       if (e.tool !== "reshape") {
         return;
       }
@@ -364,6 +356,20 @@ class LiftEditor extends Accessor {
       });
       this._previewLayer.add(routeCablePreviewGraphic);
     });
+    this._simpleSVM.update(simpleGraphic);
+  }
+
+  /**
+   * Returns true if the graphic can be updated by this editor.
+   */
+  canUpdateGraphic(graphic: Graphic): boolean {
+    return this._findGraphicGroup(graphic) != null;
+  }
+
+  private _findGraphicGroup(graphic: Graphic): LiftGraphicGroup | null {
+    return this._graphicGroups.find(
+      (group) => graphic === group.simpleGraphic || graphic === group.detailGraphic || graphic === group.displayGraphic
+    );
   }
 }
 

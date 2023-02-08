@@ -15,7 +15,7 @@ class PlanActions extends Widget<ConstructProperties> {
     return (
       <div class="plan-actions">
         <calcite-card>
-          <calcite-button disabled onclick={() => this.actions.startSlopeEditor()}>New Slope</calcite-button>
+          <calcite-button onclick={() => this.actions.startSlopeEditor()}>New Slope</calcite-button>
           <calcite-button onclick={() => this.actions.startLiftEditor()}>New Lift</calcite-button>
         </calcite-card>
       </div>

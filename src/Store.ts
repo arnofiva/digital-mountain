@@ -8,6 +8,7 @@ import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamer
 import { TaskScreen, TaskScreenType, UIActions } from "./components/interfaces";
 import { skiResortArea } from "./data";
 import LiftEditor from "./LiftEditor";
+import SlopeEditor from "./SlopeEditor";
 import { parcelSymbol } from "./symbols";
 import { abortNullable, ignoreAbortErrors } from "./utils";
 
@@ -32,6 +33,7 @@ class Store extends Accessor implements UIActions {
     super();
     this._view = view;
     this._liftEditor = new LiftEditor({ view });
+    this._slopeEditor = new SlopeEditor({ view });
   }
 
   @property()
@@ -44,6 +46,7 @@ class Store extends Accessor implements UIActions {
 
   private readonly _view: SceneView;
   private readonly _liftEditor: LiftEditor;
+  private readonly _slopeEditor: SlopeEditor;
   private _animationAbortController: AbortController | null = null;
   private _planningAbortController: AbortController | null = null;
 
@@ -52,15 +55,14 @@ class Store extends Accessor implements UIActions {
    *************/
 
   openTaskScreen(taskScreenType: TaskScreenType): void {
-    this._removeScreenHandles();
-    const abortController = new AbortController();
-    this._addScreenHandle(() => abortController.abort());
+    this._onScreenChange();
     this._screenHandles.push(this._setupHitTest());
+    const { signal } = (this._animationAbortController = new AbortController());
     ignoreAbortErrors(
       this._view.goTo(taskScreenStartCamera, {
         animate: true,
         speedFactor: transitionCameraAnimationSpeedFactor,
-        signal: abortController.signal
+        signal
       })
     );
     document.body.classList.add(taskScreenClass);
@@ -68,24 +70,29 @@ class Store extends Accessor implements UIActions {
   }
 
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void {
-    this._removeScreenHandles();
+    this._onScreenChange();
+    // hide UI on task selection screen and restore once task is selected
+    this._view.ui.components.length = 0;
+    this._addScreenHandle(() => (this._view.ui.components = this._defaultUIComponents));
+    // start animating camera in background view
     ignoreAbortErrors(this._startBackgroundCameraAnimation(options));
-    this._addScreenHandle(() => this._stopBackgroundCameraAnimation());
     document.body.classList.remove(taskScreenClass);
     this._taskScreen = null;
   }
 
-  startSlopeEditor(): void {
-    this._planningAbortController = abortNullable(this._planningAbortController);
+  startSlopeEditor(options?: { updateGraphic?: Graphic }): void {
+    this._planningAbortController?.abort();
+    const { signal } = (this._planningAbortController = new AbortController());
+    if (options?.updateGraphic) {
+      this._slopeEditor.update(options.updateGraphic, { signal });
+    } else {
+      this._slopeEditor.create({ signal });
+    }
   }
 
   startLiftEditor(options?: { updateGraphic?: Graphic }): void {
     this._planningAbortController?.abort();
-    this._planningAbortController = new AbortController();
-    this._addScreenHandle(() => {
-      this._planningAbortController = abortNullable(this._planningAbortController);
-    });
-    const { signal } = this._planningAbortController;
+    const { signal } = (this._planningAbortController = new AbortController());
     if (options?.updateGraphic) {
       this._liftEditor.update(options.updateGraphic, { signal });
     } else {
@@ -93,18 +100,22 @@ class Store extends Accessor implements UIActions {
     }
   }
 
+  private _onScreenChange(): void {
+    this._removeScreenHandles();
+    this._animationAbortController = abortNullable(this._animationAbortController);
+    this._planningAbortController = abortNullable(this._planningAbortController);
+  }
+
   /***************
    * View actions
    ***************/
 
   private async _startBackgroundCameraAnimation(options: { animateCameraToStart: boolean }): Promise<void> {
-    this._stopBackgroundCameraAnimation();
+    this._animationAbortController?.abort();
     this._animationAbortController = new AbortController();
     const { signal } = this._animationAbortController;
     const camera1 = backgroundCamera;
     const camera2 = backgroundAnimationTargetCamera;
-    // hide UI while animating and restore once animation is stopped
-    this._view.ui.components.length = 0;
     await this._view.when();
     if (options.animateCameraToStart) {
       await this._view.goTo(camera1, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal });
@@ -119,18 +130,17 @@ class Store extends Accessor implements UIActions {
     }
   }
 
-  private _stopBackgroundCameraAnimation(): void {
-    this._view.ui.components = this._defaultUIComponents;
-    this._animationAbortController = abortNullable(this._animationAbortController);
-  }
-
   private _setupHitTest(): IHandle {
     return this._view.on("click", (event) => {
       this._view.hitTest(event).then((response) => {
         const result = response.results[0];
         if (result?.type === "graphic") {
           const { graphic } = result;
-          this.startLiftEditor({ updateGraphic: graphic });
+          if (this._slopeEditor.canUpdateGraphic(graphic)) {
+            this.startSlopeEditor({ updateGraphic: graphic });
+          } else if (this._liftEditor.canUpdateGraphic(graphic)) {
+            this.startLiftEditor({ updateGraphic: graphic });
+          }
         }
       });
     });
