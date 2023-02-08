@@ -6,18 +6,21 @@ import { UIActions } from "./interfaces";
 import PlanActions from "./PlanActions";
 import { Widget } from "./Widget";
 
-type ConstructProperties = Pick<PlanScreen, "actions">;
+type ConstructProperties = Pick<PlanScreen, "actions" | "planningHint">;
 
 @subclass("digital-mountain.PlanScreen")
 class PlanScreen extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
 
+  @property()
+  planningHint: string | null;
+
   render() {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Planning" />
-        <PlanActions actions={this.actions} />
+        <PlanActions planningHint={this.planningHint} actions={this.actions} />
       </div>
     );
   }

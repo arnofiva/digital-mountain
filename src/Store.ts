@@ -44,9 +44,21 @@ class Store extends Accessor implements UIActions {
   @property()
   private _taskScreenType: TaskScreenType | null = null;
 
+  @property()
+  get planningHint(): string | null {
+    if (this._liftEditor.isCreating) {
+      return "Click in the view to place start and end points for the new lift";
+    }
+    if (this._slopeEditor.isCreating) {
+      return "Click in the view to draw the new slope";
+    }
+    return null;
+  }
+
   private readonly _view: SceneView;
   private readonly _liftEditor: LiftEditor;
   private readonly _slopeEditor: SlopeEditor;
+
   private _animationAbortController: AbortController | null = null;
   private _planningAbortController: AbortController | null = null;
 

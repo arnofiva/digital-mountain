@@ -111,6 +111,11 @@ class LiftEditor extends Accessor {
     this._elevationSamplerPromise = view.map.ground.createElevationSampler(skiResortArea.extent);
   }
 
+  @property()
+  get isCreating(): boolean {
+    return this._simpleSVM.createGraphic != null;
+  }
+
   private readonly _view: SceneView;
 
   /**

@@ -7,7 +7,7 @@ import { PolygonSymbol3D } from "@arcgis/core/symbols";
 import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
-import { subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import Accessor from "@arcgis/core/core/Accessor";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import Layer from "@arcgis/core/layers/Layer";
@@ -81,6 +81,11 @@ class SlopeEditor extends Accessor {
     });
   }
 
+  @property()
+  get isCreating(): boolean {
+    return this._centerlineSVM.createGraphic != null;
+  }
+
   private readonly _view: SceneView;
 
   /**
@@ -99,12 +104,12 @@ class SlopeEditor extends Accessor {
   private readonly _parcelLayer: GraphicsLayer;
 
   /**
-   * SketchViewModel used to create and update the centerline of slopes.
+   * SketchViewModel used to create slopes.
    */
   private readonly _centerlineSVM: SketchViewModel;
 
   /**
-   * SketchViewModel used to create and update the area of slopes.
+   * SketchViewModel used to update the area of slopes.
    */
   private readonly _bufferSVM: SketchViewModel;
 

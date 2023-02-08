@@ -29,7 +29,7 @@ class App extends Widget<ConstructProperties> {
       case TaskScreenType.Monitor:
         return <MonitorScreen actions={this.store} />;
       case TaskScreenType.Plan:
-        return <PlanScreen actions={this.store} />;
+        return <PlanScreen planningHint={this.store.planningHint} actions={this.store} />;
       case TaskScreenType.Visit:
         return <VisitScreen actions={this.store} />;
     }
