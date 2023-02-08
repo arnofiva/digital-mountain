@@ -5,7 +5,7 @@ import { FillSymbol3DLayer, PolygonSymbol3D } from "@arcgis/core/symbols";
 import SceneView from "@arcgis/core/views/SceneView";
 
 import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
-import { TaskScreen, TaskScreenType, UIActions } from "./components/interfaces";
+import { TaskScreenType, UIActions } from "./components/interfaces";
 import { skiResortArea } from "./data";
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
@@ -37,12 +37,12 @@ class Store extends Accessor implements UIActions {
   }
 
   @property()
-  get taskScreen(): TaskScreen | null {
-    return this._taskScreen;
+  get taskScreenType(): TaskScreenType | null {
+    return this._taskScreenType;
   }
 
   @property()
-  private _taskScreen: TaskScreen | null = null;
+  private _taskScreenType: TaskScreenType | null = null;
 
   private readonly _view: SceneView;
   private readonly _liftEditor: LiftEditor;
@@ -66,7 +66,7 @@ class Store extends Accessor implements UIActions {
       })
     );
     document.body.classList.add(taskScreenClass);
-    this._taskScreen = { type: taskScreenType };
+    this._taskScreenType = taskScreenType;
   }
 
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void {
@@ -77,7 +77,7 @@ class Store extends Accessor implements UIActions {
     // start animating camera in background view
     ignoreAbortErrors(this._startBackgroundCameraAnimation(options));
     document.body.classList.remove(taskScreenClass);
-    this._taskScreen = null;
+    this._taskScreenType = null;
   }
 
   startSlopeEditor(options?: { updateGraphic?: Graphic }): void {

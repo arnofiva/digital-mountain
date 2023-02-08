@@ -12,17 +12,3 @@ export enum TaskScreenType {
   Plan,
   Visit
 }
-
-export type TaskScreen = TaskScreenMonitor | TaskScreenPlan | TaskScreenVisit;
-
-interface TaskScreenMonitor {
-  type: TaskScreenType.Monitor;
-}
-
-interface TaskScreenPlan {
-  type: TaskScreenType.Plan;
-}
-
-interface TaskScreenVisit {
-  type: TaskScreenType.Visit;
-}

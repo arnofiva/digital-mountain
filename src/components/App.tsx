@@ -21,7 +21,7 @@ class App extends Widget<ConstructProperties> {
   }
 
   private _screenComponent(): tsx.JSX.Element {
-    const taskScreenType = this.store.taskScreen?.type;
+    const taskScreenType = this.store.taskScreenType;
     if (taskScreenType == null) {
       return <TaskSelectionScreen actions={this.store} />;
     }
