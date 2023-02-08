@@ -12,7 +12,7 @@ import Accessor from "@arcgis/core/core/Accessor";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import Layer from "@arcgis/core/layers/Layer";
 
-import { hiddenLineSymbol, parcelSymbol } from "./symbols";
+import { hiddenLineSymbol, parcelSymbol, sketchPreviewSymbol } from "./symbols";
 import { skiResortArea } from "./data";
 import { slopeBufferDistance, slopeMaxDeviation } from "./constants";
 import { removeNullable } from "./utils";
@@ -61,7 +61,7 @@ class SlopeEditor extends Accessor {
         reshapeOptions: { shapeOperation: "none" },
         toggleToolOnClick: false
       },
-      polylineSymbol: hiddenLineSymbol,
+      polylineSymbol: sketchPreviewSymbol,
       snappingOptions: {
         enabled: true,
         selfEnabled: false,
@@ -153,25 +153,20 @@ class SlopeEditor extends Accessor {
         case "complete":
           if (isRouteValid(routeGraphic?.geometry, skiResortArea)) {
             routeGraphic.geometry = generalize(routeGraphic.geometry, slopeMaxDeviation);
+            routeGraphic.symbol = hiddenLineSymbol;
+            let bufferGeometry = buffer(routeGraphic.geometry, slopeBufferDistance) as Polygon;
+            bufferGeometry = generalize(bufferGeometry, slopeMaxDeviation) as Polygon;
+            bufferGraphic = new Graphic({
+              geometry: bufferGeometry,
+              symbol: bufferSymbol
+            });
+            this._bufferLayer.add(bufferGraphic);
             this._routeToBufferMap.set(routeGraphic, bufferGraphic);
             this._bufferToRouteMap.set(bufferGraphic, routeGraphic);
           }
           cleanup();
-          this.update(routeGraphic, { signal });
+          this.update(bufferGraphic, { signal });
           break;
-      }
-      if (e.toolEventInfo?.type === "cursor-update" || e.toolEventInfo?.type === "vertex-add") {
-        let bufferGeometry = buffer(routeGraphic.geometry, slopeBufferDistance) as Polygon;
-        bufferGeometry = bufferGeometry ? (generalize(bufferGeometry, slopeMaxDeviation) as Polygon) : null;
-        if (bufferGraphic) {
-          bufferGraphic.geometry = bufferGeometry;
-        } else if (bufferGeometry) {
-          bufferGraphic = new Graphic({
-            geometry: bufferGeometry,
-            symbol: bufferSymbol
-          });
-          this._bufferLayer.add(bufferGraphic);
-        }
       }
     });
     this._centerlineSVM.create("polyline", { mode: "click" });

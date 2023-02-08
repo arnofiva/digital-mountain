@@ -33,6 +33,22 @@ export const parcelSymbol = new PolygonSymbol3D({
 export const hiddenLineSymbol = new LineSymbol3D({ symbolLayers: [new LineSymbol3DLayer({ size: 20 })] });
 
 /**
+ * Symbol used to visualize slope and lift routes while they are being created.
+ */
+export const sketchPreviewSymbol = new LineSymbol3D({
+  symbolLayers: [
+    new LineSymbol3DLayer({
+      material: {
+        color: [0, 200, 0, 1]
+      },
+      join: "bevel",
+      cap: "round",
+      size: 4
+    })
+  ]
+});
+
+/**
  * Symbols used for lift cables.
  */
 export const routeCableSymbol = new LineSymbol3D({ symbolLayers: [routeCableSymbolLayer()] });
