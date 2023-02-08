@@ -33,7 +33,7 @@ class SlopeEditor extends Accessor {
     super();
     this._view = view;
 
-    this._simpleLayer = new GraphicsLayer({
+    this._centerlineLayer = new GraphicsLayer({
       elevationInfo: { mode: "on-the-ground" },
       listMode: "hide",
       title: "Slopes - centerlines"
@@ -53,8 +53,8 @@ class SlopeEditor extends Accessor {
     for (const layer of this._layers) {
       view.map.add(layer);
     }
-    this._simpleSVM = new SketchViewModel({
-      layer: this._simpleLayer,
+    this._centerlineSVM = new SketchViewModel({
+      layer: this._centerlineLayer,
       view,
       defaultUpdateOptions: {
         tool: "reshape",
@@ -65,7 +65,17 @@ class SlopeEditor extends Accessor {
       snappingOptions: {
         enabled: true,
         selfEnabled: false,
-        featureSources: [{ layer: this._simpleLayer, enabled: true }]
+        featureSources: [{ layer: this._centerlineLayer, enabled: true }]
+      },
+      updateOnGraphicClick: false
+    });
+    this._bufferSVM = new SketchViewModel({
+      layer: this._bufferLayer,
+      view,
+      defaultUpdateOptions: {
+        tool: "reshape",
+        reshapeOptions: { shapeOperation: "none" },
+        toggleToolOnClick: false
       },
       updateOnGraphicClick: false
     });
@@ -76,10 +86,10 @@ class SlopeEditor extends Accessor {
   /**
    * Stores graphics for the centerline of slopes, which the 'simple' SketchViewModel will update.
    */
-  private readonly _simpleLayer: GraphicsLayer;
+  private readonly _centerlineLayer: GraphicsLayer;
 
   /**
-   * Stores graphics for the buffer of the slope being created.
+   * Stores graphics for the area of the slope being created.
    */
   private readonly _bufferLayer: GraphicsLayer;
 
@@ -91,13 +101,18 @@ class SlopeEditor extends Accessor {
   /**
    * SketchViewModel used to create and update the centerline of slopes.
    */
-  private readonly _simpleSVM: SketchViewModel;
+  private readonly _centerlineSVM: SketchViewModel;
+
+  /**
+   * SketchViewModel used to create and update the area of slopes.
+   */
+  private readonly _bufferSVM: SketchViewModel;
 
   private _routeToBufferMap = new Map();
   private _bufferToRouteMap = new Map();
 
   private get _layers(): Layer[] {
-    return [this._simpleLayer, this._bufferLayer, this._parcelLayer];
+    return [this._centerlineLayer, this._bufferLayer, this._parcelLayer];
   }
 
   /**
@@ -111,14 +126,14 @@ class SlopeEditor extends Accessor {
     const cleanup = (options?: { removeRoute?: boolean }) => {
       if (options?.removeRoute || !isRouteValid(routeGraphic?.geometry, skiResortArea)) {
         this._bufferLayer.remove(bufferGraphic);
-        this._simpleLayer.remove(routeGraphic);
+        this._centerlineLayer.remove(routeGraphic);
       }
       this._parcelLayer.visible = false;
       createHandle = removeNullable(createHandle);
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
-      this._simpleSVM.cancel();
+      this._centerlineSVM.cancel();
       cleanup();
     };
     signal.addEventListener("abort", onAbort, { once: true });
@@ -126,7 +141,7 @@ class SlopeEditor extends Accessor {
     // while creating, display the area within which slopes can be created
     this._parcelLayer.visible = true;
 
-    createHandle = this._simpleSVM.on("create", (e) => {
+    createHandle = this._centerlineSVM.on("create", (e) => {
       routeGraphic = e.graphic;
       switch (e.state) {
         case "start": {
@@ -159,7 +174,7 @@ class SlopeEditor extends Accessor {
         }
       }
     });
-    this._simpleSVM.create("polyline", { mode: "hybrid" });
+    this._centerlineSVM.create("polyline", { mode: "click" });
   }
 
   /**
@@ -167,40 +182,28 @@ class SlopeEditor extends Accessor {
    */
   update(graphic: Graphic, { signal }: { signal: AbortSignal }): void {
     let bufferGraphic: Graphic;
-    let routeGraphic: Graphic;
     if (this._routeToBufferMap.has(graphic)) {
-      routeGraphic = graphic;
       bufferGraphic = this._routeToBufferMap.get(graphic);
     } else if (this._bufferToRouteMap.has(graphic)) {
-      routeGraphic = this._bufferToRouteMap.get(graphic);
       bufferGraphic = graphic;
     }
-    if (!bufferGraphic || !routeGraphic) {
+    if (!bufferGraphic) {
       return;
     }
 
-    let updateHandle: IHandle | null = null;
     const cleanup = () => {
       this._parcelLayer.visible = false;
-      updateHandle = removeNullable(updateHandle);
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
-      this._simpleSVM.cancel();
+      this._centerlineSVM.cancel();
       cleanup();
     };
     signal.addEventListener("abort", onAbort, { once: true });
 
     // while updating, display the area within which slopes can be updated
     this._parcelLayer.visible = true;
-
-    updateHandle = this._simpleSVM.on("update", (e) => {
-      const routeGeometry = e.graphics.at(0).geometry;
-      let bufferGeometry = buffer(routeGeometry, slopeBufferDistance) as Polygon;
-      bufferGeometry = generalize(bufferGeometry, slopeMaxDeviation) as Polygon;
-      bufferGraphic.geometry = bufferGeometry;
-    });
-    this._simpleSVM.update(routeGraphic);
+    this._bufferSVM.update(bufferGraphic);
   }
 
   /**
