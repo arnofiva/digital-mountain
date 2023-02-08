@@ -12,7 +12,7 @@ import Accessor from "@arcgis/core/core/Accessor";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import Layer from "@arcgis/core/layers/Layer";
 
-import { hiddenLineSymbol, parcelSymbol, sketchPreviewSymbol } from "./symbols";
+import { hiddenLineSymbol, parcelSymbol, sketchPreviewLineSymbol } from "./symbols";
 import { skiResortArea } from "./data";
 import { slopeBufferDistance, slopeMaxDeviation } from "./constants";
 import { removeNullable } from "./utils";
@@ -61,7 +61,7 @@ class SlopeEditor extends Accessor {
         reshapeOptions: { shapeOperation: "none" },
         toggleToolOnClick: false
       },
-      polylineSymbol: sketchPreviewSymbol,
+      polylineSymbol: sketchPreviewLineSymbol,
       snappingOptions: {
         enabled: true,
         selfEnabled: false,

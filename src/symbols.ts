@@ -1,5 +1,6 @@
 import {
   FillSymbol3DLayer,
+  IconSymbol3DLayer,
   LineSymbol3D,
   LineSymbol3DLayer,
   ObjectSymbol3DLayer,
@@ -33,9 +34,9 @@ export const parcelSymbol = new PolygonSymbol3D({
 export const hiddenLineSymbol = new LineSymbol3D({ symbolLayers: [new LineSymbol3DLayer({ size: 20 })] });
 
 /**
- * Symbol used to visualize slope and lift routes while they are being created.
+ * Symbols used to visualize slope and lift routes while they are being created.
  */
-export const sketchPreviewSymbol = new LineSymbol3D({
+export const sketchPreviewLineSymbol = new LineSymbol3D({
   symbolLayers: [
     new LineSymbol3DLayer({
       material: {
@@ -45,6 +46,31 @@ export const sketchPreviewSymbol = new LineSymbol3D({
       cap: "round",
       size: 4
     })
+  ]
+});
+
+export const invalidSketchPreviewLineSymbol = new LineSymbol3D({
+  symbolLayers: [
+    new LineSymbol3DLayer({
+      material: {
+        color: [200, 0, 0, 1]
+      },
+      join: "bevel",
+      cap: "round",
+      size: 4
+    })
+  ]
+});
+
+export const sketchPreviewPointSymbol = new PointSymbol3D({
+  symbolLayers: [
+    new IconSymbol3DLayer({ material: { color: [0, 200, 0, 1] }, resource: { primitive: "circle" }, size: 15 })
+  ]
+});
+
+export const invalidSketchPreviewPointSymbol = new PointSymbol3D({
+  symbolLayers: [
+    new IconSymbol3DLayer({ material: { color: [200, 0, 0, 1] }, resource: { primitive: "circle" }, size: 15 })
   ]
 });
 

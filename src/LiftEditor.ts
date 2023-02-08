@@ -29,9 +29,13 @@ import { skiResortArea } from "./data";
 import {
   hiddenLineSymbol,
   invalidRouteCableSymbol,
+  invalidSketchPreviewLineSymbol,
+  invalidSketchPreviewPointSymbol,
   invalidTowerPreviewSymbol,
   parcelSymbol,
   routeCableSymbol,
+  sketchPreviewLineSymbol,
+  sketchPreviewPointSymbol,
   towerPreviewSymbol,
   towerSymbolLayer
 } from "./symbols";
@@ -52,10 +56,15 @@ class LiftEditor extends Accessor {
       listMode: "hide",
       title: "Lift routes - detail"
     });
-    this._previewLayer = new GraphicsLayer({
+    this._createPreviewLayer = new GraphicsLayer({
+      elevationInfo: { mode: "on-the-ground" },
+      listMode: "hide",
+      title: "Lift routes - create preview"
+    });
+    this._updatePreviewLayer = new GraphicsLayer({
       elevationInfo: { mode: "relative-to-ground" },
       listMode: "hide",
-      title: "Lift routes - preview"
+      title: "Lift routes - update preview"
     });
     this._cableDisplayLayer = new GraphicsLayer({
       elevationInfo: { mode: "absolute-height" },
@@ -102,9 +111,14 @@ class LiftEditor extends Accessor {
   private readonly _detailLayer: GraphicsLayer;
 
   /**
-   * Stores graphics used to show a simplified preview of the lift cables and towers while creating or editing.
+   * Stores graphics used to show a simplified preview of the lift cables and towers while creating.
    */
-  private readonly _previewLayer: GraphicsLayer;
+  private readonly _createPreviewLayer: GraphicsLayer;
+
+  /**
+   * Stores graphics used to show a simplified preview of the lift cables and towers while updating.
+   */
+  private readonly _updatePreviewLayer: GraphicsLayer;
 
   /**
    * Stores graphics used to show lift cable visualizations when not creating or editing, with lift cables that sag.
@@ -138,7 +152,8 @@ class LiftEditor extends Accessor {
       this._simpleLayer,
       this._detailLayer,
       this._cableDisplayLayer,
-      this._previewLayer,
+      this._createPreviewLayer,
+      this._updatePreviewLayer,
       this._parcelLayer,
       ...this._towerDisplayLayers
     ];
@@ -166,19 +181,19 @@ class LiftEditor extends Accessor {
       const detailGeometry = densify(geometry, initialTowerSeparation) as typeof geometry;
       isValid = isRouteValid(detailGeometry, skiResortArea);
 
-      this._previewLayer.removeAll();
+      this._createPreviewLayer.removeAll();
       for (const vertex of detailGeometry.paths[0]) {
         const routeTowerPreviewGraphic = new Graphic({
           geometry: vertexToPoint(vertex, detailGeometry.spatialReference),
-          symbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
+          symbol: isValid ? sketchPreviewPointSymbol : invalidSketchPreviewPointSymbol
         });
-        this._previewLayer.add(routeTowerPreviewGraphic);
+        this._createPreviewLayer.add(routeTowerPreviewGraphic);
       }
       const routeCablePreviewGraphic = new Graphic({
         geometry: detailGeometry,
-        symbol: isValid ? routeCableSymbol : invalidRouteCableSymbol
+        symbol: isValid ? sketchPreviewLineSymbol : invalidSketchPreviewLineSymbol
       });
-      this._previewLayer.add(routeCablePreviewGraphic);
+      this._createPreviewLayer.add(routeCablePreviewGraphic);
     };
 
     const completeGeometry = (vertices: number[][]): LiftGraphicGroup => {
@@ -217,7 +232,7 @@ class LiftEditor extends Accessor {
     let createHandle: IHandle | null = null;
     const cleanup = () => {
       this._parcelLayer.visible = false;
-      this._previewLayer.removeAll();
+      this._createPreviewLayer.removeAll();
       createHandle = removeNullable(createHandle);
       signal.removeEventListener("abort", onAbort);
     };
@@ -279,7 +294,7 @@ class LiftEditor extends Accessor {
     const hidePreviewLayer = () => {
       displayGraphic.visible = true;
       towerLayer.visible = true;
-      this._previewLayer.removeAll();
+      this._updatePreviewLayer.removeAll();
     };
 
     let updateHandle: IHandle | null = null;
@@ -342,19 +357,19 @@ class LiftEditor extends Accessor {
       displayGraphic.visible = false;
       towerLayer.visible = false;
 
-      this._previewLayer.removeAll();
+      this._updatePreviewLayer.removeAll();
       for (const vertex of detailGeometry.paths[0]) {
         const routeTowerPreviewGraphic = new Graphic({
           geometry: vertexToPoint(vertex, detailGeometry.spatialReference),
           symbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
         });
-        this._previewLayer.add(routeTowerPreviewGraphic);
+        this._updatePreviewLayer.add(routeTowerPreviewGraphic);
       }
       const routeCablePreviewGraphic = new Graphic({
         geometry: detailGeometry,
         symbol: isValid ? routeCableSymbol : invalidRouteCableSymbol
       });
-      this._previewLayer.add(routeCablePreviewGraphic);
+      this._updatePreviewLayer.add(routeCablePreviewGraphic);
     });
     this._simpleSVM.update(simpleGraphic);
   }
