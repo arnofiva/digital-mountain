@@ -152,9 +152,6 @@ class SlopeEditor extends Accessor {
     createHandle = this._centerlineSVM.on("create", (e) => {
       routeGraphic = e.graphic;
       switch (e.state) {
-        case "start": {
-          break;
-        }
         case "cancel":
           cleanup({ removeRoute: true });
           break;
