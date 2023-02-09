@@ -3,7 +3,7 @@ import { contains, densify, planarLength } from "@arcgis/core/geometry/geometryE
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
-import { PointSymbol3D } from "@arcgis/core/symbols";
+import { LineSymbol3D, PointSymbol3D } from "@arcgis/core/symbols";
 import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import Accessor from "@arcgis/core/core/Accessor";
@@ -209,19 +209,11 @@ class LiftEditor extends Accessor {
       const detailGeometry = densify(geometry, initialTowerSeparation) as typeof geometry;
       isValid = isRouteValid(detailGeometry, skiResortArea);
 
-      this._createPreviewLayer.removeAll();
-      for (const vertex of detailGeometry.paths[0]) {
-        const routeTowerPreviewGraphic = new Graphic({
-          geometry: vertexToPoint(vertex, detailGeometry.spatialReference),
-          symbol: isValid ? sketchPreviewPointSymbol : invalidSketchPreviewPointSymbol
-        });
-        this._createPreviewLayer.add(routeTowerPreviewGraphic);
-      }
-      const routeCablePreviewGraphic = new Graphic({
-        geometry: detailGeometry,
-        symbol: isValid ? sketchPreviewLineSymbol : invalidSketchPreviewLineSymbol
+      populatePreviewLayer(this._createPreviewLayer, {
+        detailGeometry,
+        cableSymbol: isValid ? sketchPreviewLineSymbol : invalidSketchPreviewLineSymbol,
+        towerSymbol: isValid ? sketchPreviewPointSymbol : invalidSketchPreviewPointSymbol
       });
-      this._createPreviewLayer.add(routeCablePreviewGraphic);
     };
 
     const completeGeometry = (vertices: number[][]): LiftGraphicGroup => {
@@ -344,16 +336,32 @@ class LiftEditor extends Accessor {
     const elevationSampler = await this._elevationSamplerPromise;
     let initialDetailGeometry: Polyline | null = null;
     updateHandle = this._detailSVM.on("update", (e) => {
-      if (e.tool !== "reshape" || e.state === "start") {
-        return;
-      }
-      if (e.state === "complete") {
-        cleanup();
+      if (e.tool !== "reshape") {
         return;
       }
 
+      const detailGeometry = detailGraphic.geometry as Polyline;
+      switch (e.state) {
+        case "start":
+          // while updating hide the display graphics and show less detailed preview graphics instead
+          displayGraphic.visible = false;
+          towerLayer.visible = false;
+          populatePreviewLayer(this._updatePreviewLayer, {
+            detailGeometry,
+            cableSymbol: routeCableSymbol,
+            towerSymbol: towerPreviewSymbol
+          });
+          return;
+        case "complete":
+          // once complete, update the display graphics to reflect any changes made to the detail geometry
+          displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry, elevationSampler);
+          placeTowers(towerLayer, detailGeometry, elevationSampler);
+          cleanup();
+          return;
+      }
+
       if (e.toolEventInfo?.type === "reshape-start") {
-        initialDetailGeometry = detailGraphic.geometry.clone() as Polyline;
+        initialDetailGeometry = detailGeometry.clone();
       }
 
       /**
@@ -361,7 +369,6 @@ class LiftEditor extends Accessor {
        * distances relative to the end vertex. If we measured relative to the start vertex in this
        * case we would be measuring relative to its unconstrained position.
        */
-      const detailGeometry = detailGraphic.geometry as Polyline;
       const reshapingStart = !vec2.equals(detailGeometry.paths[0][0], initialDetailGeometry.paths[0][0]);
       const newDetailGeometry = constrainRouteDetailGeometry(detailGraphic.geometry as Polyline, {
         relativeToStart: !reshapingStart
@@ -369,8 +376,8 @@ class LiftEditor extends Accessor {
 
       const isValid = isRouteValid(newDetailGeometry, skiResortArea);
       if (e.toolEventInfo?.type === "reshape-stop") {
+        // once we stop reshaping, if the new detail geometry is invalid then revert the change
         if (isValid) {
-          // if the new geometry is valid, update the display graphics
           const path = (detailGraphic.geometry as Polyline).paths[0];
           const start = [...path[0]];
           const end = [...path[path.length - 1]];
@@ -379,32 +386,18 @@ class LiftEditor extends Accessor {
             spatialReference: detailGraphic.geometry.spatialReference
           });
           detailGraphic.geometry = newDetailGeometry;
-          displayGraphic.geometry = detailGeometryToDisplayGeometry(newDetailGeometry, elevationSampler);
-          placeTowers(towerLayer, newDetailGeometry, elevationSampler);
         } else {
           detailGraphic.geometry = initialDetailGeometry;
         }
-        hidePreviewLayer();
         return;
       }
 
-      // while reshaping, hide the display graphics and show less detailed preview graphics instead
-      displayGraphic.visible = false;
-      towerLayer.visible = false;
-
-      this._updatePreviewLayer.removeAll();
-      for (const vertex of newDetailGeometry.paths[0]) {
-        const routeTowerPreviewGraphic = new Graphic({
-          geometry: vertexToPoint(vertex, newDetailGeometry.spatialReference),
-          symbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
-        });
-        this._updatePreviewLayer.add(routeTowerPreviewGraphic);
-      }
-      const routeCablePreviewGraphic = new Graphic({
-        geometry: newDetailGeometry,
-        symbol: isValid ? routeCableSymbol : invalidRouteCableSymbol
+      // while reshaping, update the preview layer to match the reshaped detail geometry
+      populatePreviewLayer(this._updatePreviewLayer, {
+        detailGeometry: newDetailGeometry,
+        cableSymbol: isValid ? routeCableSymbol : invalidRouteCableSymbol,
+        towerSymbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
       });
-      this._updatePreviewLayer.add(routeCablePreviewGraphic);
     });
     this._detailSVM.update(detailGraphic);
   }
@@ -535,6 +528,29 @@ function placeTowers(towerLayer: GraphicsLayer, relativeZGeometry: Polyline, ele
   }
   towerLayer.graphics.removeAll();
   towerLayer.graphics.addMany(newFeatures);
+}
+
+function populatePreviewLayer(
+  layer: GraphicsLayer,
+  {
+    detailGeometry,
+    cableSymbol,
+    towerSymbol
+  }: { detailGeometry: Polyline; cableSymbol: LineSymbol3D; towerSymbol: PointSymbol3D }
+) {
+  layer.removeAll();
+  for (const vertex of detailGeometry.paths[0]) {
+    const routeTowerPreviewGraphic = new Graphic({
+      geometry: vertexToPoint(vertex, detailGeometry.spatialReference),
+      symbol: towerSymbol
+    });
+    layer.add(routeTowerPreviewGraphic);
+  }
+  const routeCablePreviewGraphic = new Graphic({
+    geometry: detailGeometry,
+    symbol: cableSymbol
+  });
+  layer.add(routeCablePreviewGraphic);
 }
 
 function setInitialTowerHeight(line: Polyline): Polyline {
