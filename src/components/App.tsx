@@ -1,8 +1,8 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import Store from "../Store";
-import { TaskScreenType } from "./interfaces";
+import { Store } from "../stores";
+import { ScreenType } from "./interfaces";
 import MonitorScreen from "./MonitorScreen";
 import PlanScreen from "./PlanScreen";
 import TaskSelectionScreen from "./TaskSelectionScreen";
@@ -21,17 +21,16 @@ class App extends Widget<ConstructProperties> {
   }
 
   private _screenComponent(): tsx.JSX.Element {
-    const taskScreenType = this.store.taskScreenType;
-    if (taskScreenType == null) {
-      return <TaskSelectionScreen actions={this.store} />;
-    }
-    switch (taskScreenType) {
-      case TaskScreenType.Monitor:
-        return <MonitorScreen actions={this.store} />;
-      case TaskScreenType.Plan:
-        return <PlanScreen planningHint={this.store.planningHint} actions={this.store} />;
-      case TaskScreenType.Visit:
-        return <VisitScreen actions={this.store} />;
+    const { screenStore } = this.store;
+    switch (screenStore.type) {
+      case ScreenType.TaskSelection:
+        return <TaskSelectionScreen store={screenStore} actions={this.store} />;
+      case ScreenType.Monitor:
+        return <MonitorScreen store={screenStore} actions={this.store} />;
+      case ScreenType.Plan:
+        return <PlanScreen store={screenStore} actions={this.store} />;
+      case ScreenType.Visit:
+        return <VisitScreen store={screenStore} actions={this.store} />;
     }
   }
 }

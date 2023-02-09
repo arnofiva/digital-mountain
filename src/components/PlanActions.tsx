@@ -4,7 +4,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 import { UIActions } from "./interfaces";
 import { Widget } from "./Widget";
 
-type ConstructProperties = Pick<PlanActions, "actions" | "planningHint">;
+type ConstructProperties = Pick<PlanActions, "actions" | "hint">;
 
 @subclass("digital-mountain.PlanActions")
 class PlanActions extends Widget<ConstructProperties> {
@@ -12,14 +12,14 @@ class PlanActions extends Widget<ConstructProperties> {
   actions: UIActions;
 
   @property()
-  planningHint: string | null;
+  hint: string | null;
 
   render() {
     return (
       <div class="plan-actions">
         <calcite-card>
-          {this.planningHint ? (
-            <span>{this.planningHint}</span>
+          {this.hint ? (
+            <span>{this.hint}</span>
           ) : (
             <div>
               <calcite-button onclick={() => this.actions.startSlopeEditor()}>

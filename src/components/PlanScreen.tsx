@@ -5,8 +5,9 @@ import Header from "./Header";
 import { UIActions } from "./interfaces";
 import PlanActions from "./PlanActions";
 import { Widget } from "./Widget";
+import { PlanStore } from "../stores";
 
-type ConstructProperties = Pick<PlanScreen, "actions" | "planningHint">;
+type ConstructProperties = Pick<PlanScreen, "actions" | "store">;
 
 @subclass("digital-mountain.PlanScreen")
 class PlanScreen extends Widget<ConstructProperties> {
@@ -14,13 +15,13 @@ class PlanScreen extends Widget<ConstructProperties> {
   actions: UIActions;
 
   @property()
-  planningHint: string | null;
+  store: PlanStore;
 
   render() {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Planning" />
-        <PlanActions planningHint={this.planningHint} actions={this.actions} />
+        <PlanActions hint={this.store.hint} actions={this.actions} />
       </div>
     );
   }

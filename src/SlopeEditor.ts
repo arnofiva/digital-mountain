@@ -76,6 +76,14 @@ class SlopeEditor extends Accessor {
     });
   }
 
+  destroy(): void {
+    this._centerlineSVM.destroy();
+    this._bufferSVM.destroy();
+    for (const layer of this._layers) {
+      this._view.map.remove(layer);
+    }
+  }
+
   @property()
   get isCreating(): boolean {
     return this._centerlineSVM.createGraphic != null;

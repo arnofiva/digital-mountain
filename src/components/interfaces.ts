@@ -7,8 +7,11 @@ export interface UIActions {
   startLiftEditor(options?: { updateGraphic?: Graphic }): void;
 }
 
-export enum TaskScreenType {
+export enum ScreenType {
+  TaskSelection,
   Monitor,
   Plan,
   Visit
 }
+
+export type TaskScreenType = Exclude<ScreenType, ScreenType.TaskSelection>;

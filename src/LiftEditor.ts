@@ -108,6 +108,14 @@ class LiftEditor extends Accessor {
     this._elevationSamplerPromise = view.map.ground.createElevationSampler(skiResortArea.extent);
   }
 
+  destroy(): void {
+    this._simpleSVM.destroy();
+    this._detailSVM.destroy();
+    for (const layer of this._layers) {
+      this._view.map.remove(layer);
+    }
+  }
+
   @property()
   get isCreating(): boolean {
     return this._simpleSVM.createGraphic != null;

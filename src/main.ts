@@ -4,7 +4,7 @@ import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
 import App from "./components/App";
-import Store from "./Store";
+import { Store } from "./stores";
 
 const view = (window["view"] = new SceneView({
   container: "view",
