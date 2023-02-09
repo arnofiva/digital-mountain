@@ -126,9 +126,27 @@ export class TaskSelectionStore extends ScreenStore {
     // hide UI on task selection screen and restore once task is selected
     view.ui.components = [];
     this.addHandles({ remove: () => (view.ui.components = this._defaultUIComponents) });
+    // hide layers until task is selected
+    view.when(() => {
+      if (!this.destroyed) {
+        view.map.allLayers.forEach((l) => {
+          this._initialLayerVisibilities.push(l.visible);
+          if (l.type !== "elevation" && l.type !== "tile") {
+            l.visible = false;
+          }
+        });
+      }
+    });
+    this.addHandles({
+      remove: () => {
+        view.map.allLayers.forEach((l, i) => (l.visible = this._initialLayerVisibilities[i]));
+      }
+    });
     const { signal } = this.createAbortController();
     ignoreAbortErrors(this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal }));
   }
+
+  private readonly _initialLayerVisibilities: boolean[] = [];
 
   private async _startBackgroundCameraAnimation(
     view: SceneView,

@@ -25,10 +25,10 @@ export const backgroundAnimationTargetCamera = new Camera({
 export const taskScreenStartCamera = new Camera({
   position: {
     spatialReference: { wkid: 102100 },
-    x: 1035006,
-    y: 5908919,
-    z: 4294
+    x: 1028789,
+    y: 5913876,
+    z: 2519
   },
-  heading: 309,
-  tilt: 63
+  heading: 310,
+  tilt: 78
 });

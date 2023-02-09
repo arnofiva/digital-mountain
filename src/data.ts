@@ -1,5 +1,7 @@
 import { Polygon, SpatialReference } from "@arcgis/core/geometry";
 
+export const webSceneId = "2e0b4ceaba2d4ebb9f8022cb7632b3c6";
+
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,
   rings: [
