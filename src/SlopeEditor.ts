@@ -62,11 +62,6 @@ class SlopeEditor extends Accessor {
         toggleToolOnClick: false
       },
       polylineSymbol: sketchPreviewLineSymbol,
-      snappingOptions: {
-        enabled: true,
-        selfEnabled: false,
-        featureSources: [{ layer: this._centerlineLayer, enabled: true }]
-      },
       updateOnGraphicClick: false
     });
     this._bufferSVM = new SketchViewModel({
