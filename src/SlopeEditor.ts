@@ -1,6 +1,5 @@
-import { watch } from "@arcgis/core/core/reactiveUtils";
 import { Polygon, Polyline } from "@arcgis/core/geometry";
-import { buffer, contains, generalize, union } from "@arcgis/core/geometry/geometryEngine";
+import { buffer, contains, generalize } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import { PolygonSymbol3D } from "@arcgis/core/symbols";

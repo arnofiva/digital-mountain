@@ -11,7 +11,6 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Layer from "@arcgis/core/layers/Layer";
-import Geometry from "@arcgis/core/geometry/Geometry";
 
 import {
   initialTowerHeight,
@@ -268,13 +267,14 @@ class LiftEditor extends Accessor {
         case "cancel":
           cleanup();
           return;
-        case "complete":
+        case "complete": {
           // remove graphic created by SVM, we will create our own
           this._simpleLayer.remove(e.graphic);
           const { simpleGraphic } = completeGeometry(validVertices);
           cleanup();
           this.update(simpleGraphic, { signal });
           return;
+        }
       }
       switch (e.toolEventInfo?.type) {
         case "cursor-update":
