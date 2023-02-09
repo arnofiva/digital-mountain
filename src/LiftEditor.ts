@@ -103,9 +103,6 @@ class LiftEditor extends Accessor {
         reshapeOptions: { shapeOperation: "none" },
         toggleToolOnClick: false
       },
-      tooltipOptions: {
-        enabled: true
-      },
       updateOnGraphicClick: false
     });
     this._elevationSamplerPromise = view.map.ground.createElevationSampler(skiResortArea.extent);
