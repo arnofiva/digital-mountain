@@ -12,10 +12,6 @@ import { union } from "@arcgis/core/geometry/geometryEngine";
  */
 @subclass("digital-mountain.TreeFilterState")
 class TreeFilterState extends Accessor {
-  constructor() {
-    super();
-  }
-
   /**
    * Returns a union of the staged and committed geometry, that can be applied in a feature filter.
    */
