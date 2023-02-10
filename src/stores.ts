@@ -1,10 +1,17 @@
 import Accessor from "@arcgis/core/core/Accessor";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import { watch } from "@arcgis/core/core/reactiveUtils";
+import { Polygon } from "@arcgis/core/geometry";
+import { buffer, union } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
+import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
+import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
 import SceneView from "@arcgis/core/views/SceneView";
 
 import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
 import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
+import { treeFilterDistance } from "./constants";
+import { findTreeLayer } from "./data";
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
 import { ignoreAbortErrors } from "./utils";
@@ -198,6 +205,7 @@ export class PlanStore extends ScreenStore {
     this._slopeEditor = new SlopeEditor({ view });
     const { signal } = this.createAbortController();
     goToTaskScreenStart(view, { signal });
+    this._setupTreeFilterWatch(view);
   }
 
   destroy(): void {
@@ -209,8 +217,8 @@ export class PlanStore extends ScreenStore {
 
   private readonly _liftEditor: LiftEditor;
   private readonly _slopeEditor: SlopeEditor;
-
   private _planningAbortController: AbortController | null = null;
+  private _treeLayerView: FeatureLayerView | null = null;
 
   @property()
   get hint(): string | null {
@@ -249,6 +257,45 @@ export class PlanStore extends ScreenStore {
     } else if (this._liftEditor.canUpdateGraphic(graphic)) {
       this.startLiftEditor({ updateGraphic: graphic });
     }
+  }
+
+  private _setupTreeFilterWatch(view: SceneView): void {
+    view.whenLayerView(findTreeLayer(view.map)).then((lv) => (this._treeLayerView = lv as FeatureLayerView));
+    // update the layer view filter once the layer view has been found, and whenever lift or slope geometries changes
+    const filterWatchHandle = watch(
+      () => ({
+        layerView: this._treeLayerView,
+        geometries: [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter((g) => g != null)
+      }),
+      ({ layerView, geometries }) => {
+        if (layerView == null) {
+          return;
+        }
+        if (geometries.length === 0) {
+          layerView.filter = null;
+          return;
+        }
+        // buffer lift line geometries by a small amount, so that they can be unioned with slope polygons
+        const bufferGeometries =
+          geometries.some((g) => g.type === "polygon") && geometries.some((g) => g.type === "polyline")
+            ? (buffer(geometries, 0.01) as Polygon[])
+            : geometries;
+        layerView.filter = new FeatureFilter({
+          distance: treeFilterDistance,
+          geometry: union(bufferGeometries),
+          spatialRelationship: "disjoint",
+          units: "meters"
+        });
+      }
+    );
+    this.addHandles({
+      remove: () => {
+        filterWatchHandle.remove();
+        if (this._treeLayerView) {
+          this._treeLayerView.filter = null;
+        }
+      }
+    });
   }
 }
 

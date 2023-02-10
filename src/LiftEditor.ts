@@ -11,6 +11,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Layer from "@arcgis/core/layers/Layer";
+import Geometry from "@arcgis/core/geometry/Geometry";
 
 import {
   initialTowerHeight,
@@ -38,6 +39,7 @@ import {
   towerPreviewSymbol,
   towerSymbolLayer
 } from "./symbols";
+import TreeFilterState from "./TreeFilterState";
 
 @subclass("digital-mountain.LiftEditor")
 class LiftEditor extends Accessor {
@@ -120,6 +122,11 @@ class LiftEditor extends Accessor {
     return this._simpleSVM.createGraphic != null;
   }
 
+  @property()
+  get treeFilterGeometry(): Geometry | null {
+    return this._treeFilterState.geometry;
+  }
+
   private readonly _view: SceneView;
 
   /**
@@ -173,6 +180,7 @@ class LiftEditor extends Accessor {
   private readonly _detailSVM: SketchViewModel;
 
   private readonly _elevationSamplerPromise: Promise<ElevationSampler>;
+  private readonly _treeFilterState = new TreeFilterState();
 
   private get _layers(): Layer[] {
     return [
@@ -195,6 +203,20 @@ class LiftEditor extends Accessor {
     // while creating, display the area within which lifts can be created
     this._parcelLayer.visible = true;
 
+    let createHandle: IHandle | null = null;
+    const cleanup = () => {
+      this._parcelLayer.visible = false;
+      this._createPreviewLayer.removeAll();
+      this._treeFilterState.revert();
+      createHandle = removeNullable(createHandle);
+      signal.removeEventListener("abort", onAbort);
+    };
+    const onAbort = () => {
+      this._simpleSVM.cancel();
+      cleanup();
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+
     let isValid = true;
     const updateGeometry = (vertices: number[][]) => {
       const geometry = setInitialTowerHeight(
@@ -213,6 +235,7 @@ class LiftEditor extends Accessor {
         cableSymbol: isValid ? sketchPreviewLineSymbol : invalidSketchPreviewLineSymbol,
         towerSymbol: isValid ? sketchPreviewPointSymbol : invalidSketchPreviewPointSymbol
       });
+      this._treeFilterState.stage(detailGeometry);
     };
 
     const completeGeometry = (vertices: number[][]): LiftGraphicGroup => {
@@ -240,26 +263,15 @@ class LiftEditor extends Accessor {
       });
       this._towerDisplayLayers.push(towerLayer);
       this._view.map.add(towerLayer);
-
       placeTowers(towerLayer, detailGeometry, elevationSampler);
+
+      this._treeFilterState.stage(detailGeometry);
+      this._treeFilterState.commit();
 
       const group = { simpleGraphic, detailGraphic, displayGraphic, towerLayer };
       this._graphicGroups.push(group);
       return group;
     };
-
-    let createHandle: IHandle | null = null;
-    const cleanup = () => {
-      this._parcelLayer.visible = false;
-      this._createPreviewLayer.removeAll();
-      createHandle = removeNullable(createHandle);
-      signal.removeEventListener("abort", onAbort);
-    };
-    const onAbort = () => {
-      this._simpleSVM.cancel();
-      cleanup();
-    };
-    signal.addEventListener("abort", onAbort, { once: true });
 
     const validVertices: number[][] = [];
     createHandle = this._simpleSVM.on("create", (e) => {
@@ -311,6 +323,16 @@ class LiftEditor extends Accessor {
     }
     const { simpleGraphic, detailGraphic, displayGraphic, towerLayer } = group;
 
+    const showPreviewLayer = (detailGeometry: Polyline, { isValid }: { isValid: boolean }) => {
+      // while updating hide the display graphics and show less detailed preview graphics instead
+      displayGraphic.visible = false;
+      towerLayer.visible = false;
+      populatePreviewLayer(this._updatePreviewLayer, {
+        detailGeometry,
+        cableSymbol: isValid ? routeCableSymbol : invalidRouteCableSymbol,
+        towerSymbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
+      });
+    };
     const hidePreviewLayer = () => {
       displayGraphic.visible = true;
       towerLayer.visible = true;
@@ -321,6 +343,8 @@ class LiftEditor extends Accessor {
     const cleanup = () => {
       hidePreviewLayer();
       this._parcelLayer.visible = false;
+      // reset the filter to include the updated feature
+      this._treeFilterState.commit(this._detailLayer.graphics.toArray().map((g) => g.geometry));
       updateHandle = removeNullable(updateHandle);
       signal.removeEventListener("abort", onAbort);
     };
@@ -343,14 +367,7 @@ class LiftEditor extends Accessor {
       const detailGeometry = detailGraphic.geometry as Polyline;
       switch (e.state) {
         case "start":
-          // while updating hide the display graphics and show less detailed preview graphics instead
-          displayGraphic.visible = false;
-          towerLayer.visible = false;
-          populatePreviewLayer(this._updatePreviewLayer, {
-            detailGeometry,
-            cableSymbol: routeCableSymbol,
-            towerSymbol: towerPreviewSymbol
-          });
+          showPreviewLayer(detailGeometry, { isValid: true });
           return;
         case "complete":
           // once complete, update the display graphics to reflect any changes made to the detail geometry
@@ -361,6 +378,13 @@ class LiftEditor extends Accessor {
       }
 
       if (e.toolEventInfo?.type === "reshape-start") {
+        // exclude the feature being updated from the filter
+        this._treeFilterState.commit(
+          this._detailLayer.graphics
+            .toArray()
+            .filter((g) => g !== detailGraphic)
+            .map((g) => g.geometry)
+        );
         initialDetailGeometry = detailGeometry.clone();
       }
 
@@ -370,14 +394,15 @@ class LiftEditor extends Accessor {
        * case we would be measuring relative to its unconstrained position.
        */
       const reshapingStart = !vec2.equals(detailGeometry.paths[0][0], initialDetailGeometry.paths[0][0]);
-      const newDetailGeometry = constrainRouteDetailGeometry(detailGraphic.geometry as Polyline, {
+      let newDetailGeometry = constrainRouteDetailGeometry(detailGraphic.geometry as Polyline, {
         relativeToStart: !reshapingStart
       });
 
-      const isValid = isRouteValid(newDetailGeometry, skiResortArea);
+      let isValid = isRouteValid(newDetailGeometry, skiResortArea);
       if (e.toolEventInfo?.type === "reshape-stop") {
         // once we stop reshaping, if the new detail geometry is invalid then revert the change
         if (isValid) {
+          // store the constrained geometry on the simple and detail graphics
           const path = (detailGraphic.geometry as Polyline).paths[0];
           const start = [...path[0]];
           const end = [...path[path.length - 1]];
@@ -387,17 +412,15 @@ class LiftEditor extends Accessor {
           });
           detailGraphic.geometry = newDetailGeometry;
         } else {
+          newDetailGeometry = initialDetailGeometry;
           detailGraphic.geometry = initialDetailGeometry;
+          isValid = true;
         }
-        return;
       }
 
       // while reshaping, update the preview layer to match the reshaped detail geometry
-      populatePreviewLayer(this._updatePreviewLayer, {
-        detailGeometry: newDetailGeometry,
-        cableSymbol: isValid ? routeCableSymbol : invalidRouteCableSymbol,
-        towerSymbol: isValid ? towerPreviewSymbol : invalidTowerPreviewSymbol
-      });
+      showPreviewLayer(newDetailGeometry, { isValid });
+      this._treeFilterState.stage(newDetailGeometry);
     });
     this._detailSVM.update(detailGraphic);
   }

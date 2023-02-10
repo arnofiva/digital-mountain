@@ -1,6 +1,12 @@
 import { Polygon, SpatialReference } from "@arcgis/core/geometry";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import Map from "@arcgis/core/Map";
 
 export const webSceneId = "2e0b4ceaba2d4ebb9f8022cb7632b3c6";
+
+export function findTreeLayer(map: Map): FeatureLayer {
+  return map.allLayers.find((l) => l.title.toLowerCase().includes("trees")) as FeatureLayer;
+}
 
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,

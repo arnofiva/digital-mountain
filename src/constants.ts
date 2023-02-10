@@ -1,4 +1,8 @@
 /**
+ * Constants used in the application. All values are in meters.
+ */
+
+/**
  * Slope editor
  */
 export const slopeBufferDistance = 15;
@@ -14,3 +18,8 @@ export const maxTowerHeight = 20;
 export const minCableLength = 100;
 export const maxCableLength = 10000;
 export const minTowerSeparation = 50;
+
+/**
+ * Hide trees that are within this distance from slopes and lifts.
+ */
+export const treeFilterDistance = 20;

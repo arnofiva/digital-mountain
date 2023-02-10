@@ -15,6 +15,7 @@ import { hiddenLineSymbol, parcelSymbol, sketchPreviewLineSymbol } from "./symbo
 import { skiResortArea } from "./data";
 import { slopeBufferDistance, slopeMaxDeviation } from "./constants";
 import { removeNullable } from "./utils";
+import TreeFilterState from "./TreeFilterState";
 
 const bufferSymbol = new PolygonSymbol3D({
   symbolLayers: [
@@ -88,6 +89,11 @@ class SlopeEditor extends Accessor {
     return this._centerlineSVM.createGraphic != null;
   }
 
+  @property()
+  get treeFilterGeometry(): Geometry | null {
+    return this._treeFilterState.geometry;
+  }
+
   private readonly _view: SceneView;
 
   /**
@@ -115,8 +121,9 @@ class SlopeEditor extends Accessor {
    */
   private readonly _bufferSVM: SketchViewModel;
 
-  private _routeToBufferMap = new Map();
-  private _bufferToRouteMap = new Map();
+  private readonly _routeToBufferMap = new Map();
+  private readonly _bufferToRouteMap = new Map();
+  private readonly _treeFilterState = new TreeFilterState();
 
   private get _layers(): Layer[] {
     return [this._centerlineLayer, this._bufferLayer, this._parcelLayer];
@@ -136,6 +143,7 @@ class SlopeEditor extends Accessor {
         this._centerlineLayer.remove(routeGraphic);
       }
       this._parcelLayer.visible = false;
+      this._treeFilterState.revert();
       createHandle = removeNullable(createHandle);
       signal.removeEventListener("abort", onAbort);
     };
@@ -153,7 +161,7 @@ class SlopeEditor extends Accessor {
       switch (e.state) {
         case "cancel":
           cleanup({ removeRoute: true });
-          break;
+          return;
         case "complete":
           if (isRouteValid(routeGraphic?.geometry, skiResortArea)) {
             routeGraphic.geometry = generalize(routeGraphic.geometry, slopeMaxDeviation);
@@ -167,11 +175,14 @@ class SlopeEditor extends Accessor {
             this._bufferLayer.add(bufferGraphic);
             this._routeToBufferMap.set(routeGraphic, bufferGraphic);
             this._bufferToRouteMap.set(bufferGraphic, routeGraphic);
+            this._treeFilterState.stage(bufferGeometry);
+            this._treeFilterState.commit();
           }
           cleanup();
           this.update(bufferGraphic, { signal });
-          break;
+          return;
       }
+      this._treeFilterState.stage(routeGraphic.geometry);
     });
     this._centerlineSVM.create("polyline", { mode: "click" });
   }
@@ -190,8 +201,11 @@ class SlopeEditor extends Accessor {
       return;
     }
 
+    let updateHandle: IHandle | null = null;
     const cleanup = () => {
       this._parcelLayer.visible = false;
+      this._treeFilterState.revert();
+      updateHandle = removeNullable(updateHandle);
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
@@ -202,6 +216,21 @@ class SlopeEditor extends Accessor {
 
     // while updating, display the area within which slopes can be updated
     this._parcelLayer.visible = true;
+    updateHandle = this._bufferSVM.on("update", (e) => {
+      if (e.toolEventInfo?.type === "reshape-start") {
+        // exclude the feature being updated from the filter
+        this._treeFilterState.commit(
+          this._bufferLayer.graphics
+            .toArray()
+            .filter((g) => g !== bufferGraphic)
+            .map((g) => g.geometry)
+        );
+      }
+      this._treeFilterState.stage(e.graphics[0].geometry);
+      if (e.state === "complete") {
+        this._treeFilterState.commit();
+      }
+    });
     this._bufferSVM.update(bufferGraphic);
   }
 
