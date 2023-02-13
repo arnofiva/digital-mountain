@@ -280,6 +280,7 @@ export class PlanStore extends ScreenStore {
       ]);
       const scene = this._view.map as WebScene;
       await scene.updateFrom(this._view);
+      scene.presentation.slides.removeAll();
       const cablesLayer = findCablesLayer(scene);
       const towersLayer = findTowersLayer(scene);
       const slopesLayer = findSlopesLayer(scene);
