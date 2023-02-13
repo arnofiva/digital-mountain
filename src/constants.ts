@@ -11,6 +11,9 @@ export const slopeMaxDeviation = 5;
 /**
  * Lift editor
  */
+export const liftColor = [120, 120, 120, 1];
+export const liftInvalidPreviewColor = [255, 0, 0, 1];
+export const cableOffset = 3;
 export const initialTowerHeight = 10;
 export const initialTowerSeparation = 200;
 export const minTowerHeight = 5;

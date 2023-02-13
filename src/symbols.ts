@@ -9,7 +9,7 @@ import {
   PolygonSymbol3D
 } from "@arcgis/core/symbols";
 
-import { maxTowerHeight } from "./constants";
+import { liftColor, liftInvalidPreviewColor, maxTowerHeight } from "./constants";
 
 /**
  * Symbol used to visualize the area within which lifts and slopes can be created or updated.
@@ -79,16 +79,15 @@ export const invalidSketchPreviewPointSymbol = new PointSymbol3D({
  */
 export const routeCableSymbol = new LineSymbol3D({ symbolLayers: [routeCableSymbolLayer()] });
 export const invalidRouteCableSymbol = new LineSymbol3D({
-  symbolLayers: [routeCableSymbolLayer({ color: [255, 0, 0, 1] })]
+  symbolLayers: [routeCableSymbolLayer({ color: liftInvalidPreviewColor })]
 });
 
 function routeCableSymbolLayer(options?: { color?: number[] }): PathSymbol3DLayer {
   return new PathSymbol3DLayer({
-    profile: "quad", // creates a rectangular shape
-    width: 4, // path width in meters
-    height: 0.1, // path height in meters
-    material: { color: options?.color ?? [0, 0, 0, 1] },
-    cap: "butt",
+    profile: "circle",
+    width: 0.5,
+    height: 0.5,
+    material: { color: options?.color ?? liftColor },
     profileRotation: "heading"
   });
 }
@@ -96,25 +95,48 @@ function routeCableSymbolLayer(options?: { color?: number[] }): PathSymbol3DLaye
 /**
  * Symbols used for lift towers.
  */
-export const towerPreviewSymbol = new PointSymbol3D({ symbolLayers: [towerSymbolLayer({ roll: 180 })] });
+export const towerPreviewSymbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ showCrossarm: false }) });
 export const invalidTowerPreviewSymbol = new PointSymbol3D({
-  symbolLayers: [towerSymbolLayer({ roll: 180, color: [255, 0, 0, 1] })]
+  symbolLayers: towerSymbolLayers({ color: liftInvalidPreviewColor, showCrossarm: false })
 });
 
-export function towerSymbolLayer(options?: {
+export function towerSymbolLayers(options?: {
   heading?: number;
   tilt?: number;
   roll?: number;
   color?: number[];
-}): ObjectSymbol3DLayer {
-  return new ObjectSymbol3DLayer({
-    width: 2,
-    depth: 2,
-    height: maxTowerHeight,
-    heading: options?.heading,
-    tilt: options?.tilt,
-    roll: options?.roll,
-    resource: { primitive: "cylinder" },
-    material: { color: options?.color ?? [0, 0, 0, 1] }
-  });
+  showCrossarm?: boolean;
+}): ObjectSymbol3DLayer[] {
+  const symbolLayers = [
+    new ObjectSymbol3DLayer({
+      anchor: "top",
+      resource: {
+        primitive: "cylinder"
+      },
+      material: { color: options?.color ?? liftColor },
+      height: maxTowerHeight,
+      heading: options?.heading,
+      tilt: options?.tilt,
+      roll: options?.roll,
+      width: 1,
+      depth: 1
+    })
+  ];
+  if ((options?.showCrossarm ?? true) === true) {
+    symbolLayers.push(
+      new ObjectSymbol3DLayer({
+        anchor: "center",
+        resource: {
+          primitive: "cylinder"
+        },
+        material: { color: options?.color ?? liftColor },
+        roll: 90,
+        heading: 0,
+        height: 6,
+        width: 1,
+        depth: 1
+      })
+    );
+  }
+  return symbolLayers;
 }

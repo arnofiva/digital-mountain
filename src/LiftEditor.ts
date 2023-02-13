@@ -1,5 +1,5 @@
 import { Point, Polygon, Polyline, SpatialReference } from "@arcgis/core/geometry";
-import { contains, densify, planarLength } from "@arcgis/core/geometry/geometryEngine";
+import { contains, densify, offset, planarLength, union } from "@arcgis/core/geometry/geometryEngine";
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
@@ -20,7 +20,8 @@ import {
   minCableLength,
   maxCableLength,
   minTowerSeparation,
-  initialTowerSeparation
+  initialTowerSeparation,
+  cableOffset
 } from "./constants";
 import { createSag, sagToSpanRatio } from "./sag";
 import * as vec2 from "./vec2";
@@ -37,7 +38,7 @@ import {
   sketchPreviewLineSymbol,
   sketchPreviewPointSymbol,
   towerPreviewSymbol,
-  towerSymbolLayer
+  towerSymbolLayers
 } from "./symbols";
 import TreeFilterState from "./TreeFilterState";
 
@@ -447,12 +448,22 @@ interface LiftGraphicGroup {
 }
 
 function computeTilt(v0: number[], v1: number[]): number {
-  return (-Math.atan2(vec2.distance(v0, v1), v1[2] - v0[2]) * 180) / Math.PI - 90;
+  return (-Math.atan2(vec2.distance(v0, v1), v1[2] - v0[2]) * 180) / Math.PI + 90;
 }
 
 function detailGeometryToDisplayGeometry(detailGeometry: Polyline, elevationSampler: ElevationSampler): Polyline {
   const absoluteHeightGeometry = geometryToAbsoluteHeight(detailGeometry, elevationSampler);
-  return createSag(absoluteHeightGeometry, sagToSpanRatio());
+  const offsetGeometries = [
+    offset(absoluteHeightGeometry, -cableOffset, "meters"),
+    offset(absoluteHeightGeometry, cableOffset, "meters")
+  ] as Polyline[];
+  for (const geometry of offsetGeometries) {
+    geometry.hasZ = true;
+    geometry.paths.forEach((path, pathIdx) =>
+      path.forEach((v, vIdx) => (v[2] = absoluteHeightGeometry.paths[pathIdx][vIdx][2]))
+    );
+  }
+  return union(offsetGeometries.map((g) => createSag(g, sagToSpanRatio()))) as Polyline;
 }
 
 function geometryToAbsoluteHeight(geometry: Polyline, elevationSampler: ElevationSampler): Polyline {
@@ -545,7 +556,7 @@ function placeTowers(towerLayer: GraphicsLayer, relativeZGeometry: Polyline, ele
     const previousTilt = previousVertex ? computeTilt(previousVertex, vertex) : null;
     const tilt = nextTilt != null && previousTilt != null ? (nextTilt + previousTilt) / 2 : nextTilt ?? previousTilt;
     const geometry = vertexToPoint(vertex, relativeZGeometry.spatialReference);
-    const symbol = new PointSymbol3D({ symbolLayers: [towerSymbolLayer({ heading, tilt })] });
+    const symbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ heading, tilt }) });
     newFeatures.push(new Graphic({ attributes: { objectID, heading, tilt }, geometry, symbol }));
     objectID++;
   }
