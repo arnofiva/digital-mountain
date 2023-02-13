@@ -90,6 +90,11 @@ class SlopeEditor extends Accessor {
   }
 
   @property()
+  get exportFeatures(): Graphic[] {
+    return this._bufferLayer.graphics.toArray();
+  }
+
+  @property()
   get treeFilterGeometry(): Geometry | null {
     return this._treeFilterState.geometry;
   }
@@ -168,6 +173,7 @@ class SlopeEditor extends Accessor {
             routeGraphic.symbol = hiddenLineSymbol;
             let bufferGeometry = buffer(routeGraphic.geometry, slopeBufferDistance) as Polygon;
             bufferGeometry = generalize(bufferGeometry, slopeMaxDeviation) as Polygon;
+            bufferGeometry.hasZ = false;
             bufferGraphic = new Graphic({
               geometry: bufferGeometry,
               symbol: bufferSymbol

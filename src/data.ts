@@ -3,6 +3,25 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Map from "@arcgis/core/Map";
 
 export const webSceneId = "2e0b4ceaba2d4ebb9f8022cb7632b3c6";
+export const portalUrl = "https://zurich.maps.arcgis.com/";
+
+export const liftIdFilterField = "LiftID";
+export const liftIdFilterValue = 0;
+
+export const slopeIdFilterField = "IDENT";
+export const slopeIdFilterValue = "Planned";
+
+export function findCablesLayer(map: Map): FeatureLayer {
+  return map.allLayers.find((l) => l.title === "Cables") as FeatureLayer;
+}
+
+export function findSlopesLayer(map: Map): FeatureLayer {
+  return map.allLayers.find((l) => l.title === "Laax_Pisten") as FeatureLayer;
+}
+
+export function findTowersLayer(map: Map): FeatureLayer {
+  return map.allLayers.find((l) => l.title === "Towers") as FeatureLayer;
+}
 
 export function findTreeLayer(map: Map): FeatureLayer {
   return map.allLayers.find((l) => l.title.toLowerCase().includes("trees")) as FeatureLayer;

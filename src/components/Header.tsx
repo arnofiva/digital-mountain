@@ -4,12 +4,15 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 import { UIActions } from "./interfaces";
 import { Widget } from "./Widget";
 
-type ConstructProperties = Pick<Header, "actions" | "subtitle">;
+type ConstructProperties = Pick<Header, "actions" | "contentElement" | "subtitle">;
 
 @subclass("digital-mountain.Header")
 class Header extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
+
+  @property()
+  contentElement?: tsx.JSX.Element;
 
   @property()
   subtitle: string;
@@ -25,6 +28,7 @@ class Header extends Widget<ConstructProperties> {
           <h1>Digital Mountain</h1>
           <h3 class="subtitle">{this.subtitle}</h3>
         </div>
+        {this.contentElement}
       </div>
     );
   }

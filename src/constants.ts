@@ -3,6 +3,11 @@
  */
 
 /**
+ * The title used for exported webscenes.
+ */
+export const sceneExportTitle = "Plan Export";
+
+/**
  * Slope editor
  */
 export const slopeBufferDistance = 15;

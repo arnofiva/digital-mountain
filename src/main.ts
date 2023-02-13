@@ -6,14 +6,14 @@ import "@esri/calcite-components/dist/calcite/calcite.css";
 import "@esri/calcite-components/dist/components/calcite-loader";
 
 import App from "./components/App";
-import { webSceneId } from "./data";
+import { portalUrl, webSceneId } from "./data";
 import { Store } from "./stores";
 
 const oAuthInfo = new OAuthInfo({
   appId: "KojZjH6glligLidj",
   popup: true,
   popupCallbackUrl: `${document.location.origin}${document.location.pathname}oauth-callback-api.html`,
-  portalUrl: "https://zurich.maps.arcgis.com/"
+  portalUrl
 });
 
 IdentityManager.registerOAuthInfos([oAuthInfo]);
@@ -22,7 +22,7 @@ IdentityManager.registerOAuthInfos([oAuthInfo]);
   IdentityManager.setOAuthResponseHash(responseHash);
 };
 
-const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: "https://zurich.maps.arcgis.com/" } } });
+const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: portalUrl } } });
 const view = (window["view"] = new SceneView({ container: "view", map }));
 
 const store = new Store({ view });

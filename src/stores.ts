@@ -7,14 +7,27 @@ import Graphic from "@arcgis/core/Graphic";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
 import SceneView from "@arcgis/core/views/SceneView";
+import WebScene from "@arcgis/core/WebScene";
+import Map from "@arcgis/core/Map";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 
 import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
 import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
-import { treeFilterDistance } from "./constants";
-import { findTreeLayer } from "./data";
+import { sceneExportTitle, treeFilterDistance } from "./constants";
+import {
+  findCablesLayer,
+  findSlopesLayer,
+  findTowersLayer,
+  findTreeLayer,
+  liftIdFilterField,
+  liftIdFilterValue,
+  portalUrl,
+  slopeIdFilterField,
+  slopeIdFilterValue
+} from "./data";
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
-import { ignoreAbortErrors } from "./utils";
+import { abortNullable, ignoreAbortErrors } from "./utils";
 
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
@@ -36,6 +49,7 @@ export class Store extends Accessor implements UIActions {
   constructor({ view }: { view: SceneView }) {
     super();
     this._view = view;
+    view.when(() => hidePlannedFeatures(view.map));
   }
 
   @property()
@@ -51,6 +65,12 @@ export class Store extends Accessor implements UIActions {
   /*************
    * UI actions
    *************/
+
+  exportPlan(): void {
+    if (this._screenStore?.type === ScreenType.Plan) {
+      this._screenStore.exportPlan();
+    }
+  }
 
   openTaskScreen(taskScreenType: TaskScreenType): void {
     this._screenStore?.destroy();
@@ -201,6 +221,7 @@ export class MonitorStore extends ScreenStore {
 export class PlanStore extends ScreenStore {
   constructor({ view }: { view: SceneView }) {
     super();
+    this._view = view;
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
     const { signal } = this.createAbortController();
@@ -215,6 +236,7 @@ export class PlanStore extends ScreenStore {
 
   readonly type = ScreenType.Plan;
 
+  private readonly _view: SceneView;
   private readonly _liftEditor: LiftEditor;
   private readonly _slopeEditor: SlopeEditor;
   private _planningAbortController: AbortController | null = null;
@@ -229,6 +251,79 @@ export class PlanStore extends ScreenStore {
       return "Click in the view to draw the new slope";
     }
     return null;
+  }
+
+  @property()
+  get exporting(): boolean {
+    return this._exporting;
+  }
+
+  @property()
+  private _exporting = false;
+
+  @property()
+  get didExportFail(): boolean {
+    return this._didExportFail;
+  }
+
+  @property()
+  private _didExportFail = false;
+
+  async exportPlan(): Promise<void> {
+    this._planningAbortController = abortNullable(this._planningAbortController);
+    this._exporting = true;
+    this._didExportFail = false;
+    try {
+      const [{ cableObjectIds, towerObjectIds }, slopeObjectIds] = await Promise.all([
+        this._exportLifts(),
+        this._exportSlopes()
+      ]);
+      const scene = this._view.map as WebScene;
+      await scene.updateFrom(this._view);
+      const cablesLayer = findCablesLayer(scene);
+      const towersLayer = findTowersLayer(scene);
+      const slopesLayer = findSlopesLayer(scene);
+      const definitionExpression = (
+        filterField: string,
+        filterValue: number | string,
+        objectIdField: string,
+        objectIds: number[]
+      ) => {
+        filterValue = typeof filterValue === "number" ? filterValue : `'${filterValue}'`;
+        // only show existing features or features planned in this editing session
+        return `${filterField} <> ${filterValue} OR ${objectIdField} IN (${objectIds.join(",")})`;
+      };
+      cablesLayer.definitionExpression = definitionExpression(
+        liftIdFilterField,
+        liftIdFilterValue,
+        cablesLayer.objectIdField,
+        cableObjectIds
+      );
+      towersLayer.definitionExpression = definitionExpression(
+        liftIdFilterField,
+        liftIdFilterValue,
+        towersLayer.objectIdField,
+        towerObjectIds
+      );
+      slopesLayer.definitionExpression = definitionExpression(
+        slopeIdFilterField,
+        slopeIdFilterValue,
+        slopesLayer.objectIdField,
+        slopeObjectIds
+      );
+      const item = await scene.saveAs(
+        { title: sceneExportTitle, portal: { url: portalUrl } },
+        // ignore errors triggered by attempting to save graphics layers
+        { ignoreUnsupported: true }
+      );
+      hidePlannedFeatures(scene);
+      const viewerUrl = item.portal.url + "/home/webscene/viewer.html?webscene=" + item.id;
+      window.open(viewerUrl, "_blank");
+    } catch (e) {
+      this._didExportFail = true;
+      console.error("Export failed", e);
+    }
+    this._exporting = false;
   }
 
   startSlopeEditor(options?: { updateGraphic?: Graphic }): void {
@@ -257,6 +352,64 @@ export class PlanStore extends ScreenStore {
     } else if (this._liftEditor.canUpdateGraphic(graphic)) {
       this.startLiftEditor({ updateGraphic: graphic });
     }
+  }
+
+  private async _exportLifts(): Promise<{ cableObjectIds: number[]; towerObjectIds: number[] }> {
+    const { cableFeatures, towerFeatures } = this._liftEditor.exportFeatures;
+    // add attributes required by layers
+    for (const feature of cableFeatures) {
+      if (!feature.attributes) {
+        feature.attributes = {};
+      }
+      feature.attributes[liftIdFilterField] = liftIdFilterValue;
+    }
+    for (const features of towerFeatures) {
+      features.forEach((feature, i) => {
+        if (!feature.attributes) {
+          feature.attributes = {};
+        }
+        feature.attributes[liftIdFilterField] = liftIdFilterValue;
+        feature.attributes["PositionAlongCable"] = i;
+      });
+    }
+    const cablesLayer = findCablesLayer(this._view.map);
+    const towersLayer = findTowersLayer(this._view.map);
+    const [cableResult, towerResult] = await Promise.all([
+      cablesLayer.applyEdits({ addFeatures: cableFeatures }),
+      towersLayer.applyEdits({ addFeatures: towerFeatures.flat() })
+    ]);
+    const cableObjectIds = cableResult.addFeatureResults.map((result) => {
+      if (result.error) {
+        throw result.error;
+      }
+      return result.objectId;
+    });
+    const towerObjectIds = towerResult.addFeatureResults.map((result) => {
+      if (result.error) {
+        throw result.error;
+      }
+      return result.objectId;
+    });
+    return { cableObjectIds, towerObjectIds };
+  }
+
+  private async _exportSlopes(): Promise<number[]> {
+    const features = this._slopeEditor.exportFeatures;
+    // add attributes required by layer
+    for (const feature of features) {
+      if (!feature.attributes) {
+        feature.attributes = {};
+      }
+      feature.attributes[slopeIdFilterField] = slopeIdFilterValue;
+    }
+    const layer = findSlopesLayer(this._view.map);
+    const { addFeatureResults } = await layer.applyEdits({ addFeatures: features });
+    return addFeatureResults.map((result) => {
+      if (result.error) {
+        throw result.error;
+      }
+      return result.objectId;
+    });
   }
 
   private _setupTreeFilterWatch(view: SceneView): void {
@@ -318,4 +471,13 @@ function goToTaskScreenStart(view: SceneView, { signal }: { signal: AbortSignal 
       signal
     })
   );
+}
+
+/**
+ * Hide previously exported copies of planned features in feature layers and show them only in graphics layers.
+ */
+function hidePlannedFeatures(map: Map): void {
+  findCablesLayer(map).definitionExpression = `${liftIdFilterField} <> ${liftIdFilterValue}`;
+  findTowersLayer(map).definitionExpression = `${liftIdFilterField} <> ${liftIdFilterValue}`;
+  findSlopesLayer(map).definitionExpression = `${slopeIdFilterField} <> '${slopeIdFilterValue}'`;
 }

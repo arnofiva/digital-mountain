@@ -124,6 +124,14 @@ class LiftEditor extends Accessor {
   }
 
   @property()
+  get exportFeatures(): { cableFeatures: Graphic[]; towerFeatures: Graphic[][] } {
+    return {
+      cableFeatures: this._cableDisplayLayer.graphics.toArray(),
+      towerFeatures: this._towerDisplayLayers.map((l) => l.graphics.toArray())
+    };
+  }
+
+  @property()
   get treeFilterGeometry(): Geometry | null {
     return this._treeFilterState.geometry;
   }
@@ -557,7 +565,9 @@ function placeTowers(towerLayer: GraphicsLayer, relativeZGeometry: Polyline, ele
     const tilt = nextTilt != null && previousTilt != null ? (nextTilt + previousTilt) / 2 : nextTilt ?? previousTilt;
     const geometry = vertexToPoint(vertex, relativeZGeometry.spatialReference);
     const symbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ heading, tilt }) });
-    newFeatures.push(new Graphic({ attributes: { objectID, heading, tilt }, geometry, symbol }));
+    newFeatures.push(
+      new Graphic({ attributes: { objectID, heading, tilt, relativeElevation: relativeZPath[i][2] }, geometry, symbol })
+    );
     objectID++;
   }
   towerLayer.graphics.removeAll();

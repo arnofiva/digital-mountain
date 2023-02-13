@@ -18,9 +18,20 @@ class PlanScreen extends Widget<ConstructProperties> {
   store: PlanStore;
 
   render() {
+    const contentElement = (
+      <calcite-button
+        icon-start={this.store.exporting ? "spinner" : "save"}
+        disabled={this.store.exporting}
+        kind={this.store.didExportFail ? "danger" : "brand"}
+        class="align-right save-button"
+        onclick={() => this.actions.exportPlan()}
+      >
+        Export
+      </calcite-button>
+    );
     return (
       <div class="screen">
-        <Header actions={this.actions} subtitle="Planning" />
+        <Header actions={this.actions} contentElement={contentElement} subtitle="Planning" />
         <PlanActions hint={this.store.hint} actions={this.actions} />
       </div>
     );
