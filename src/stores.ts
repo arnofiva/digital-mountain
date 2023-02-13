@@ -28,6 +28,7 @@ import {
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
 import { abortNullable, ignoreAbortErrors } from "./utils";
+import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
@@ -240,7 +241,6 @@ export class PlanStore extends ScreenStore {
   private readonly _liftEditor: LiftEditor;
   private readonly _slopeEditor: SlopeEditor;
   private _planningAbortController: AbortController | null = null;
-  private _treeLayerView: FeatureLayerView | null = null;
 
   @property()
   get hint(): string | null {
@@ -413,40 +413,28 @@ export class PlanStore extends ScreenStore {
   }
 
   private _setupTreeFilterWatch(view: SceneView): void {
-    view.whenLayerView(findTreeLayer(view.map)).then((lv) => (this._treeLayerView = lv as FeatureLayerView));
+    const treeLayer = findTreeLayer(view.map);
     // update the layer view filter once the layer view has been found, and whenever lift or slope geometries changes
     const filterWatchHandle = watch(
-      () => ({
-        layerView: this._treeLayerView,
-        geometries: [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter((g) => g != null)
-      }),
-      ({ layerView, geometries }) => {
-        if (layerView == null) {
-          return;
-        }
+      () => [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter((g) => g != null),
+      (geometries) => {
         if (geometries.length === 0) {
-          layerView.filter = null;
+          treeLayer.filter = null;
           return;
         }
-        // buffer lift line geometries by a small amount, so that they can be unioned with slope polygons
-        const bufferGeometries =
-          geometries.some((g) => g.type === "polygon") && geometries.some((g) => g.type === "polyline")
-            ? (buffer(geometries, 0.01) as Polygon[])
-            : geometries;
-        layerView.filter = new FeatureFilter({
-          distance: treeFilterDistance,
-          geometry: union(bufferGeometries),
-          spatialRelationship: "disjoint",
-          units: "meters"
+        const bufferGeometries = (buffer(geometries, treeFilterDistance, "meters") as Polygon[]).filter(
+          (g) => g != null
+        );
+        treeLayer.filter = new SceneFilter({
+          geometries: bufferGeometries,
+          spatialRelationship: "disjoint"
         });
       }
     );
     this.addHandles({
       remove: () => {
         filterWatchHandle.remove();
-        if (this._treeLayerView) {
-          this._treeLayerView.filter = null;
-        }
+        treeLayer.filter = null;
       }
     });
   }
