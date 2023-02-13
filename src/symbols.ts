@@ -131,7 +131,7 @@ export function towerSymbolLayers(options?: {
         },
         material: { color: options?.color ?? liftColor },
         roll: 90,
-        heading: 0,
+        heading: options?.heading,
         height: 6,
         width: 1,
         depth: 1
