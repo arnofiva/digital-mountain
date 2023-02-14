@@ -271,6 +271,13 @@ export class PlanStore extends ScreenStore {
 
   async exportPlan(): Promise<void> {
     this._planningAbortController = abortNullable(this._planningAbortController);
+    const scene = this._view.map as WebScene;
+    const cablesLayer = findCablesLayer(scene);
+    const towersLayer = findTowersLayer(scene);
+    const slopesLayer = findSlopesLayer(scene);
+    const existingCablesDefinitionExpression = cablesLayer.definitionExpression;
+    const existingTowersDefinitionExpression = towersLayer.definitionExpression;
+    const existingSlopesDefinitionExpression = slopesLayer.definitionExpression;
     this._exporting = true;
     this._didExportFail = false;
     try {
@@ -278,46 +285,16 @@ export class PlanStore extends ScreenStore {
         this._exportLifts(),
         this._exportSlopes()
       ]);
-      const scene = this._view.map as WebScene;
       await scene.updateFrom(this._view);
       scene.presentation.slides.removeAll();
-      const cablesLayer = findCablesLayer(scene);
-      const towersLayer = findTowersLayer(scene);
-      const slopesLayer = findSlopesLayer(scene);
-      const definitionExpression = (
-        filterField: string,
-        filterValue: number | string,
-        objectIdField: string,
-        objectIds: number[]
-      ) => {
-        filterValue = typeof filterValue === "number" ? filterValue : `'${filterValue}'`;
-        // only show existing features or features planned in this editing session
-        return `${filterField} <> ${filterValue} OR ${objectIdField} IN (${objectIds.join(",")})`;
-      };
-      cablesLayer.definitionExpression = definitionExpression(
-        liftIdFilterField,
-        liftIdFilterValue,
-        cablesLayer.objectIdField,
-        cableObjectIds
-      );
-      towersLayer.definitionExpression = definitionExpression(
-        liftIdFilterField,
-        liftIdFilterValue,
-        towersLayer.objectIdField,
-        towerObjectIds
-      );
-      slopesLayer.definitionExpression = definitionExpression(
-        slopeIdFilterField,
-        slopeIdFilterValue,
-        slopesLayer.objectIdField,
-        slopeObjectIds
-      );
+      setExportDefinitionExpression(cablesLayer, cableObjectIds);
+      setExportDefinitionExpression(towersLayer, towerObjectIds);
+      setExportDefinitionExpression(slopesLayer, slopeObjectIds);
       const item = await scene.saveAs(
         { title: sceneExportTitle, portal: { url: portalUrl } },
         // ignore errors triggered by attempting to save graphics layers
         { ignoreUnsupported: true }
       );
-      hidePlannedFeatures(scene);
       const viewerUrl = item.portal.url + "/home/webscene/viewer.html?webscene=" + item.id;
       window.open(viewerUrl, "_blank");
     } catch (e) {
@@ -325,6 +302,9 @@ export class PlanStore extends ScreenStore {
       console.error("Export failed", e);
     }
     this._exporting = false;
+    cablesLayer.definitionExpression = existingCablesDefinitionExpression;
+    towersLayer.definitionExpression = existingTowersDefinitionExpression;
+    slopesLayer.definitionExpression = existingSlopesDefinitionExpression;
   }
 
   startSlopeEditor(options?: { updateGraphic?: Graphic }): void {
@@ -466,7 +446,23 @@ function goToTaskScreenStart(view: SceneView, { signal }: { signal: AbortSignal 
  * Hide previously exported copies of planned features in feature layers and show them only in graphics layers.
  */
 function hidePlannedFeatures(map: Map): void {
-  findCablesLayer(map).definitionExpression = `${liftIdFilterField} <> ${liftIdFilterValue}`;
-  findTowersLayer(map).definitionExpression = `${liftIdFilterField} <> ${liftIdFilterValue}`;
-  findSlopesLayer(map).definitionExpression = `${slopeIdFilterField} <> '${slopeIdFilterValue}'`;
+  appendDefinitionExpression(findCablesLayer(map), "AND", `${liftIdFilterField} <> ${liftIdFilterValue}`);
+  appendDefinitionExpression(findTowersLayer(map), "AND", `${liftIdFilterField} <> ${liftIdFilterValue}`);
+  appendDefinitionExpression(findSlopesLayer(map), "AND", `${slopeIdFilterField} <> '${slopeIdFilterValue}'`);
+}
+
+/**
+ * Isolate newly planned features in the exported scene.
+ */
+function setExportDefinitionExpression(layer: FeatureLayer, objectIds: number[]): void {
+  appendDefinitionExpression(layer, "OR", `${layer.objectIdField} IN (${objectIds.join(",")})`);
+}
+
+/**
+ * Set a new definition expression on the layer, combining it with any existing expression if one exists.
+ */
+function appendDefinitionExpression(layer: FeatureLayer, operator: "AND" | "OR", expression: string): void {
+  layer.definitionExpression = layer.definitionExpression
+    ? `(${layer.definitionExpression}) ${operator} ${expression}`
+    : expression;
 }
