@@ -7,10 +7,17 @@ import Geometry from "@arcgis/core/geometry/Geometry";
 import { buffer } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import StreamLayer from "@arcgis/core/layers/StreamLayer";
+import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 import Map from "@arcgis/core/Map";
+import { SimpleRenderer } from "@arcgis/core/renderers";
+import { LabelSymbol3D, ObjectSymbol3DLayer, PointSymbol3D, TextSymbol3DLayer } from "@arcgis/core/symbols";
+import LineCallout3D from "@arcgis/core/symbols/callouts/LineCallout3D";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
+import Expand from "@arcgis/core/widgets/Expand";
+import LayerList from "@arcgis/core/widgets/LayerList";
 
 import {
   backgroundAnimationTargetCamera,
@@ -20,6 +27,7 @@ import {
   visitScreenStartCamera
 } from "./cameras";
 import { AlertData, ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
+
 import { sceneExportTitle, treeFilterDistance } from "./constants";
 import {
   findCablesLayer,
@@ -33,8 +41,10 @@ import {
   slopeIdFilterValue
 } from "./data";
 import LiftEditor from "./LiftEditor";
+import StreamLayerMock from "./live/streamLayerMock";
 import SlopeEditor from "./SlopeEditor";
 import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
+
 
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
@@ -223,10 +233,89 @@ export class TaskSelectionStore extends ScreenStore {
 export class MonitorStore extends ScreenStore {
   readonly type = ScreenType.Monitor;
 
+
+  private readonly _stream: StreamLayer;
+  private readonly _streamMock: StreamLayerMock;
+
   constructor({ view }: { view: SceneView }) {
     super();
     const { signal } = this.createAbortController();
+
     goToTaskScreenStart(monitorScreenStartCamera, { signal, view });
+
+
+    const streamLayerUrl = "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer";
+
+    this._streamMock = new StreamLayerMock(
+      streamLayerUrl,
+      "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowCat_StreamLayer4/FeatureServer/0"
+    );
+
+    this._stream = new StreamLayer({
+      url: streamLayerUrl,
+      title: "Stream Layer",
+      elevationInfo: {
+        mode: "on-the-ground"
+      },
+      purgeOptions: {
+        displayCount: 10000
+      },
+      labelingInfo: [
+        new LabelClass({
+          labelExpressionInfo: { expression: "return 'SnowCat'" },
+          symbol: new LabelSymbol3D({
+            verticalOffset: {
+              screenLength: 20,
+              maxWorldLength: 20,
+              minWorldLength: 5
+            },
+            callout: new LineCallout3D({
+              size: 0.5,
+              color: [0, 0, 0]
+            }),
+            symbolLayers: [
+              new TextSymbol3DLayer({
+                material: { color: "white" },
+                size: 16, // Defined in points
+                background: {
+                  color: [0, 0, 0, 0.4]
+                }
+              })
+            ]
+          })
+        })
+      ],
+      renderer: new SimpleRenderer({
+        symbol: new PointSymbol3D({
+          symbolLayers: [
+            new ObjectSymbol3DLayer({
+              resource: {
+                href: "https://static.arcgis.com/arcgis/styleItems/RealisticTransportation/gltf/resource/Backhoe.glb"
+              },
+              // width: 3.046784222126007,
+              height: 50,
+              heading: 220,
+              tilt: -10
+              // depth: 4.3906859159469604
+            })
+          ]
+        })
+      })
+    });
+
+    view.map.add(this._stream);
+
+    const expand = new Expand({
+      view,
+      content: new LayerList({view})
+    });
+    view.ui.add(expand, "top-right");
+
+    this.addHandles({
+      remove: () => {
+        view.ui.remove(expand);
+      }
+    })
   }
 }
 
