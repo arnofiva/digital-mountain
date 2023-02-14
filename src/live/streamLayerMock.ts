@@ -16,79 +16,74 @@ class MockWebSocket {
   public onmessage: (message: any) => void;
 
   private count = 0;
-  public destroyed = false;
   public readyState = MockWebSocket.CONNECTING;
 
-  constructor(url: string | URL, protocols?: string | string[]) {
+  constructor(private url: string | URL, protocols?: string | string[]) {
 
-
-    console.log("New socket", { url, protocols });
-
-    setTimeout(() => {
-      console.log("Socket open");
+    this.delay(() => {
       this.readyState = MockWebSocket.OPEN;
       this.onopen();
-    }, 1);
+    });
 
     connections.set(url, this);
   }
 
-  loop() {
-    if (this.destroyed) {
-      return;
-    }
-
-    this.onmessage({
-      data: JSON.stringify(messages[this.count++ % messages.length])
-    });
-
-    setTimeout(() => {
-      this.loop();
-    }, 1000);
+  private delay(handler: TimerHandler) {
+    setTimeout(handler, 10);
   }
 
   send(data: any) {
     console.log("Send", { data });
 
-    setTimeout(() => {
-      // GeoEventConnection.ts expects that handshake
-      this.onmessage({
-        data: JSON.stringify({ filter: "{}" })
-      });
-      this.loop();
-    }, 1);
+    if (typeof data === 'string') {
+      const parsedData = JSON.parse(data);
+      if (parsedData.filter) {
+        this.delay(() => {
+          this.onmessage({
+            data //: JSON.stringify({ filter: "{}" })
+          })    
+        });
+      }
+    }
   }
 
   close() {
-    console.log("Close connection!");
     this.readyState = MockWebSocket.CLOSED;
-    this.destroyed = true;
+    connections.delete(this.url);
+  }
+}
+
+// e.g. https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
+
+const regex = /https:\/\/((.*)\/([a-zA-Z0-9_]*)\/StreamServer)/;
+
+function parseStreamUrl(streamUrl: string) {
+  const urlParts = regex.exec(streamUrl);
+  return {
+    streamName: urlParts[3], // snowCat_StreamLayer4
+    webSocketUrl: `wss://${urlParts[1]}` // wss://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
   }
 }
 
 class StreamLayerMock {
 
   private _featureLayerSourceJSON: Promise<any>;
+  private _events: StreamLayerEvent[];
+  private _startTime: number;
 
-  constructor(private streamUrl: string, private featureLayerUrl: string) {
+  constructor(private _streamUrl: string, private _featureLayerUrl: string) {
 
     window.WebSocket = MockWebSocket as any;
 
-    const regex = /https:\/\/((.*)\/([a-zA-Z0-9_]*)\/StreamServer)/; // "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer"
-    const urlParts = regex.exec(streamUrl);
-    const streamPath = urlParts[1];
-    const streamName = urlParts[3];
-    const webSocketUrl = `wss://${streamPath}`;
-
-    console.log("REGEX", {urlParts});
+    const {streamName, webSocketUrl} = parseStreamUrl(_streamUrl);
 
     config.request.interceptors.push({
-      urls: [streamUrl, featureLayerUrl],
+      urls: [_streamUrl, _featureLayerUrl],
 
       before: async (params) => {
         const url = params.url;
         console.log("Before", url, {params});
-        if (url === streamUrl) {
+        if (url === this._streamUrl) {
           console.log("Mock Stream");
           const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
           return {
@@ -110,7 +105,7 @@ class StreamLayerMock {
                 maxTransactionSize: 1000,
               },
               keepLatestArchive: {
-                featuresUrl: featureLayerUrl,
+                featuresUrl: this._featureLayerUrl,
                 maximumFeatureAge: 0,
                 updateInterval: 30
               },
@@ -136,7 +131,7 @@ class StreamLayerMock {
 
   private loadFeatureLayerJSON(requestOptions: __esri.RequestOptions) {
     if (!this._featureLayerSourceJSON) {
-      this._featureLayerSourceJSON = request(this.featureLayerUrl, requestOptions)
+      this._featureLayerSourceJSON = request(this._featureLayerUrl, requestOptions)
         .then((response) => {
           return response.data;
         });
@@ -146,15 +141,37 @@ class StreamLayerMock {
   }
 
   setEvents(events: StreamLayerEvent[]) {
-
+    this.stop();
+    this._events = events;
   }
 
   start() {
+    
+    const startTime = performance.now();
+    this._startTime = startTime;
 
+    const loop = () => {
+      if (startTime !== this._startTime) {
+        return;
+      }
+
+      if (!this._events || this._events.length === 0) {
+        return;       
+      }
+
+      const connection = connections.get(this._streamUrl);
+      if (connection) {
+        
+      }
+
+      requestAnimationFrame(loop);
+    };
+
+    requestAnimationFrame(loop);
   }
 
   stop() {
-
+    this._startTime = 0;
   }
 
 }
