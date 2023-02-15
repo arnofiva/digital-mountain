@@ -207,8 +207,6 @@ class LiftEditor extends Accessor {
    * Start the interactive creation of a new lift.
    */
   async create({ signal }: { signal: AbortSignal }): Promise<void> {
-    const elevationSampler = await this._elevationSamplerPromise;
-
     // while creating, display the area within which lifts can be created
     this._parcelLayer.visible = true;
 
@@ -259,9 +257,7 @@ class LiftEditor extends Accessor {
       const detailGraphic = new Graphic({ geometry: detailGeometry, symbol: hiddenLineSymbol });
       this._detailLayer.add(detailGraphic);
 
-      // apply cable sag to the completed geometry
       const displayGraphic = new Graphic({ symbol: routeCableSymbol });
-      displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry, elevationSampler);
       this._cableDisplayLayer.add(displayGraphic);
 
       // create layer used to store tower graphics for the new lift
@@ -272,7 +268,6 @@ class LiftEditor extends Accessor {
       });
       this._towerDisplayLayers.push(towerLayer);
       this._view.map.add(towerLayer);
-      placeTowers(towerLayer, detailGeometry, elevationSampler);
 
       this._treeFilterState.stage(detailGeometry);
       this._treeFilterState.commit();
