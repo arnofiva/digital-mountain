@@ -48,6 +48,13 @@ class LiftEditor extends Accessor {
     super();
     this._view = view;
 
+    this._parcelLayer = new GraphicsLayer({
+      elevationInfo: { mode: "on-the-ground" },
+      graphics: [new Graphic({ geometry: skiResortArea, symbol: parcelSymbol })],
+      listMode: "hide",
+      title: "Editable parcel",
+      visible: false
+    });
     this._simpleLayer = new GraphicsLayer({
       elevationInfo: { mode: "on-the-ground" },
       listMode: "hide",
@@ -72,13 +79,6 @@ class LiftEditor extends Accessor {
       elevationInfo: { mode: "absolute-height" },
       listMode: "hide",
       title: "Lift routes - display"
-    });
-    this._parcelLayer = new GraphicsLayer({
-      elevationInfo: { mode: "on-the-ground" },
-      graphics: [new Graphic({ geometry: skiResortArea, symbol: parcelSymbol })],
-      listMode: "hide",
-      title: "Editable parcel",
-      visible: false
     });
     for (const layer of this._layers) {
       view.map.add(layer);
@@ -139,6 +139,11 @@ class LiftEditor extends Accessor {
   private readonly _view: SceneView;
 
   /**
+   * Stores a graphic used to visualize the area within which lifts can be created or updated.
+   */
+  private readonly _parcelLayer: GraphicsLayer;
+
+  /**
    * Stores graphics with only start and end vertices, which the 'simple' SketchViewModel will update.
    */
   private readonly _simpleLayer: GraphicsLayer;
@@ -169,11 +174,6 @@ class LiftEditor extends Accessor {
   private readonly _towerDisplayLayers: GraphicsLayer[] = [];
 
   /**
-   * Stores a graphic used to visualize the area within which lifts can be created or updated.
-   */
-  private readonly _parcelLayer: GraphicsLayer;
-
-  /**
    * Associates the graphics that belong to each lift across the various layers.
    */
   private readonly _graphicGroups: LiftGraphicGroup[] = [];
@@ -193,12 +193,12 @@ class LiftEditor extends Accessor {
 
   private get _layers(): Layer[] {
     return [
+      this._parcelLayer,
       this._simpleLayer,
       this._detailLayer,
       this._cableDisplayLayer,
       this._createPreviewLayer,
       this._updatePreviewLayer,
-      this._parcelLayer,
       ...this._towerDisplayLayers
     ];
   }

@@ -33,6 +33,13 @@ class SlopeEditor extends Accessor {
     super();
     this._view = view;
 
+    this._parcelLayer = new GraphicsLayer({
+      elevationInfo: { mode: "on-the-ground" },
+      graphics: [new Graphic({ geometry: skiResortArea, symbol: parcelSymbol })],
+      listMode: "hide",
+      title: "Editable parcel",
+      visible: false
+    });
     this._centerlineLayer = new GraphicsLayer({
       elevationInfo: { mode: "on-the-ground" },
       listMode: "hide",
@@ -42,13 +49,6 @@ class SlopeEditor extends Accessor {
       elevationInfo: { mode: "on-the-ground" },
       listMode: "hide",
       title: "Slopes - buffer"
-    });
-    this._parcelLayer = new GraphicsLayer({
-      elevationInfo: { mode: "on-the-ground" },
-      graphics: [new Graphic({ geometry: skiResortArea, symbol: parcelSymbol })],
-      listMode: "hide",
-      title: "Editable parcel",
-      visible: false
     });
     for (const layer of this._layers) {
       view.map.add(layer);
@@ -102,6 +102,11 @@ class SlopeEditor extends Accessor {
   private readonly _view: SceneView;
 
   /**
+   * Stores a graphic used to visualize the area within which slopes can be created or updated.
+   */
+  private readonly _parcelLayer: GraphicsLayer;
+
+  /**
    * Stores graphics for the centerline of slopes, which the 'simple' SketchViewModel will update.
    */
   private readonly _centerlineLayer: GraphicsLayer;
@@ -110,11 +115,6 @@ class SlopeEditor extends Accessor {
    * Stores graphics for the area of the slope being created.
    */
   private readonly _bufferLayer: GraphicsLayer;
-
-  /**
-   * Stores a graphic used to visualize the area within which slopes can be created or updated.
-   */
-  private readonly _parcelLayer: GraphicsLayer;
 
   /**
    * SketchViewModel used to create slopes.
@@ -131,7 +131,7 @@ class SlopeEditor extends Accessor {
   private readonly _treeFilterState = new TreeFilterState();
 
   private get _layers(): Layer[] {
-    return [this._centerlineLayer, this._bufferLayer, this._parcelLayer];
+    return [this._parcelLayer, this._centerlineLayer, this._bufferLayer];
   }
 
   /**
@@ -234,6 +234,7 @@ class SlopeEditor extends Accessor {
       }
       this._treeFilterState.stage(e.graphics[0].geometry);
       if (e.state === "complete") {
+        console.log(e.graphics[0] === bufferGraphic, this._bufferToRouteMap.has(bufferGraphic));
         this._treeFilterState.commit();
       }
     });
