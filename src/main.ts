@@ -23,7 +23,11 @@ IdentityManager.registerOAuthInfos([oAuthInfo]);
 };
 
 const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: portalUrl } } });
-const view = (window["view"] = new SceneView({ container: "view", map }));
+const view = (window["view"] = new SceneView({
+  container: "view",
+  map,
+  environment: { weather: { type: "cloudy", cloudCover: 0.2 } }
+}));
 
 const store = new Store({ view });
 store.openTaskSelectionScreen({ animateCameraToStart: false });

@@ -33,7 +33,7 @@ import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
  */
-const backgroundCameraAnimationSpeedFactor = 0.02;
+const backgroundCameraAnimationSpeedFactor = 0.01;
 
 /**
  * The speed factor used for the animation of the camera when transitioning between screens.
