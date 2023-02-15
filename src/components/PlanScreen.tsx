@@ -6,6 +6,7 @@ import { UIActions } from "./interfaces";
 import PlanActions from "./PlanActions";
 import { Widget } from "./Widget";
 import { PlanStore } from "../stores";
+import PlanOverview from "./PlanOverview";
 
 type ConstructProperties = Pick<PlanScreen, "actions" | "store">;
 
@@ -33,6 +34,7 @@ class PlanScreen extends Widget<ConstructProperties> {
       <div class="screen">
         <Header actions={this.actions} contentElement={contentElement} subtitle="Planning" />
         <PlanActions hint={this.store.hint} actions={this.actions} />
+        <PlanOverview cableLength={this.store.cableLength} measurementSystem={this.store.measurementSystem} slopeSurfaceArea={this.store.slopeSurfaceArea} towerCount={this.store.towerCount} />
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import { Point, Polygon, Polyline, SpatialReference } from "@arcgis/core/geometry";
-import { contains, densify, offset, planarLength, union } from "@arcgis/core/geometry/geometryEngine";
+import { contains, densify, geodesicLength, offset, planarLength, union } from "@arcgis/core/geometry/geometryEngine";
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
@@ -125,6 +125,22 @@ class LiftEditor extends Accessor {
   @property()
   get isCreating(): boolean {
     return this._simpleSVM.createGraphic != null;
+  }
+
+  @property()
+  get cableLength(): number {
+    return this._detailLayer.graphics.reduce(
+      (length, graphic) => length + geodesicLength(graphic.geometry, "meters"),
+      0
+    );
+  }
+
+  @property()
+  get towerCount(): number {
+    return this._detailLayer.graphics.reduce(
+      (count, graphic) => count + (graphic.geometry as Polyline).paths[0].length,
+      0
+    );
   }
 
   @property()

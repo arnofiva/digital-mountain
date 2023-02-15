@@ -1,5 +1,5 @@
 import { Polygon, Polyline } from "@arcgis/core/geometry";
-import { buffer, contains, generalize } from "@arcgis/core/geometry/geometryEngine";
+import { buffer, contains, generalize, geodesicArea } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import { PolygonSymbol3D } from "@arcgis/core/symbols";
@@ -87,6 +87,14 @@ class SlopeEditor extends Accessor {
   @property()
   get isCreating(): boolean {
     return this._centerlineSVM.createGraphic != null;
+  }
+
+  @property()
+  get slopeSurfaceArea(): number {
+    return this._bufferLayer.graphics.reduce(
+      (area, graphic) => area + geodesicArea(graphic.geometry as Polygon, "square-meters"),
+      0
+    );
   }
 
   @property()

@@ -14,7 +14,13 @@ import Geometry from "@arcgis/core/geometry/Geometry";
 
 import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
 import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
-import { sceneExportTitle, treeFilterDistance } from "./constants";
+import {
+  cableCostPerMeter,
+  sceneExportTitle,
+  slopeCostPerMeterSquared,
+  towerCost,
+  treeFilterDistance
+} from "./constants";
 import {
   findCablesLayer,
   findSlopesLayer,
@@ -28,8 +34,9 @@ import {
 } from "./data";
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
-import { abortNullable, ignoreAbortErrors } from "./utils";
+import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
 import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
+import { MeasurementSystem } from "@arcgis/core/core/units";
 
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
@@ -252,6 +259,26 @@ export class PlanStore extends ScreenStore {
       return "Click in the view to draw the new slope";
     }
     return null;
+  }
+
+  @property()
+  get cableLength(): number {
+    return this._liftEditor.cableLength;
+  }
+
+  @property()
+  get measurementSystem(): MeasurementSystem {
+    return getDefaultMeasurementSystem(this._view);
+  }
+
+  @property()
+  get slopeSurfaceArea(): number {
+    return this._slopeEditor.slopeSurfaceArea;
+  }
+
+  @property()
+  get towerCount(): number {
+    return this._liftEditor.towerCount;
   }
 
   @property()

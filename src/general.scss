@@ -102,3 +102,12 @@ h1, h3 {
     }
   }
 }
+
+.plan-overview {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  width: 300px;
+  background-color: var(--calcite-ui-background);
+  padding: 10px;
+}

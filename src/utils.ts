@@ -1,4 +1,8 @@
 import { isAbortError } from "@arcgis/core/core/promiseUtils";
+import { MeasurementSystem } from "@arcgis/core/core/units";
+import Portal from "@arcgis/core/portal/Portal";
+import SceneView from "@arcgis/core/views/SceneView";
+import WebScene from "@arcgis/core/WebScene";
 
 export async function ignoreAbortErrors<T>(promise: Promise<T>): Promise<T | undefined> {
   try {
@@ -23,4 +27,11 @@ export function removeNullable<T extends { remove: () => void }>(obj: T | null):
     obj.remove();
   }
   return null;
+}
+
+export function getDefaultMeasurementSystem(view: SceneView): MeasurementSystem {
+  const scene = view.map as WebScene;
+  const portal = (scene && "portalItem" in scene ? scene.portalItem?.portal : null) ?? Portal.getDefault();
+  const units = portal.user?.units ?? portal.units;
+  return units === "english" ? "imperial" : "metric";
 }
