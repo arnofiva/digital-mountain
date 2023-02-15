@@ -234,7 +234,6 @@ class SlopeEditor extends Accessor {
       }
       this._treeFilterState.stage(e.graphics[0].geometry);
       if (e.state === "complete") {
-        console.log(e.graphics[0] === bufferGraphic, this._bufferToRouteMap.has(bufferGraphic));
         this._treeFilterState.commit();
       }
     });
