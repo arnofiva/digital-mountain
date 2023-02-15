@@ -12,6 +12,8 @@ import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Layer from "@arcgis/core/layers/Layer";
 import Geometry from "@arcgis/core/geometry/Geometry";
+import DimensionAnalysis from "@arcgis/core/analysis/DimensionAnalysis";
+import LengthDimension from "@arcgis/core/analysis/LengthDimension";
 
 import {
   initialTowerHeight,
@@ -21,7 +23,8 @@ import {
   maxCableLength,
   minTowerSeparation,
   initialTowerSeparation,
-  cableOffset
+  cableOffset,
+  towerDimensionOffset
 } from "./constants";
 import { createSag, sagToSpanRatio } from "./sag";
 import * as vec2 from "./vec2";
@@ -47,7 +50,8 @@ class LiftEditor extends Accessor {
   constructor({ view }: { view: SceneView }) {
     super();
     this._view = view;
-
+    this._dimensionAnalysis = new DimensionAnalysis();
+    this._view.analyses.add(this._dimensionAnalysis);
     this._parcelLayer = new GraphicsLayer({
       elevationInfo: { mode: "on-the-ground" },
       graphics: [new Graphic({ geometry: skiResortArea, symbol: parcelSymbol })],
@@ -107,7 +111,6 @@ class LiftEditor extends Accessor {
       },
       updateOnGraphicClick: false
     });
-    this._elevationSamplerPromise = view.map.ground.createElevationSampler(skiResortArea.extent);
   }
 
   destroy(): void {
@@ -116,6 +119,7 @@ class LiftEditor extends Accessor {
     for (const layer of this._layers) {
       this._view.map.remove(layer);
     }
+    this._view.analyses.removeAll();
   }
 
   @property()
@@ -137,6 +141,11 @@ class LiftEditor extends Accessor {
   }
 
   private readonly _view: SceneView;
+
+  /**
+   * Dimensions used to measure the heights of towers.
+   */
+  private readonly _dimensionAnalysis: DimensionAnalysis;
 
   /**
    * Stores a graphic used to visualize the area within which lifts can be created or updated.
@@ -188,7 +197,6 @@ class LiftEditor extends Accessor {
    */
   private readonly _detailSVM: SketchViewModel;
 
-  private readonly _elevationSamplerPromise: Promise<ElevationSampler>;
   private readonly _treeFilterState = new TreeFilterState();
 
   private get _layers(): Layer[] {
@@ -206,7 +214,7 @@ class LiftEditor extends Accessor {
   /**
    * Start the interactive creation of a new lift.
    */
-  async create({ signal }: { signal: AbortSignal }): Promise<void> {
+  create({ signal }: { signal: AbortSignal }): void {
     // while creating, display the area within which lifts can be created
     this._parcelLayer.visible = true;
 
@@ -327,6 +335,15 @@ class LiftEditor extends Accessor {
     }
     const { simpleGraphic, detailGraphic, displayGraphic, towerLayer } = group;
 
+    /**
+     * Expand the sampler extent by a factor, so that we have space to move around in. If we move
+     * outside this extent we will recreate the sampler.
+     */
+    let elevationSampler = await this._view.map.ground.createElevationSampler(
+      simpleGraphic.geometry.extent.expand(1.5)
+    );
+    let samplerCreationPromise: Promise<void | ElevationSampler> = Promise.resolve();
+
     const showPreviewLayer = (detailGeometry: Polyline, { isValid }: { isValid: boolean }) => {
       // while updating hide the display graphics and show less detailed preview graphics instead
       displayGraphic.visible = false;
@@ -361,9 +378,8 @@ class LiftEditor extends Accessor {
     // while updating, display the area within which lifts can be updated
     this._parcelLayer.visible = true;
 
-    const elevationSampler = await this._elevationSamplerPromise;
     let initialDetailGeometry: Polyline | null = null;
-    updateHandle = this._detailSVM.on("update", (e) => {
+    updateHandle = this._detailSVM.on("update", async (e) => {
       if (e.tool !== "reshape") {
         return;
       }
@@ -381,7 +397,10 @@ class LiftEditor extends Accessor {
           return;
       }
 
-      if (e.toolEventInfo?.type === "reshape-start") {
+      const isReshapeStart = e.toolEventInfo?.type === "reshape-start";
+      const isReshapeStop = e.toolEventInfo?.type === "reshape-stop";
+
+      if (isReshapeStart) {
         // exclude the feature being updated from the filter
         this._treeFilterState.commit(
           this._detailLayer.graphics
@@ -397,13 +416,13 @@ class LiftEditor extends Accessor {
        * distances relative to the end vertex. If we measured relative to the start vertex in this
        * case we would be measuring relative to its unconstrained position.
        */
-      const reshapingStart = !vec2.equals(detailGeometry.paths[0][0], initialDetailGeometry.paths[0][0]);
+      const reshapingStartVertex = !vec2.equals(detailGeometry.paths[0][0], initialDetailGeometry.paths[0][0]);
       let newDetailGeometry = constrainRouteDetailGeometry(detailGraphic.geometry as Polyline, {
-        relativeToStart: !reshapingStart
+        relativeToStart: !reshapingStartVertex
       });
 
       let isValid = isRouteValid(newDetailGeometry, skiResortArea);
-      if (e.toolEventInfo?.type === "reshape-stop") {
+      if (isReshapeStop) {
         // once we stop reshaping, if the new detail geometry is invalid then revert the change
         if (isValid) {
           // store the constrained geometry on the simple and detail graphics
@@ -425,6 +444,18 @@ class LiftEditor extends Accessor {
       // while reshaping, update the preview layer to match the reshaped detail geometry
       showPreviewLayer(newDetailGeometry, { isValid });
       this._treeFilterState.stage(newDetailGeometry);
+      if (isReshapeStop) {
+        this._dimensionAnalysis.dimensions.removeAll();
+      } else {
+        updateDimensions(newDetailGeometry, this._dimensionAnalysis, elevationSampler);
+      }
+
+      // recreate the sampler once we have moved out of its extent
+      samplerCreationPromise = samplerCreationPromise.then(async () => {
+        if (!elevationSampler.extent.contains(newDetailGeometry.extent)) {
+          elevationSampler = await this._view.map.ground.createElevationSampler(detailGeometry.extent.expand(1.5));
+        }
+      });
     });
     this._detailSVM.update(detailGraphic);
   }
@@ -438,7 +469,11 @@ class LiftEditor extends Accessor {
 
   private _findGraphicGroup(graphic: Graphic): LiftGraphicGroup | null {
     return this._graphicGroups.find(
-      (group) => graphic === group.simpleGraphic || graphic === group.detailGraphic || graphic === group.displayGraphic
+      (group) =>
+        group.simpleGraphic === graphic ||
+        group.detailGraphic === graphic ||
+        group.displayGraphic === graphic ||
+        group.towerLayer.graphics.includes(graphic)
     );
   }
 }
@@ -590,6 +625,34 @@ function populatePreviewLayer(
     symbol: cableSymbol
   });
   layer.add(routeCablePreviewGraphic);
+}
+
+function updateDimensions(
+  detailGeometry: Polyline,
+  dimensionAnalysis: DimensionAnalysis,
+  elevationSampler: ElevationSampler
+) {
+  const absoluteHeightGeometry = geometryToAbsoluteHeight(detailGeometry, elevationSampler);
+  const { paths, spatialReference } = absoluteHeightGeometry;
+  const path = paths[0];
+  const { dimensions } = dimensionAnalysis;
+  while (dimensions.length < path.length) {
+    dimensions.push(new LengthDimension({ measureType: "direct", offset: towerDimensionOffset }));
+  }
+  while (dimensions.length > path.length) {
+    dimensions.pop();
+  }
+  const start = webMercatorToGeographic(vertexToPoint(path[0], spatialReference)) as Point;
+  const end = webMercatorToGeographic(vertexToPoint(path[path.length - 1], spatialReference)) as Point;
+  const heading = geodesicDistance(start, end).azimuth;
+  path.forEach(([x, y, absoluteZ], vIdx) => {
+    const relativeZ = detailGeometry.paths[0][vIdx][2];
+    const dimension = dimensions.at(vIdx);
+    dimension.startPoint = new Point({ x, y, z: absoluteZ, spatialReference });
+    dimension.endPoint = new Point({ x, y, z: absoluteZ - relativeZ, spatialReference });
+    // offset dimension perpendicular to the direction of the lift
+    dimension.orientation = heading + 90;
+  });
 }
 
 function setInitialTowerHeight(line: Polyline): Polyline {
