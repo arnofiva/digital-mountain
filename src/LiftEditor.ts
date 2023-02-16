@@ -28,7 +28,7 @@ import {
 } from "./constants";
 import { createSag, sagToSpanRatio } from "./sag";
 import * as vec2 from "./vec2";
-import { removeNullable } from "./utils";
+import { ignoreAbortErrors, removeNullable } from "./utils";
 import { skiResortArea } from "./data";
 import {
   hiddenLineSymbol,
@@ -213,6 +213,7 @@ class LiftEditor extends Accessor {
    */
   private readonly _detailSVM: SketchViewModel;
 
+  private _elevationSampler: ElevationSampler | null = null;
   private readonly _treeFilterState = new TreeFilterState();
 
   private get _layers(): Layer[] {
@@ -344,21 +345,12 @@ class LiftEditor extends Accessor {
   /**
    * Start the interactive update of an existing lift.
    */
-  async update(graphic: Graphic, { signal }: { signal: AbortSignal }): Promise<void> {
+  update(graphic: Graphic, { signal }: { signal: AbortSignal }): void {
     const group = this._findGraphicGroup(graphic);
     if (!group) {
       return;
     }
     const { simpleGraphic, detailGraphic, displayGraphic, towerLayer } = group;
-
-    /**
-     * Expand the sampler extent by a factor, so that we have space to move around in. If we move
-     * outside this extent we will recreate the sampler.
-     */
-    let elevationSampler = await this._view.map.ground.createElevationSampler(
-      simpleGraphic.geometry.extent.expand(1.5)
-    );
-    let samplerCreationPromise: Promise<void | ElevationSampler> = Promise.resolve();
 
     const showPreviewLayer = (detailGeometry: Polyline, { isValid }: { isValid: boolean }) => {
       // while updating hide the display graphics and show less detailed preview graphics instead
@@ -394,8 +386,22 @@ class LiftEditor extends Accessor {
     // while updating, display the area within which lifts can be updated
     this._parcelLayer.visible = true;
 
+    /**
+     * Expand the sampler extent by a factor, so that we have space to move around in. If we move
+     * outside this extent we will recreate the sampler.
+     */
+    let samplerCreationPromise: Promise<unknown> = ignoreAbortErrors(
+      this._view.map.ground
+        .createElevationSampler(simpleGraphic.geometry.extent.expand(1.5), { signal })
+        .then((sampler) => {
+          if (!signal.aborted) {
+            this._elevationSampler = sampler;
+          }
+        })
+    );
+
     let initialDetailGeometry: Polyline | null = null;
-    updateHandle = this._detailSVM.on("update", async (e) => {
+    updateHandle = this._detailSVM.on("update", (e) => {
       if (e.tool !== "reshape") {
         return;
       }
@@ -406,9 +412,11 @@ class LiftEditor extends Accessor {
           showPreviewLayer(detailGeometry, { isValid: true });
           return;
         case "complete":
-          // once complete, update the display graphics to reflect any changes made to the detail geometry
-          displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry, elevationSampler);
-          placeTowers(towerLayer, detailGeometry, elevationSampler);
+          if (this._elevationSampler) {
+            // once complete, update the display graphics to reflect any changes made to the detail geometry
+            displayGraphic.geometry = detailGeometryToDisplayGeometry(detailGeometry, this._elevationSampler);
+            placeTowers(towerLayer, detailGeometry, this._elevationSampler);
+          }
           cleanup();
           return;
       }
@@ -462,16 +470,23 @@ class LiftEditor extends Accessor {
       this._treeFilterState.stage(newDetailGeometry);
       if (isReshapeStop) {
         this._dimensionAnalysis.dimensions.removeAll();
-      } else {
-        updateDimensions(newDetailGeometry, this._dimensionAnalysis, elevationSampler);
+      } else if (this._elevationSampler) {
+        updateDimensions(newDetailGeometry, this._dimensionAnalysis, this._elevationSampler);
       }
 
       // recreate the sampler once we have moved out of its extent
-      samplerCreationPromise = samplerCreationPromise.then(async () => {
-        if (!elevationSampler.extent.contains(newDetailGeometry.extent)) {
-          elevationSampler = await this._view.map.ground.createElevationSampler(detailGeometry.extent.expand(1.5));
-        }
-      });
+      samplerCreationPromise = ignoreAbortErrors(
+        samplerCreationPromise.then(async () => {
+          if (!this._elevationSampler.extent.contains(newDetailGeometry.extent)) {
+            const newSampler = await this._view.map.ground.createElevationSampler(detailGeometry.extent.expand(1.5), {
+              signal
+            });
+            if (!signal.aborted) {
+              this._elevationSampler = newSampler;
+            }
+          }
+        })
+      );
     });
     this._detailSVM.update(detailGraphic);
   }

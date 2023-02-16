@@ -127,11 +127,13 @@ export class Store extends Accessor implements UIActions {
   private _setupHitTest(): IHandle {
     return this._view.on("click", (event) => {
       this._view.hitTest(event).then((response) => {
-        const result = response.results[0];
-        if (result?.type === "graphic") {
+        for (const result of response.results) {
+          if (result?.type !== "graphic") {
+            continue;
+          }
           const { graphic } = result;
-          if (this._screenStore && "hitTest" in this._screenStore) {
-            this._screenStore.hitTest(graphic);
+          if (this._screenStore && "hitTest" in this._screenStore && this._screenStore.hitTest(graphic)) {
+            break;
           }
         }
       });
@@ -355,12 +357,18 @@ export class PlanStore extends ScreenStore {
     }
   }
 
-  hitTest(graphic: Graphic): void {
+  /**
+   * Returns true if the graphic could be edited by the slope or lift editors.
+   */
+  hitTest(graphic: Graphic): boolean {
     if (this._slopeEditor.canUpdateGraphic(graphic)) {
       this.startSlopeEditor({ updateGraphic: graphic });
+      return true;
     } else if (this._liftEditor.canUpdateGraphic(graphic)) {
       this.startLiftEditor({ updateGraphic: graphic });
+      return true;
     }
+    return false;
   }
 
   private async _exportLifts(): Promise<{ cableObjectIds: number[]; towerObjectIds: number[] }> {

@@ -4,6 +4,9 @@ import Portal from "@arcgis/core/portal/Portal";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 
+/**
+ * Suppress errors about uncaught abort errors in promises, for cases where we expect them to be thrown.
+ */
 export async function ignoreAbortErrors<T>(promise: Promise<T>): Promise<T | undefined> {
   try {
     return await promise;
