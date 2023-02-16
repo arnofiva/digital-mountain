@@ -1,5 +1,5 @@
-import copy from "rollup-plugin-copy";
 import { defineConfig } from "vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
   server: {
@@ -7,15 +7,15 @@ export default defineConfig({
   },
   base: "./",
   plugins: [
-    copy({
+    viteStaticCopy({
       targets: [
         {
           src: "node_modules/@esri/calcite-components/dist/calcite/assets/",
-          dest: "public/"
+          dest: "./"
         },
         {
           src: "node_modules/@arcgis/core/assets/",
-          dest: "public/"
+          dest: "./"
         }
       ]
     })

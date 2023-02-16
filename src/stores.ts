@@ -1,16 +1,16 @@
+import Camera from "@arcgis/core/Camera";
 import Accessor from "@arcgis/core/core/Accessor";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import { MeasurementSystem } from "@arcgis/core/core/units";
 import { Polygon } from "@arcgis/core/geometry";
+import Geometry from "@arcgis/core/geometry/Geometry";
+import { buffer } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
+import Map from "@arcgis/core/Map";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
-import Map from "@arcgis/core/Map";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import Geometry from "@arcgis/core/geometry/Geometry";
-import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
-import { MeasurementSystem } from "@arcgis/core/core/units";
-import Camera from "@arcgis/core/Camera";
-import { buffer } from "@arcgis/core/geometry/geometryEngine";
 
 import {
   backgroundAnimationTargetCamera,
