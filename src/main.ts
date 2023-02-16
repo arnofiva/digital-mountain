@@ -26,7 +26,8 @@ const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: portalUr
 const view = (window["view"] = new SceneView({
   container: "view",
   map,
-  environment: { weather: { type: "cloudy", cloudCover: 0.2 } }
+  environment: { weather: { type: "cloudy", cloudCover: 0.2 } },
+  qualityProfile: "high"
 }));
 
 const store = new Store({ view });
