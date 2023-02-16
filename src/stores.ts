@@ -10,6 +10,7 @@ import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 import Map from "@arcgis/core/Map";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import Geometry from "@arcgis/core/geometry/Geometry";
 
 import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
 import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
@@ -395,26 +396,31 @@ export class PlanStore extends ScreenStore {
 
   private _setupTreeFilterWatch(view: SceneView): void {
     const treeLayer = findTreeLayer(view.map);
-    // update the layer view filter once the layer view has been found, and whenever lift or slope geometries changes
-    const filterWatchHandle = watch(
-      () => [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter((g) => g != null),
-      (geometries) => {
-        if (geometries.length === 0) {
-          treeLayer.filter = null;
-          return;
-        }
-        const bufferGeometries = (buffer(geometries, treeFilterDistance, "meters") as Polygon[]).filter(
-          (g) => g != null
-        );
-        treeLayer.filter = new SceneFilter({
-          geometries: bufferGeometries,
-          spatialRelationship: "disjoint"
-        });
+    // avoid setting the filter too frequently to keep it feeling responsive
+    const intervalMs = 100;
+    let previousGeometries: Geometry[] = [];
+    const intervalHandle = setInterval(() => {
+      const geometries = [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter(
+        (g) => g != null
+      );
+      if (geometries.every((v, i) => v === previousGeometries[i])) {
+        // the geometries did not change
+        return;
       }
-    );
+      previousGeometries = geometries;
+      if (geometries.length === 0) {
+        treeLayer.filter = null;
+        return;
+      }
+      const bufferGeometries = (buffer(geometries, treeFilterDistance, "meters") as Polygon[]).filter((g) => g != null);
+      treeLayer.filter = new SceneFilter({
+        geometries: bufferGeometries,
+        spatialRelationship: "disjoint"
+      });
+    }, intervalMs);
     this.addHandles({
       remove: () => {
-        filterWatchHandle.remove();
+        clearInterval(intervalHandle);
         treeLayer.filter = null;
       }
     });
