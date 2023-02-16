@@ -1,16 +1,16 @@
 import Accessor from "@arcgis/core/core/Accessor";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
-import { watch } from "@arcgis/core/core/reactiveUtils";
 import { Polygon } from "@arcgis/core/geometry";
-import { buffer, union } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
-import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
-import FeatureLayerView from "@arcgis/core/views/layers/FeatureLayerView";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 import Map from "@arcgis/core/Map";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Geometry from "@arcgis/core/geometry/Geometry";
+import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
+import { MeasurementSystem } from "@arcgis/core/core/units";
+import Camera from "@arcgis/core/Camera";
+import { buffer } from "@arcgis/core/geometry/geometryEngine";
 
 import {
   backgroundAnimationTargetCamera,
@@ -20,13 +20,7 @@ import {
   visitScreenStartCamera
 } from "./cameras";
 import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
-import {
-  cableCostPerMeter,
-  sceneExportTitle,
-  slopeCostPerMeterSquared,
-  towerCost,
-  treeFilterDistance
-} from "./constants";
+import { sceneExportTitle, treeFilterDistance } from "./constants";
 import {
   findCablesLayer,
   findSlopesLayer,
@@ -41,9 +35,6 @@ import {
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
 import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
-import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
-import { MeasurementSystem } from "@arcgis/core/core/units";
-import Camera from "@arcgis/core/Camera";
 
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.

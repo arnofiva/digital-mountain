@@ -73,21 +73,23 @@ class PlanOverview extends Widget<ConstructProperties> {
 
   private _lengthToString(meters: number): string {
     switch (this.measurementSystem) {
-      case "imperial":
+      case "imperial": {
         const feet = convert(meters, "m").to("ft");
         const miles = convert(meters, "m").to("mi");
         return miles < 1 ? feetFormatter.format(feet) : milesFormatter.format(miles);
-      case "metric":
+      }
+      case "metric": {
         const kilometers = convert(meters, "m").to("km");
         return kilometers < 1
           ? metersFormatter.format(meters)
           : kilometersFormatter.format(kilometers);
+      }
     }
   }
 
   private _surfaceAreaToString(metersSquared: number): string {
     switch (this.measurementSystem) {
-      case "imperial":
+      case "imperial": {
         const feetSquared = convert(metersSquared, "m2").to("ft2");
         const milesSquared = convert(metersSquared, "m2").to("mi2");
         return (
@@ -95,13 +97,15 @@ class PlanOverview extends Widget<ConstructProperties> {
             ? feetFormatter.format(feetSquared)
             : milesFormatter.format(milesSquared)) + "²"
         );
-      case "metric":
+      }
+      case "metric": {
         const kilometersSquared = convert(metersSquared, "m2").to("km2");
         return (
           (metersSquared < 1e6
             ? metersFormatter.format(metersSquared)
             : kilometersFormatter.format(kilometersSquared)) + "²"
         );
+      }
     }
   }
 }
