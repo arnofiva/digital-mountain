@@ -15,7 +15,7 @@
     "lint": "eslint . --ext .ts --ext .tsx --fix"
   },
   "dependencies": {
-    "@arcgis/core": "^4.26.0-next.20230205",
+    "@arcgis/core": "^4.26.0-next.20230215",
     "@esri/calcite-components": "~1.0.3",
     "chart.js": "^4.0.1",
     "chartjs-adapter-date-fns": "^2.0.0",
@@ -34,6 +34,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "^2.7.1",
+    "rollup-plugin-copy": "^3.4.0",
     "sass": "^1.49.8"
   }
 }
