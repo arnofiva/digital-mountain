@@ -1,3 +1,8 @@
+import "@esri/calcite-components/dist/components/calcite-block";
+import "@esri/calcite-components/dist/components/calcite-icon";
+import "@esri/calcite-components/dist/components/calcite-label";
+import "@esri/calcite-components/dist/components/calcite-panel";
+
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { MeasurementSystem } from "@arcgis/core/core/units";
 import { tsx } from "@arcgis/core/widgets/support/widget";
@@ -7,7 +12,10 @@ import convert from "convert";
 import { cableCostPerMeter, slopeCostPerMeterSquared, towerCost } from "../constants";
 import { Widget } from "./Widget";
 
-type ConstructProperties = Pick<PlanOverview, "cableLength" | "measurementSystem" | "slopeSurfaceArea" | "towerCount">;
+type ConstructProperties = Pick<
+  PlanOverview,
+  "cableLength" | "measurementSystem" | "slopeSurfaceArea" | "towerCount"
+>;
 
 @subclass("digital-mountain.PlanOverview")
 class PlanOverview extends Widget<ConstructProperties> {
@@ -36,7 +44,10 @@ class PlanOverview extends Widget<ConstructProperties> {
               Towers<strong>{this._costToString(this.towerCount * towerCost)}</strong>
             </calcite-label>
             <calcite-label layout="inline-space-between">
-              Slopes<strong>{this._costToString(this.slopeSurfaceArea * slopeCostPerMeterSquared)}</strong>
+              Slopes
+              <strong>
+                {this._costToString(this.slopeSurfaceArea * slopeCostPerMeterSquared)}
+              </strong>
             </calcite-label>
           </calcite-block>
           <calcite-block collapsible heading="Quantities" open>
@@ -68,8 +79,9 @@ class PlanOverview extends Widget<ConstructProperties> {
         return miles < 1 ? feetFormatter.format(feet) : milesFormatter.format(miles);
       case "metric":
         const kilometers = convert(meters, "m").to("km");
-        return kilometers < 1 ? metersFormatter.format(meters) : kilometersFormatter.format(kilometers);
-
+        return kilometers < 1
+          ? metersFormatter.format(meters)
+          : kilometersFormatter.format(kilometers);
     }
   }
 
@@ -78,45 +90,53 @@ class PlanOverview extends Widget<ConstructProperties> {
       case "imperial":
         const feetSquared = convert(metersSquared, "m2").to("ft2");
         const milesSquared = convert(metersSquared, "m2").to("mi2");
-        return (feetSquared < 1e6 ? feetFormatter.format(feetSquared) : milesFormatter.format(milesSquared)) + '²';
+        return (
+          (feetSquared < 1e6
+            ? feetFormatter.format(feetSquared)
+            : milesFormatter.format(milesSquared)) + "²"
+        );
       case "metric":
         const kilometersSquared = convert(metersSquared, "m2").to("km2");
-        return (metersSquared < 1e6 ? metersFormatter.format(metersSquared) : kilometersFormatter.format(kilometersSquared)) + '²';
+        return (
+          (metersSquared < 1e6
+            ? metersFormatter.format(metersSquared)
+            : kilometersFormatter.format(kilometersSquared)) + "²"
+        );
     }
   }
 }
 
-const dollarsFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
+const dollarsFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
   minimumFractionDigits: 0,
   maximumFractionDigits: 0
 });
 
-const metersFormatter = new Intl.NumberFormat('en-US', {
-  style: 'unit',
-  unit: 'meter',
+const metersFormatter = new Intl.NumberFormat("en-US", {
+  style: "unit",
+  unit: "meter",
   minimumFractionDigits: 0,
   maximumFractionDigits: 0
 });
 
-const kilometersFormatter = new Intl.NumberFormat('en-US', {
-  style: 'unit',
-  unit: 'kilometer',
+const kilometersFormatter = new Intl.NumberFormat("en-US", {
+  style: "unit",
+  unit: "kilometer",
   minimumFractionDigits: 0,
   maximumFractionDigits: 2
 });
 
-const feetFormatter = new Intl.NumberFormat('en-US', {
-  style: 'unit',
-  unit: 'foot',
+const feetFormatter = new Intl.NumberFormat("en-US", {
+  style: "unit",
+  unit: "foot",
   minimumFractionDigits: 0,
   maximumFractionDigits: 0
 });
 
-const milesFormatter = new Intl.NumberFormat('en-US', {
-  style: 'unit',
-  unit: 'mile',
+const milesFormatter = new Intl.NumberFormat("en-US", {
+  style: "unit",
+  unit: "mile",
   minimumFractionDigits: 0,
   maximumFractionDigits: 2
 });

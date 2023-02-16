@@ -1,12 +1,14 @@
+import "@esri/calcite-components/dist/components/calcite-button";
+
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
+import { PlanStore } from "../stores";
 import Header from "./Header";
 import { UIActions } from "./interfaces";
 import PlanActions from "./PlanActions";
-import { Widget } from "./Widget";
-import { PlanStore } from "../stores";
 import PlanOverview from "./PlanOverview";
+import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<PlanScreen, "actions" | "store">;
 
@@ -34,7 +36,12 @@ class PlanScreen extends Widget<ConstructProperties> {
       <div class="screen">
         <Header actions={this.actions} contentElement={contentElement} subtitle="Planning" />
         <PlanActions hint={this.store.hint} actions={this.actions} />
-        <PlanOverview cableLength={this.store.cableLength} measurementSystem={this.store.measurementSystem} slopeSurfaceArea={this.store.slopeSurfaceArea} towerCount={this.store.towerCount} />
+        <PlanOverview
+          cableLength={this.store.cableLength}
+          measurementSystem={this.store.measurementSystem}
+          slopeSurfaceArea={this.store.slopeSurfaceArea}
+          towerCount={this.store.towerCount}
+        />
       </div>
     );
   }
