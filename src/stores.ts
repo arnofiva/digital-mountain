@@ -12,7 +12,13 @@ import Map from "@arcgis/core/Map";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Geometry from "@arcgis/core/geometry/Geometry";
 
-import { backgroundAnimationTargetCamera, backgroundCamera, taskScreenStartCamera } from "./cameras";
+import {
+  backgroundAnimationTargetCamera,
+  backgroundCamera,
+  monitorScreenStartCamera,
+  planScreenStartCamera,
+  visitScreenStartCamera
+} from "./cameras";
 import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
 import {
   cableCostPerMeter,
@@ -37,6 +43,7 @@ import SlopeEditor from "./SlopeEditor";
 import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
 import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 import { MeasurementSystem } from "@arcgis/core/core/units";
+import Camera from "@arcgis/core/Camera";
 
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
@@ -224,7 +231,7 @@ export class MonitorStore extends ScreenStore {
   constructor({ view }: { view: SceneView }) {
     super();
     const { signal } = this.createAbortController();
-    goToTaskScreenStart(view, { signal });
+    goToTaskScreenStart(monitorScreenStartCamera, { signal, view });
   }
 }
 
@@ -236,7 +243,7 @@ export class PlanStore extends ScreenStore {
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
     const { signal } = this.createAbortController();
-    goToTaskScreenStart(view, { signal });
+    goToTaskScreenStart(planScreenStartCamera, { signal, view });
     this._setupTreeFilterWatch(view);
   }
 
@@ -469,18 +476,12 @@ export class VisitStore extends ScreenStore {
   constructor({ view }: { view: SceneView }) {
     super();
     const { signal } = this.createAbortController();
-    goToTaskScreenStart(view, { signal });
+    goToTaskScreenStart(visitScreenStartCamera, { signal, view });
   }
 }
 
-function goToTaskScreenStart(view: SceneView, { signal }: { signal: AbortSignal }): void {
-  ignoreAbortErrors(
-    view.goTo(taskScreenStartCamera, {
-      animate: true,
-      speedFactor: transitionCameraAnimationSpeedFactor,
-      signal
-    })
-  );
+function goToTaskScreenStart(camera: Camera, { signal, view }: { signal: AbortSignal; view: SceneView }): void {
+  ignoreAbortErrors(view.goTo(camera, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
 }
 
 /**
