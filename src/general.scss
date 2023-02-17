@@ -1,13 +1,18 @@
 $header-height: 100px;
 
-html, body, #app, #view, .screen {
+html,
+body,
+#app,
+#view,
+.screen {
   padding: 0;
   margin: 0;
   height: 100%;
   width: 100%;
 }
 
-h1, h3 {
+h1,
+h3 {
   margin: 0;
 }
 
@@ -49,7 +54,8 @@ h1, h3 {
 }
 
 .task-selection {
-  .title, .subtitle {
+  .title,
+  .subtitle {
     margin-bottom: 40px;
   }
 
@@ -143,5 +149,42 @@ h1, h3 {
     margin-bottom: 0;
     height: 0;
     transition: height 1s, margin-bottom 1s;
+  }
+}
+
+.clock {
+  position: absolute;
+  top: $header-height + 15px;
+  left: 60px;
+  width: 220px;
+  background-color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-content: space-between;
+  padding: 10px;
+
+  .clock-text-container {
+    font-weight: bold;
+    font-size: 29px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+
+    .time-ss {
+      font-size: 0.8em;
+    }
+  }
+  .live-message {
+    height: 40px;
+    display: flex;
+  }
+  .simulated-time-info {
+    margin-top: 10px;
+    display: flex;
+
+    .simulated-time-label {
+      margin-left: 2px;
+    }
   }
 }
