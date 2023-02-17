@@ -5,6 +5,7 @@ import Header from "./Header";
 import { UIActions } from "./interfaces";
 import { Widget } from "./Widget";
 import { MonitorStore } from "../stores";
+import Alerts from "./Alerts";
 
 type ConstructProperties = Pick<MonitorScreen, "actions" | "store">;
 
@@ -20,6 +21,7 @@ class MonitorScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Monitoring" />
+        <Alerts actions={this.actions} />
       </div>
     );
   }

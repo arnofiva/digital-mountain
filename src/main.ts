@@ -1,16 +1,16 @@
+import "@esri/calcite-components/dist/calcite/calcite.css";
+import { setAssetPath } from "@esri/calcite-components/dist/components";
+
 import "@arcgis/core/assets/esri/themes/light/main.css";
 import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
-import "@esri/calcite-components/dist/calcite/calcite.css";
+import esriConfig from "@arcgis/core/config";
 
 import App from "./components/App";
 import { portalUrl, webSceneId } from "./data";
 import { Store } from "./stores";
-
-import esriConfig from "@arcgis/core/config";
-import { setAssetPath } from "@esri/calcite-components/dist/components";
 
 setAssetPath(window.document.URL);
 esriConfig.assetsPath = "./assets";

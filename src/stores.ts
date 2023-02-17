@@ -19,7 +19,7 @@ import {
   planScreenStartCamera,
   visitScreenStartCamera
 } from "./cameras";
-import { ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
+import { AlertData, ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
 import { sceneExportTitle, treeFilterDistance } from "./constants";
 import {
   findCablesLayer,
@@ -77,6 +77,10 @@ export class Store extends Accessor implements UIActions {
     if (this._screenStore?.type === ScreenType.Plan) {
       this._screenStore.exportPlan();
     }
+  }
+
+  goToAlert(data: AlertData): void {
+    console.log("alert clicked", data);
   }
 
   openTaskScreen(taskScreenType: TaskScreenType): void {
