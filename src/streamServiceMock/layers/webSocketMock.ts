@@ -2,9 +2,9 @@
 import config from "@arcgis/core/config";
 import { SpatialReference } from "@arcgis/core/geometry";
 import request from "@arcgis/core/request";
-import StreamLayerEvent from "./streamLayerEvent";
+import StreamLayerEvent from "./webSocketEvents";
 
-const connections = new Map<string | URL, MockWebSocket>();
+const connections = new Map<string | URL, WebSocketMock>();
 
 function delay(handler: TimerHandler, ms = 10) {
   setTimeout(handler, 10);
@@ -20,7 +20,7 @@ function parseStreamUrl(streamUrl: string) {
   }
 }
 
-class MockWebSocket {
+class WebSocketMock {
   static CONNECTING = 0;
   static OPEN = 1;
   static CLOSING = 2;
@@ -29,14 +29,14 @@ class MockWebSocket {
   public onopen: () => void;
   public onmessage: (message: any) => void;
 
-  public readyState = MockWebSocket.CONNECTING;
+  public readyState = WebSocketMock.CONNECTING;
 
   constructor(private url: string, protocols?: string | string[]) {
 
     const {webSocketUrl} = parseStreamUrl(url);
 
     delay(() => {
-      this.readyState = MockWebSocket.OPEN;
+      this.readyState = WebSocketMock.OPEN;
       this.onopen();
     });
 
@@ -59,7 +59,7 @@ class MockWebSocket {
   }
 
   close() {
-    this.readyState = MockWebSocket.CLOSED;
+    this.readyState = WebSocketMock.CLOSED;
     connections.delete(this.url);
   }
 }
@@ -67,7 +67,7 @@ class MockWebSocket {
 //   wss://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer/subscribe?outSR=102100&token=MOCK_TOKEN
 // https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
 
-class StreamLayerMock {
+class StreamServiceMock {
 
   private readonly _webSocketUrl: string;
   private _featureLayerSourceJSON: Promise<any>;
@@ -76,7 +76,7 @@ class StreamLayerMock {
 
   constructor(_streamUrl: string, private _featureLayerUrl: string) {
 
-    window.WebSocket = MockWebSocket as any;
+    window.WebSocket = WebSocketMock as any;
 
     const {streamName, webSocketUrl} = parseStreamUrl(_streamUrl);
 
@@ -199,5 +199,5 @@ class StreamLayerMock {
 
 }
 
-export default StreamLayerMock;
+export default StreamServiceMock;
 
