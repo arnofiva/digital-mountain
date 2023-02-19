@@ -2,11 +2,11 @@ import "@esri/calcite-components/dist/calcite/calcite.css";
 import { setAssetPath } from "@esri/calcite-components/dist/components";
 
 import "@arcgis/core/assets/esri/themes/light/main.css";
+import esriConfig from "@arcgis/core/config";
 import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
-import esriConfig from "@arcgis/core/config";
 
 import App from "./components/App";
 import { portalUrl, webSceneId } from "./data";
@@ -32,7 +32,11 @@ const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: portalUr
 const view = (window["view"] = new SceneView({
   container: "view",
   map,
-  environment: { weather: { type: "cloudy", cloudCover: 0.2 } },
+  environment: { 
+    lighting: {
+      directShadowsEnabled: true
+    },
+    weather: { type: "cloudy", cloudCover: 0.2 } },
   qualityProfile: "high"
 }));
 

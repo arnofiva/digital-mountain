@@ -44,8 +44,6 @@ class WebSocketMock {
   }
 
   send(data: any) {
-    console.log("Send", { data });
-
     if (typeof data === 'string') {
       const parsedData = JSON.parse(data);
       if (parsedData.filter) {
@@ -87,9 +85,7 @@ class StreamServiceMock {
 
       before: async (params) => {
         const url = params.url;
-        console.log("Before", url, {params});
         if (url === _streamUrl) {
-          console.log("Mock Stream");
           const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
           return {
               capabilities: "broadcast,subscribe",
@@ -127,9 +123,6 @@ class StreamServiceMock {
               },
           };
         }
-      },
-      after: (response) => {
-        console.log("After", {response});
       }
     })    
   }
