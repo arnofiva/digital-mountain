@@ -1,6 +1,7 @@
 import Camera from "@arcgis/core/Camera";
 import Accessor from "@arcgis/core/core/Accessor";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import Collection from "@arcgis/core/core/Collection";
 import { MeasurementSystem } from "@arcgis/core/core/units";
 import { Polygon } from "@arcgis/core/geometry";
 import Geometry from "@arcgis/core/geometry/Geometry";
@@ -22,8 +23,7 @@ import {
   planScreenStartCamera,
   visitScreenStartCamera
 } from "./cameras";
-import { AlertData, ScreenType, TaskScreenType, UIActions } from "./interfaces";
-
+import { AlertData, AlertType, ScreenType, SlopeStreamEvent, TaskScreenType, UIActions } from "./interfaces";
 import { sceneExportTitle, treeFilterDistance } from "./constants";
 import {
   findCablesLayer,
@@ -238,7 +238,6 @@ export class MonitorStore extends ScreenStore {
 
   private readonly _assetsStream: StreamLayer;
   private readonly _slopeStream: StreamLayer;
-
   private readonly _streamMock: StreamServiceMock;
 
   constructor({ view }: { view: SceneView }) {
@@ -249,33 +248,49 @@ export class MonitorStore extends ScreenStore {
 
     this._assetsStream = createAssetsStream();
     this._slopeStream = createSlopeStream();
-
     const assetsMock = new StreamServiceMock(
       this._assetsStream.url,
       "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowCat_StreamLayer4/FeatureServer/0"
     );
-
     const slopeMock = new StreamServiceMock(
       this._slopeStream.url,
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
-
     assetsMock.setEvents(assetEvents);
-
     slopeMock.setEvents(slopeEvents);
-
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
-
-    view.whenLayerView(this._assetsStream).then((lv) => assetsMock.start(lv));
-
+    view.whenLayerView(this._assetsStream).then((lv) => {
+      if (signal.aborted) {
+        return;
+      }
+      assetsMock.start(lv);
+    });
     view.whenLayerView(this._slopeStream).then((lv) => {
-      lv.on("data-received", (e) => {
-        if (e.attributes.showAlert) {
-          console.log("Slope updated", { e });
-        }
-      });
+      if (signal.aborted) {
+        return;
+      }
+      this.addHandles(
+        lv.on("data-received", (e: SlopeStreamEvent) => {
+          if (e.attributes.showAlert) {
+            const alertData = {
+              type: e.attributes.STATUS.toLowerCase() === "offen" ? AlertType.SlopeOpen : AlertType.SlopeClose,
+              date: new Date(),
+              slopeId: e.attributes.track_id
+            };
+            this._alerts.add(alertData, 0);
+          }
+        })
+      );
       slopeMock.start(lv);
+    });
+    this.addHandles({
+      remove: () => {
+        view.map.remove(this._assetsStream);
+        view.map.remove(this._slopeStream);
+        assetsMock.stop();
+        slopeMock.stop();
+      }
     });
 
     const expand = new Expand({
@@ -283,15 +298,26 @@ export class MonitorStore extends ScreenStore {
       content: new LayerList({ view })
     });
     view.ui.add(expand, "bottom-left");
-
-    this.addHandles({
-      remove: () => {
-        view.map.remove(this._assetsStream);
-        view.map.remove(this._slopeStream);
-        view.ui.remove(expand);
-      }
-    });
+    this.addHandles({ remove: () => view.ui.remove(expand) });
   }
+
+  /**
+   * Data for alerts, sorted from newest to oldest.
+   */
+  @property()
+  get alerts(): Collection<AlertData> {
+    return this._alerts;
+  }
+
+  @property()
+  private _alerts = new Collection<AlertData>([
+    // placeholder alerts
+    { type: AlertType.Accident, date: new Date(), slopeId: 23 },
+    { type: AlertType.AccidentArrival, date: new Date(), slopeId: 23 },
+    { type: AlertType.Avalanche, date: new Date() },
+    { type: AlertType.SlopeOpen, date: new Date(), slopeId: 23 },
+    { type: AlertType.SlopeClose, date: new Date(), slopeId: 23 }
+  ]);
 }
 
 @subclass("digital-mountain.PlanStore")

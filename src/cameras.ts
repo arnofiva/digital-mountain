@@ -25,12 +25,12 @@ export const backgroundAnimationTargetCamera = new Camera({
 export const monitorScreenStartCamera = new Camera({
   position: {
     spatialReference: { wkid: 102100 },
-    x: 1028789,
-    y: 5913876,
-    z: 2519
+    x: 1031400,
+    y: 5910895,
+    z: 3205
   },
-  heading: 310,
-  tilt: 78
+  heading: 319,
+  tilt: 76
 });
 
 export const planScreenStartCamera = new Camera({

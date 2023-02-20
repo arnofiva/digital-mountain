@@ -23,8 +23,8 @@ class MonitorScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Monitoring" />
-        <Alerts actions={this.actions} />
-        <Clock time={placeholderTime}></Clock>
+        <Alerts actions={this.actions} alerts={this.store.alerts} />
+        <Clock time={placeholderTime} />
       </div>
     );
   }

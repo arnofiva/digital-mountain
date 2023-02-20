@@ -7,8 +7,8 @@ import StreamLayerEvent from "./webSocketEvents";
 
 const connections = new Map<string | URL, WebSocketMock>();
 
-function delay(handler: TimerHandler, ms = 10) {
-  setTimeout(handler, 10);
+function delay(handler: TimerHandler, duration = 10) {
+  setTimeout(handler, duration);
 }
 
 // e.g. https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
@@ -165,8 +165,8 @@ class StreamServiceMock {
 
       if (connection && connection.onmessage) {
         const now = performance.now();
-
-        while (events[0].msAfterStart < now - startTime) {
+        const msSinceStart = now - startTime;
+        while (events[0].msAfterStart < msSinceStart) {
           const nextEvent = events.shift();
 
           const track_id = nextEvent.message.attributes.track_id;
@@ -195,13 +195,13 @@ class StreamServiceMock {
             return;
           }
         }
-        duration = events[0].msAfterStart - now + startTime;
+        duration = events[0].msAfterStart - msSinceStart;
       }
 
       delay(loop, duration);
     };
 
-    delay(loop);
+    loop();
   }
 
   stop() {

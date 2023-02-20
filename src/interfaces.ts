@@ -55,3 +55,11 @@ export type AlertData =
   | AvalancheAlertData
   | SlopeOpenAlertData
   | SlopeCloseAlertData;
+
+export interface SlopeStreamEvent {
+  attributes: {
+    track_id: number;
+    STATUS: "Offen";
+    showAlert: boolean;
+  };
+}

@@ -1,4 +1,6 @@
-const updates = [
+import { SlopeStreamEvent } from "../../components/interfaces";
+
+const updates: SlopeStreamEvent[] = [
   {
     attributes: {
       track_id: 255,

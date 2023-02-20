@@ -8,7 +8,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 import { Widget } from "./Widget";
 import { AlertData, AlertType, UIActions } from "../interfaces";
 
-type ConstructProperties = Pick<Alert, "actions" | "data" | "title">;
+type ConstructProperties = Pick<Alert, "actions" | "data">;
 
 @subclass("digital-mountain.Alert")
 class Alert extends Widget<ConstructProperties> {
@@ -17,9 +17,6 @@ class Alert extends Widget<ConstructProperties> {
 
   @property()
   data: AlertData;
-
-  @property()
-  title: string;
 
   render() {
     const notice = (
@@ -32,7 +29,7 @@ class Alert extends Widget<ConstructProperties> {
         open
       >
         <div class="title" slot="title">
-          {this.title}
+          {alertTitle(this.data)}
           <div class="time">
             {this.data.date.toLocaleTimeString("default", { timeStyle: "short" })}
           </div>
@@ -55,6 +52,21 @@ class Alert extends Widget<ConstructProperties> {
   }
 }
 
+function alertTitle(alertData: AlertData): string {
+  switch (alertData.type) {
+    case AlertType.Accident:
+      return `Accident on slope ${alertData.slopeId}`;
+    case AlertType.AccidentArrival:
+      return "Arrived at accident";
+    case AlertType.Avalanche:
+      return "Avalanche successful";
+    case AlertType.SlopeClose:
+      return `Slope ${alertData.slopeId} closed`;
+    case AlertType.SlopeOpen:
+      return `Slope ${alertData.slopeId} opened`;
+  }
+}
+
 function noticeIcon(alertType: AlertType): string {
   switch (alertType) {
     case AlertType.Accident:
@@ -64,9 +76,9 @@ function noticeIcon(alertType: AlertType): string {
     case AlertType.Avalanche:
       return "exclamation-mark-triangle";
     case AlertType.SlopeClose:
-      return "check";
-    case AlertType.SlopeOpen:
       return "x";
+    case AlertType.SlopeOpen:
+      return "check";
   }
 }
 
@@ -79,9 +91,9 @@ function noticeKind(alertType: AlertType): string {
     case AlertType.Avalanche:
       return "warning";
     case AlertType.SlopeClose:
-      return "success";
-    case AlertType.SlopeOpen:
       return "info";
+    case AlertType.SlopeOpen:
+      return "success";
   }
 }
 
@@ -94,9 +106,9 @@ function noticeLabel(alertType: AlertType): string {
     case AlertType.Avalanche:
       return "Avalanche alert";
     case AlertType.SlopeClose:
-      return "Slope open alert";
-    case AlertType.SlopeOpen:
       return "Slope close alert";
+    case AlertType.SlopeOpen:
+      return "Slope open alert";
   }
 }
 
