@@ -22,7 +22,7 @@ import {
   planScreenStartCamera,
   visitScreenStartCamera
 } from "./cameras";
-import { AlertData, ScreenType, TaskScreenType, UIActions } from "./components/interfaces";
+import { AlertData, ScreenType, TaskScreenType, UIActions } from "./interfaces";
 
 import { sceneExportTitle, treeFilterDistance } from "./constants";
 import {

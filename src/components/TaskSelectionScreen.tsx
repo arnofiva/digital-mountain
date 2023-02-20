@@ -2,7 +2,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import TaskSelectionButton from "./TaskSelectionButton";
-import { ScreenType, UIActions } from "./interfaces";
+import { ScreenType, UIActions } from "../interfaces";
 import { Widget } from "./Widget";
 import { TaskSelectionStore } from "../stores";
 

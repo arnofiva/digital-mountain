@@ -6,7 +6,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { Widget } from "./Widget";
-import { AlertData, AlertType, UIActions } from "./interfaces";
+import { AlertData, AlertType, UIActions } from "../interfaces";
 
 type ConstructProperties = Pick<Alert, "actions" | "data" | "title">;
 

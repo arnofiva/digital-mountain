@@ -2,7 +2,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import Header from "./Header";
-import { UIActions } from "./interfaces";
+import { UIActions } from "../interfaces";
 import { Widget } from "./Widget";
 import { MonitorStore } from "../stores";
 import Alerts from "./Alerts";

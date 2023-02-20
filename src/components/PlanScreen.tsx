@@ -5,7 +5,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { PlanStore } from "../stores";
 import Header from "./Header";
-import { UIActions } from "./interfaces";
+import { UIActions } from "../interfaces";
 import PlanActions from "./PlanActions";
 import PlanOverview from "./PlanOverview";
 import { Widget } from "./Widget";

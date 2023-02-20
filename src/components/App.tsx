@@ -2,7 +2,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { Store } from "../stores";
-import { ScreenType } from "./interfaces";
+import { ScreenType } from "../interfaces";
 import MonitorScreen from "./MonitorScreen";
 import PlanScreen from "./PlanScreen";
 import TaskSelectionScreen from "./TaskSelectionScreen";
