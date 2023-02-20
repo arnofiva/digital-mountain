@@ -2,6 +2,8 @@
 import config from "@arcgis/core/config";
 import { SpatialReference } from "@arcgis/core/geometry";
 import request from "@arcgis/core/request";
+import Query from "@arcgis/core/rest/support/Query";
+import StreamLayerView from "@arcgis/core/views/layers/StreamLayerView";
 import StreamLayerEvent from "./webSocketEvents";
 
 const connections = new Map<string | URL, WebSocketMock>();
@@ -143,7 +145,7 @@ class StreamServiceMock {
     this._events = events;
   }
 
-  start() {
+  start(layerView: StreamLayerView) {
 
     if (!this._events || this._events.length === 0) {
       return;
@@ -154,7 +156,7 @@ class StreamServiceMock {
 
     const events = [...this._events];
 
-    const loop = () => {
+    const loop = async () => {
 
       if (startTime !== this._startTime) {
         return;
@@ -169,8 +171,25 @@ class StreamServiceMock {
 
         while (events[0].msAfterStart < (now - startTime)) {
           const nextEvent = events.shift();
+
+          const track_id = nextEvent.message.attributes.track_id;
+
+          const result = await layerView.queryFeatures(new Query({
+            returnGeometry: true,
+            outFields: ["*"],
+            where: `track_id = ${track_id}`
+          }));
+
+          const attributes = result.features.length && result.features[0].attributes || {};
+          const geometry = result.features.length && result.features[0].geometry;
+
+          const message = {
+            attributes: {...attributes, ...nextEvent.message.attributes},
+            geometry: nextEvent.message.geometry || geometry
+          }
+
           connection.onmessage({
-            data: JSON.stringify(nextEvent.message)
+            data: JSON.stringify(message)
           });
 
           if (events.length === 0) {

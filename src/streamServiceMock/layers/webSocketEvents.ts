@@ -7,7 +7,7 @@ type StreamLayerEvent = {
     attributes: {
       track_id: number;
     },
-    geometry: {
+    geometry?: {
       spatialReference: any;
     }
   }

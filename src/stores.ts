@@ -37,9 +37,11 @@ import {
   slopeIdFilterValue
 } from "./data";
 import createAssetsStream from "./layers/liveAssets";
+import createSlopeStream from "./layers/liveSlopes";
 import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
-import assetEvents from "./streamServiceMock/events/assets";
+import assetEvents from "./streamServiceMock/events/assetEvents";
+import slopeEvents from "./streamServiceMock/events/slopeEvents";
 import StreamServiceMock from "./streamServiceMock/layers/webSocketMock";
 import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
 
@@ -232,6 +234,7 @@ export class MonitorStore extends ScreenStore {
   readonly type = ScreenType.Monitor;
 
   private readonly _assetsStream: StreamLayer;
+  private readonly _slopeStream: StreamLayer;
 
   private readonly _streamMock: StreamServiceMock;
 
@@ -242,27 +245,46 @@ export class MonitorStore extends ScreenStore {
     goToTaskScreenStart(monitorScreenStartCamera, { signal, view });
 
     this._assetsStream = createAssetsStream();
+    this._slopeStream = createSlopeStream();
 
     const assetsMock = new StreamServiceMock(
       this._assetsStream.url,
       "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowCat_StreamLayer4/FeatureServer/0"
     );
+
+    const slopeMock = new StreamServiceMock(
+      this._slopeStream.url,
+      "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
+    );
     
     assetsMock.setEvents(assetEvents);
 
-    assetsMock.start();
+    slopeMock.setEvents(slopeEvents);
 
     view.map.add(this._assetsStream);
+    view.map.add(this._slopeStream);
+
+    view.whenLayerView(this._assetsStream).then(lv => assetsMock.start(lv));
+
+    view.whenLayerView(this._slopeStream).then((lv) => {
+      lv.on("data-received", (e) => {
+        if (e.attributes.showAlert) {
+          console.log("Slope updated", {e})
+        }
+      });
+      slopeMock.start(lv);
+    });
 
     const expand = new Expand({
       view,
       content: new LayerList({view})
     });
-    view.ui.add(expand, "top-right");
+    view.ui.add(expand, "bottom-left");
 
     this.addHandles({
       remove: () => {
         view.map.remove(this._assetsStream);
+        view.map.remove(this._slopeStream);
         view.ui.remove(expand);
       }
     })

@@ -40,6 +40,8 @@ const view = (window["view"] = new SceneView({
   qualityProfile: "high"
 }));
 
+view.popup.defaultPopupTemplateEnabled = true;
+
 const store = new Store({ view });
 store.openTaskSelectionScreen({ animateCameraToStart: false });
 new App({ container: document.getElementById("app"), store });
