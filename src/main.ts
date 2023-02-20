@@ -38,6 +38,7 @@ const view = (window["view"] = new SceneView({
     },
     weather: { type: "cloudy", cloudCover: 0.2 }
   },
+  padding: { top: 100 }, // include padding from application header
   qualityProfile: "high"
 }));
 
