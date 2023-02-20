@@ -45,7 +45,6 @@ import slopeEvents from "./streamServiceMock/events/slopeEvents";
 import StreamServiceMock from "./streamServiceMock/layers/streamServiceMock";
 import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
 
-
 /**
  * The speed factor used for the animation of the camera in the background of the task selection screen.
  */
@@ -256,7 +255,7 @@ export class MonitorStore extends ScreenStore {
       this._slopeStream.url,
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
-    
+
     assetsMock.setEvents(assetEvents);
 
     slopeMock.setEvents(slopeEvents);
@@ -264,12 +263,12 @@ export class MonitorStore extends ScreenStore {
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
 
-    view.whenLayerView(this._assetsStream).then(lv => assetsMock.start(lv));
+    view.whenLayerView(this._assetsStream).then((lv) => assetsMock.start(lv));
 
     view.whenLayerView(this._slopeStream).then((lv) => {
       lv.on("data-received", (e) => {
         if (e.attributes.showAlert) {
-          console.log("Slope updated", {e})
+          console.log("Slope updated", { e });
         }
       });
       slopeMock.start(lv);
@@ -277,7 +276,7 @@ export class MonitorStore extends ScreenStore {
 
     const expand = new Expand({
       view,
-      content: new LayerList({view})
+      content: new LayerList({ view })
     });
     view.ui.add(expand, "bottom-left");
 
@@ -287,7 +286,7 @@ export class MonitorStore extends ScreenStore {
         view.map.remove(this._slopeStream);
         view.ui.remove(expand);
       }
-    })
+    });
   }
 }
 
@@ -564,4 +563,3 @@ function appendDefinitionExpression(layer: FeatureLayer, operator: "AND" | "OR",
     ? `(${layer.definitionExpression}) ${operator} ${expression}`
     : expression;
 }
-

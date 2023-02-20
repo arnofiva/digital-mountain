@@ -1,5 +1,3 @@
-
-
 const updates = [
   {
     attributes: {
@@ -529,4 +527,3 @@ const assetEvents = updates.map((message, idx) => ({
 }));
 
 export default assetEvents;
-

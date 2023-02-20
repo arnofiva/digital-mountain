@@ -1,4 +1,3 @@
-
 import config from "@arcgis/core/config";
 import { SpatialReference } from "@arcgis/core/geometry";
 import request from "@arcgis/core/request";
@@ -19,7 +18,7 @@ function parseStreamUrl(streamUrl: string) {
   return {
     streamName: urlParts[3], // snowCat_StreamLayer4
     webSocketUrl: `wss://${urlParts[1]}` // wss://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
-  }
+  };
 }
 
 class WebSocketMock {
@@ -33,9 +32,8 @@ class WebSocketMock {
 
   public readyState = WebSocketMock.CONNECTING;
 
-  constructor(private url: string, protocols?: string | string[]) {
-
-    const {webSocketUrl} = parseStreamUrl(url);
+  constructor(private url: string) {
+    const { webSocketUrl } = parseStreamUrl(url);
 
     delay(() => {
       this.readyState = WebSocketMock.OPEN;
@@ -46,13 +44,13 @@ class WebSocketMock {
   }
 
   send(data: any) {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
       const parsedData = JSON.parse(data);
       if (parsedData.filter) {
         delay(() => {
           this.onmessage({
             data
-          })    
+          });
         });
       }
     }
@@ -68,17 +66,15 @@ class WebSocketMock {
 // https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
 
 class StreamServiceMock {
-
   private readonly _webSocketUrl: string;
   private _featureLayerSourceJSON: Promise<any>;
   private _events: StreamLayerEvent[];
   private _startTime: number;
 
   constructor(_streamUrl: string, private _featureLayerUrl: string) {
-
     window.WebSocket = WebSocketMock as any;
 
-    const {streamName, webSocketUrl} = parseStreamUrl(_streamUrl);
+    const { streamName, webSocketUrl } = parseStreamUrl(_streamUrl);
 
     this._webSocketUrl = webSocketUrl;
 
@@ -90,51 +86,54 @@ class StreamServiceMock {
         if (url === _streamUrl) {
           const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
           return {
-              capabilities: "broadcast,subscribe",
-              currentVersion: 11,
-              description: null,
-              displayField: "x",
-              drawingInfo: sourceJSON.drawingInfo,
-              fields: sourceJSON.fields.filter((f: any) => f.name !== "objectid"),
-              geometryField: null,
-              geometryType: sourceJSON.geometryType,
-              globalIdField: "globalid",
-              hasZ: sourceJSON.hasZ,
-              keepLatest: {
-                dataSourceLayerName: streamName,
-                dataSourceName: streamName,
-                datastoreUrl: "",
-                flushInterval: 50,
-                maxTransactionSize: 1000,
-              },
-              keepLatestArchive: {
-                featuresUrl: this._featureLayerUrl,
-                maximumFeatureAge: 0,
-                updateInterval: 30
-              },
-              objectIdField: null,
-              portalProperties: {/* TODO */},
-              spatialReference: SpatialReference.WebMercator.toJSON(),
-              streamUrls: [{
+            capabilities: "broadcast,subscribe",
+            currentVersion: 11,
+            description: null,
+            displayField: "x",
+            drawingInfo: sourceJSON.drawingInfo,
+            fields: sourceJSON.fields.filter((f: any) => f.name !== "objectid"),
+            geometryField: null,
+            geometryType: sourceJSON.geometryType,
+            globalIdField: "globalid",
+            hasZ: sourceJSON.hasZ,
+            keepLatest: {
+              dataSourceLayerName: streamName,
+              dataSourceName: streamName,
+              datastoreUrl: "",
+              flushInterval: 50,
+              maxTransactionSize: 1000
+            },
+            keepLatestArchive: {
+              featuresUrl: this._featureLayerUrl,
+              maximumFeatureAge: 0,
+              updateInterval: 30
+            },
+            objectIdField: null,
+            portalProperties: {
+              /* TODO */
+            },
+            spatialReference: SpatialReference.WebMercator.toJSON(),
+            streamUrls: [
+              {
                 token: "MOCK_TOKEN",
                 transport: "ws",
                 urls: [webSocketUrl]
-              }],
-              timeInfo: {
-                trackIdField: "track_id"
-              },
+              }
+            ],
+            timeInfo: {
+              trackIdField: "track_id"
+            }
           };
         }
       }
-    })    
+    });
   }
 
   private loadFeatureLayerJSON(requestOptions: __esri.RequestOptions) {
     if (!this._featureLayerSourceJSON) {
-      this._featureLayerSourceJSON = request(this._featureLayerUrl, requestOptions)
-        .then((response) => {
-          return response.data;
-        });
+      this._featureLayerSourceJSON = request(this._featureLayerUrl, requestOptions).then((response) => {
+        return response.data;
+      });
     }
 
     return this._featureLayerSourceJSON;
@@ -146,7 +145,6 @@ class StreamServiceMock {
   }
 
   start(layerView: StreamLayerView) {
-
     if (!this._events || this._events.length === 0) {
       return;
     }
@@ -157,7 +155,6 @@ class StreamServiceMock {
     const events = [...this._events];
 
     const loop = async () => {
-
       if (startTime !== this._startTime) {
         return;
       }
@@ -165,28 +162,30 @@ class StreamServiceMock {
       let duration = 10;
 
       const connection = connections.get(this._webSocketUrl);
-      
+
       if (connection && connection.onmessage) {
         const now = performance.now();
 
-        while (events[0].msAfterStart < (now - startTime)) {
+        while (events[0].msAfterStart < now - startTime) {
           const nextEvent = events.shift();
 
           const track_id = nextEvent.message.attributes.track_id;
 
-          const result = await layerView.queryFeatures(new Query({
-            returnGeometry: true,
-            outFields: ["*"],
-            where: `track_id = ${track_id}`
-          }));
+          const result = await layerView.queryFeatures(
+            new Query({
+              returnGeometry: true,
+              outFields: ["*"],
+              where: `track_id = ${track_id}`
+            })
+          );
 
-          const attributes = result.features.length && result.features[0].attributes || {};
+          const attributes = (result.features.length && result.features[0].attributes) || {};
           const geometry = result.features.length && result.features[0].geometry;
 
           const message = {
-            attributes: {...attributes, ...nextEvent.message.attributes},
+            attributes: { ...attributes, ...nextEvent.message.attributes },
             geometry: nextEvent.message.geometry || geometry
-          }
+          };
 
           connection.onmessage({
             data: JSON.stringify(message)
@@ -208,8 +207,6 @@ class StreamServiceMock {
   stop() {
     this._startTime = 0;
   }
-
 }
 
 export default StreamServiceMock;
-

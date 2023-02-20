@@ -32,11 +32,12 @@ const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: portalUr
 const view = (window["view"] = new SceneView({
   container: "view",
   map,
-  environment: { 
+  environment: {
     lighting: {
       directShadowsEnabled: true
     },
-    weather: { type: "cloudy", cloudCover: 0.2 } },
+    weather: { type: "cloudy", cloudCover: 0.2 }
+  },
   qualityProfile: "high"
 }));
 
