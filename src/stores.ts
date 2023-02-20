@@ -42,7 +42,7 @@ import LiftEditor from "./LiftEditor";
 import SlopeEditor from "./SlopeEditor";
 import assetEvents from "./streamServiceMock/events/assetEvents";
 import slopeEvents from "./streamServiceMock/events/slopeEvents";
-import StreamServiceMock from "./streamServiceMock/layers/webSocketMock";
+import StreamServiceMock from "./streamServiceMock/layers/streamServiceMock";
 import { abortNullable, getDefaultMeasurementSystem, ignoreAbortErrors } from "./utils";
 
 
