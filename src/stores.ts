@@ -192,7 +192,7 @@ export class TaskSelectionStore extends ScreenStore {
       }
     });
     const { signal } = this.createAbortController();
-    ignoreAbortErrors(this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal }));
+    this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal });
   }
 
   private readonly _initialLayerVisibilities: boolean[] = [];
@@ -211,13 +211,17 @@ export class TaskSelectionStore extends ScreenStore {
     const camera2 = backgroundAnimationTargetCamera;
     await view.when();
     if (animateCameraToStart) {
-      await view.goTo(camera1, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal });
+      await ignoreAbortErrors(
+        view.goTo(camera1, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal })
+      );
     } else {
       view.camera = camera1;
     }
     let targetCamera = camera2;
     while (!signal.aborted) {
-      await view.goTo(targetCamera, { animate: true, speedFactor: backgroundCameraAnimationSpeedFactor, signal });
+      await ignoreAbortErrors(
+        view.goTo(targetCamera, { animate: true, speedFactor: backgroundCameraAnimationSpeedFactor, signal })
+      );
       // loop between the camera positions
       targetCamera = targetCamera === camera2 ? camera1 : camera2;
     }
