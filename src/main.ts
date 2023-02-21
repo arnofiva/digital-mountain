@@ -10,7 +10,7 @@ import WebScene from "@arcgis/core/WebScene";
 
 import App from "./components/App";
 import { portalUrl, webSceneId } from "./data";
-import { Store } from "./stores";
+import AppStore from "./stores/AppStore";
 
 setAssetPath(window.document.URL);
 esriConfig.assetsPath = "./assets";
@@ -44,6 +44,6 @@ const view = (window["view"] = new SceneView({
 
 view.popup.defaultPopupTemplateEnabled = true;
 
-const store = new Store({ view });
+const store = new AppStore({ view });
 store.openTaskSelectionScreen({ animateCameraToStart: false });
 new App({ container: document.getElementById("app"), store });

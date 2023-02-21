@@ -4,7 +4,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 import TaskSelectionButton from "./TaskSelectionButton";
 import { ScreenType, UIActions } from "../interfaces";
 import { Widget } from "./Widget";
-import { TaskSelectionStore } from "../stores";
+import TaskSelectionStore from "../stores/TaskSelectionStore";
 
 type ConstructProperties = Pick<TaskSelectionScreen, "actions" | "store">;
 

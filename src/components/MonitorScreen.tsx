@@ -1,7 +1,7 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import { MonitorStore } from "../stores";
+import MonitorStore from "../stores/MonitorStore";
 import Alerts from "./Alerts";
 import Clock from "./Clock";
 import Header from "./Header";

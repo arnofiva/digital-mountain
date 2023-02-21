@@ -8,6 +8,16 @@
 export const sceneExportTitle = "Plan Export";
 
 /**
+ * The speed factor used for the animation of the camera when transitioning between screens.
+ */
+export const transitionCameraAnimationSpeedFactor = 0.5;
+
+/**
+ * The speed factor used for the animation of the camera in the background of the task selection screen.
+ */
+export const backgroundCameraAnimationSpeedFactor = 0.01;
+
+/**
  * Slope editor
  */
 export const slopeBufferDistance = 15;

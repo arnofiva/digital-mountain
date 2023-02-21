@@ -3,7 +3,7 @@ import "@esri/calcite-components/dist/components/calcite-button";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import { PlanStore } from "../stores";
+import PlanStore from "../stores/PlanStore";
 import Header from "./Header";
 import { UIActions } from "../interfaces";
 import PlanActions from "./PlanActions";

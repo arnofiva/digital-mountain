@@ -1,5 +1,6 @@
 import { isAbortError } from "@arcgis/core/core/promiseUtils";
 import { MeasurementSystem } from "@arcgis/core/core/units";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Portal from "@arcgis/core/portal/Portal";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
@@ -37,4 +38,13 @@ export function getDefaultMeasurementSystem(view: SceneView): MeasurementSystem 
   const portal = (scene && "portalItem" in scene ? scene.portalItem?.portal : null) ?? Portal.getDefault();
   const units = portal.user?.units ?? portal.units;
   return units === "english" ? "imperial" : "metric";
+}
+
+/**
+ * Set a new definition expression on a layer, combining it with any existing expression if one exists.
+ */
+export function appendDefinitionExpression(layer: FeatureLayer, operator: "AND" | "OR", expression: string): void {
+  layer.definitionExpression = layer.definitionExpression
+    ? `(${layer.definitionExpression}) ${operator} ${expression}`
+    : expression;
 }
