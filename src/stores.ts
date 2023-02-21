@@ -15,6 +15,7 @@ import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
+import Query from "@arcgis/core/rest/support/Query";
 
 import {
   backgroundAnimationTargetCamera,
@@ -89,7 +90,9 @@ export class Store extends Accessor implements UIActions {
   }
 
   goToAlert(data: AlertData): void {
-    console.log("alert clicked", data);
+    if (this._screenStore?.type === ScreenType.Monitor) {
+      this._screenStore.goToAlert(data);
+    }
   }
 
   openTaskScreen(taskScreenType: TaskScreenType): void {
@@ -236,12 +239,16 @@ export class TaskSelectionStore extends ScreenStore {
 export class MonitorStore extends ScreenStore {
   readonly type = ScreenType.Monitor;
 
+  private readonly _view: SceneView;
   private readonly _assetsStream: StreamLayer;
   private readonly _slopeStream: StreamLayer;
   private readonly _streamMock: StreamServiceMock;
 
+  private _goToAlertAbortController: AbortController | null = null;
+
   constructor({ view }: { view: SceneView }) {
     super();
+    this._view = view;
     const { signal } = this.createAbortController();
 
     goToTaskScreenStart(monitorScreenStartCamera, { signal, view });
@@ -318,6 +325,33 @@ export class MonitorStore extends ScreenStore {
     { type: AlertType.SlopeOpen, date: new Date(), slopeId: 23 },
     { type: AlertType.SlopeClose, date: new Date(), slopeId: 23 }
   ]);
+
+  async goToAlert(data: AlertData): Promise<void> {
+    this._goToAlertAbortController?.abort();
+    const { signal } = (this._goToAlertAbortController = this.createAbortController());
+    const slopesLayer = findSlopesLayer(this._view.map);
+    switch (data.type) {
+      case AlertType.SlopeClose:
+      case AlertType.SlopeOpen: {
+        const [feature] = (
+          await ignoreAbortErrors(
+            slopesLayer.queryFeatures(
+              new Query({
+                returnGeometry: true,
+                objectIds: [data.slopeId],
+                outSpatialReference: this._view.spatialReference
+              }),
+              { signal }
+            )
+          )
+        ).features;
+        const extent = feature?.geometry?.extent;
+        if (extent && !signal.aborted) {
+          ignoreAbortErrors(this._view.goTo(extent, { signal }));
+        }
+      }
+    }
+  }
 }
 
 @subclass("digital-mountain.PlanStore")
