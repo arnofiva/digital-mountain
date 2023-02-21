@@ -1,4 +1,4 @@
-import { SlopeStreamEvent } from "../../components/interfaces";
+import { SlopeStreamEvent } from "../../interfaces";
 
 const updates: SlopeStreamEvent[] = [
   {
