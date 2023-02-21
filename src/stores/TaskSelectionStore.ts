@@ -69,7 +69,7 @@ class TaskSelectionStore extends ScreenStore {
   }
 
   private get _defaultUIComponents(): string[] {
-    return ["attribution", "zoom", "navigation-toggle", "compass"];
+    return ["attribution"];
   }
 }
 
