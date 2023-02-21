@@ -12,6 +12,21 @@ import {
 import { liftColor, liftInvalidPreviewColor, maxTowerHeight } from "./constants";
 
 /**
+ * Symbols used to visualize slopes based on status.
+ */
+export const defaultSlopeSymbol = new PolygonSymbol3D({
+  symbolLayers: [new FillSymbol3DLayer({ material: { color: [127, 127, 127, 0.5] } })]
+});
+
+export const openSlopeSymbol = new PolygonSymbol3D({
+  symbolLayers: [new FillSymbol3DLayer({ material: { color: [79, 160, 227, 0.5] } })]
+});
+
+export const preparingSlopeSymbol = new PolygonSymbol3D({
+  symbolLayers: [new FillSymbol3DLayer({ material: { color: [242, 140, 40, 0.5] } })]
+});
+
+/**
  * Symbol used to visualize the area within which lifts and slopes can be created or updated.
  */
 export const parcelSymbol = new PolygonSymbol3D({

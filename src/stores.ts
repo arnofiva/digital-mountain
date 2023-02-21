@@ -28,6 +28,7 @@ import { AlertData, AlertType, ScreenType, SlopeStreamEvent, TaskScreenType, UIA
 import { sceneExportTitle, treeFilterDistance } from "./constants";
 import {
   findCablesLayer,
+  findSlopesGroupLayer,
   findSlopesLayer,
   findTowersLayer,
   findTreeLayer,
@@ -252,6 +253,11 @@ export class MonitorStore extends ScreenStore {
     const { signal } = this.createAbortController();
 
     goToTaskScreenStart(monitorScreenStartCamera, { signal, view });
+
+    // Slopes will be displayed by the stream layer
+    const slopesGroupLayer = findSlopesGroupLayer(view.map);
+    slopesGroupLayer.visible = false;
+    this.addHandles({ remove: () => (slopesGroupLayer.visible = true) });
 
     this._assetsStream = createAssetsStream();
     this._slopeStream = createSlopeStream();

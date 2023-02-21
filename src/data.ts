@@ -1,5 +1,6 @@
 import { Polygon, SpatialReference } from "@arcgis/core/geometry";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import GroupLayer from "@arcgis/core/layers/GroupLayer";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import Map from "@arcgis/core/Map";
 
@@ -18,6 +19,10 @@ export function findCablesLayer(map: Map): FeatureLayer {
 
 export function findSlopesLayer(map: Map): FeatureLayer {
   return map.allLayers.find((l) => l.title === "Laax_Pisten") as FeatureLayer;
+}
+
+export function findSlopesGroupLayer(map: Map): GroupLayer {
+  return map.allLayers.find((l) => l.title === "Laax Slopes") as GroupLayer;
 }
 
 export function findTowersLayer(map: Map): FeatureLayer {
