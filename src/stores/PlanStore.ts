@@ -247,6 +247,7 @@ export class PlanStore extends ScreenStore {
         return;
       }
       const bufferGeometries = (buffer(geometries, treeFilterDistance, "meters") as Polygon[]).filter((g) => g != null);
+      bufferGeometries.forEach((g) => (g.hasZ = false));
       treeLayer.filter = new SceneFilter({
         geometries: bufferGeometries,
         spatialRelationship: "disjoint"
