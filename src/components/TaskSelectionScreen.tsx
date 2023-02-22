@@ -24,18 +24,18 @@ class TaskSelectionScreen extends Widget<ConstructProperties> {
         <div class="tasks">
           <TaskSelectionButton
             actions={this.actions}
-            text="Monitoring"
+            text="Live"
             taskScreenType={ScreenType.Monitor}
+          />
+          <TaskSelectionButton
+            actions={this.actions}
+            text="Statistics"
+            taskScreenType={ScreenType.Visit}
           />
           <TaskSelectionButton
             actions={this.actions}
             text="Planning"
             taskScreenType={ScreenType.Plan}
-          />
-          <TaskSelectionButton
-            actions={this.actions}
-            text="Visiting"
-            taskScreenType={ScreenType.Visit}
           />
         </div>
       </div>
