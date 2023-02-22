@@ -187,7 +187,7 @@ class StreamServiceMock {
             geometry: nextEvent.message.geometry || geometry
           };
 
-          connection.onmessage({
+          connection.onmessage?.({
             data: JSON.stringify(message)
           });
 
