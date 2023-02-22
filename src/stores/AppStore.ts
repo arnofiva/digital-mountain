@@ -3,6 +3,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import Graphic from "@arcgis/core/Graphic";
 import Map from "@arcgis/core/Map";
 import SceneView from "@arcgis/core/views/SceneView";
+import { SimpleRenderer } from "@arcgis/core/renderers";
 
 import { AlertData, ScreenType, TaskScreenType, UIActions } from "../interfaces";
 import {
@@ -19,6 +20,7 @@ import TaskSelectionStore from "./TaskSelectionStore";
 import MonitorStore from "./MonitorStore";
 import PlanStore from "./PlanStore";
 import VisitStore from "./VisitStore";
+import { openSlopeSymbol } from "../symbols";
 
 /**
  * Class name set on the body element while on a task screen, used to adjust the layout of the view.
@@ -32,7 +34,13 @@ class AppStore extends Accessor implements UIActions {
   constructor({ view }: { view: SceneView }) {
     super();
     this._view = view;
-    view.when(() => hidePlannedFeatures(view.map));
+    view.when(() => {
+      hidePlannedFeatures(view.map);
+      const { renderer: slopesRenderer } = findSlopesLayer(view.map);
+      if (slopesRenderer.type === "simple") {
+        (slopesRenderer as SimpleRenderer).symbol = openSlopeSymbol;
+      }
+    });
   }
 
   @property()

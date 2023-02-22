@@ -11,21 +11,11 @@ import Accessor from "@arcgis/core/core/Accessor";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import Layer from "@arcgis/core/layers/Layer";
 
-import { hiddenLineSymbol, parcelSymbol, sketchPreviewLineSymbol } from "./symbols";
+import { hiddenLineSymbol, openSlopeSymbol, parcelSymbol, sketchPreviewLineSymbol } from "./symbols";
 import { skiResortArea } from "./data";
 import { slopeBufferDistance, slopeMaxDeviation } from "./constants";
 import { removeNullable } from "./utils";
 import TreeFilterState from "./TreeFilterState";
-
-const bufferSymbol = new PolygonSymbol3D({
-  symbolLayers: [
-    new FillSymbol3DLayer({
-      material: {
-        color: [167, 209, 234, 1]
-      }
-    })
-  ]
-});
 
 @subclass("digital-mountain.SlopeEditor")
 class SlopeEditor extends Accessor {
@@ -184,7 +174,7 @@ class SlopeEditor extends Accessor {
             bufferGeometry.hasZ = false;
             bufferGraphic = new Graphic({
               geometry: bufferGeometry,
-              symbol: bufferSymbol
+              symbol: openSlopeSymbol
             });
             this._bufferLayer.add(bufferGraphic);
             this._routeToBufferMap.set(routeGraphic, bufferGraphic);
