@@ -2,8 +2,6 @@ import { Polygon, Polyline } from "@arcgis/core/geometry";
 import { buffer, contains, generalize, geodesicArea } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import { PolygonSymbol3D } from "@arcgis/core/symbols";
-import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import SceneView from "@arcgis/core/views/SceneView";
 import SketchViewModel from "@arcgis/core/widgets/Sketch/SketchViewModel";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
