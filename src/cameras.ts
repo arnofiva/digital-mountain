@@ -35,13 +35,16 @@ export const monitorScreenStartCamera = new Camera({
 
 export const planScreenStartCamera = new Camera({
   position: {
-    spatialReference: { wkid: 102100 },
-    x: 1028156,
-    y: 5911058,
-    z: 1944
+    spatialReference: {
+      latestWkid: 3857,
+      wkid: 102100
+    },
+    x: 1028206.5948908242,
+    y: 5912053.454068003,
+    z: 1855.737452336587
   },
-  heading: 337.4764268607255,
-  tilt: 82.89959831116761
+  heading: 320.93107053807717,
+  tilt: 80.60495457138171
 });
 
 export const visitScreenStartCamera = new Camera({
