@@ -3,6 +3,7 @@ import { MeasurementSystem } from "@arcgis/core/core/units";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Portal from "@arcgis/core/portal/Portal";
 import SceneView from "@arcgis/core/views/SceneView";
+import DefaultUI from "@arcgis/core/views/ui/DefaultUI";
 import WebScene from "@arcgis/core/WebScene";
 
 /**
@@ -47,4 +48,31 @@ export function appendDefinitionExpression(layer: FeatureLayer, operator: "AND" 
   layer.definitionExpression = layer.definitionExpression
     ? `(${layer.definitionExpression}) ${operator} ${expression}`
     : expression;
+}
+
+/**
+ * Finds an element in the view UI that can be used as a container for a widget.
+ * @param position The position of the element in the view UI
+ * @param widgetId A unique id specific to the component being added
+ */
+export function ensureViewUIContainer(
+  position: "top-left" | "top-right" | "bottom-left" | "bottom-right",
+  widgetId: string
+): HTMLElement {
+  widgetId += "-ui-container"; // avoid conflicts with other ids used for CSS
+  let widgetContainerEl = document.getElementById(widgetId);
+  if (!widgetContainerEl) {
+    widgetContainerEl = document.createElement("div");
+    widgetContainerEl.id = widgetId;
+    viewUI.add(widgetContainerEl, position);
+  }
+  return widgetContainerEl;
+}
+
+/**
+ * For use in findViewUIContainer.
+ */
+let viewUI: DefaultUI;
+export function setViewUI(ui: DefaultUI): void {
+  viewUI = ui;
 }

@@ -14,8 +14,9 @@ class TaskSelectionStore extends ScreenStore {
   constructor({ animateCameraToStart, view }: { animateCameraToStart: boolean; view: SceneView }) {
     super();
     // hide UI on task selection screen and restore once task is selected
-    view.ui.components = [];
-    this.addHandles({ remove: () => (view.ui.components = this._defaultUIComponents) });
+    const uiClass = "task-selection-ui";
+    view.ui.container.classList.add(uiClass);
+    this.addHandles({ remove: () => view.ui.container.classList.remove(uiClass) });
     // hide layers until task is selected
     view.when(() => {
       if (!this.destroyed) {
@@ -66,10 +67,6 @@ class TaskSelectionStore extends ScreenStore {
       // loop between the camera positions
       targetCamera = targetCamera === camera2 ? camera1 : camera2;
     }
-  }
-
-  private get _defaultUIComponents(): string[] {
-    return ["attribution"];
   }
 }
 

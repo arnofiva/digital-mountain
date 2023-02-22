@@ -7,6 +7,7 @@ import Clock from "./Clock";
 import Header from "./Header";
 import { UIActions } from "../interfaces";
 import { Widget } from "./Widget";
+import { ensureViewUIContainer } from "../utils";
 
 type ConstructProperties = Pick<MonitorScreen, "actions" | "store">;
 
@@ -23,8 +24,8 @@ class MonitorScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Monitoring" />
-        <Alerts actions={this.actions} alerts={this.store.alerts} />
-        <Clock time={placeholderTime} />
+        <Clock container={ensureViewUIContainer("top-left", "clock")} time={placeholderTime} />
+        <Alerts actions={this.actions} alerts={this.store.alerts} container={ensureViewUIContainer("top-right", "alerts")} />
       </div>
     );
   }

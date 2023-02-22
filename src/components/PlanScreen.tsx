@@ -9,6 +9,7 @@ import { UIActions } from "../interfaces";
 import PlanActions from "./PlanActions";
 import PlanOverview from "./PlanOverview";
 import { Widget } from "./Widget";
+import { ensureViewUIContainer } from "../utils";
 
 type ConstructProperties = Pick<PlanScreen, "actions" | "store">;
 
@@ -38,6 +39,7 @@ class PlanScreen extends Widget<ConstructProperties> {
         <PlanActions hint={this.store.hint} actions={this.actions} />
         <PlanOverview
           cableLength={this.store.cableLength}
+          container={ensureViewUIContainer("bottom-right", "plan-overview")}
           measurementSystem={this.store.measurementSystem}
           slopeSurfaceArea={this.store.slopeSurfaceArea}
           towerCount={this.store.towerCount}

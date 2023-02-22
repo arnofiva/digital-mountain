@@ -1,5 +1,3 @@
-$header-height: 100px;
-
 html,
 body,
 #app,
@@ -58,6 +56,10 @@ h3 {
   }
 }
 
+.task-selection-ui {
+  visibility: hidden;
+}
+
 .header {
   display: flex;
   flex-direction: row;
@@ -66,7 +68,7 @@ h3 {
   backdrop-filter: blur(2px);
   box-sizing: border-box;
   filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
-  height: $header-height;
+  height: 100px;
 
   .title {
     margin-left: 20px;
@@ -96,23 +98,18 @@ h3 {
 }
 
 .plan-overview {
-  position: absolute;
-  bottom: 30px;
-  right: 30px;
   width: 300px;
   background-color: var(--calcite-ui-background);
   padding: 10px;
 }
 
 .alerts {
-  position: absolute;
-  top: $header-height + 20px;
-  right: 20px;
   width: 400px;
   height: 500px;
   overflow: hidden;
   -webkit-mask-image: linear-gradient(to bottom, black 90%, rgba(0, 0, 0, 0));
   mask-image: linear-gradient(to bottom, black 90%, rgba(0, 0, 0, 0));
+  box-shadow: none; // override shadow added by .esri-component
 }
 
 .alert {
@@ -146,9 +143,6 @@ h3 {
 }
 
 .clock {
-  position: absolute;
-  top: $header-height + 15px;
-  left: 20px;
   width: 220px;
   background-color: #fff;
   display: flex;

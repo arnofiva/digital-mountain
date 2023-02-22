@@ -11,6 +11,7 @@ import WebScene from "@arcgis/core/WebScene";
 import App from "./components/App";
 import { portalUrl, webSceneId } from "./data";
 import AppStore from "./stores/AppStore";
+import { setViewUI } from "./utils";
 
 setAssetPath(window.document.URL);
 esriConfig.assetsPath = "./assets";
@@ -39,8 +40,10 @@ const view = (window["view"] = new SceneView({
     weather: { type: "cloudy", cloudCover: 0.2 }
   },
   padding: { top: 100 }, // include padding from application header
-  qualityProfile: "high"
+  qualityProfile: "high",
+  ui: { components: ["attribution"] }
 }));
+setViewUI(view.ui);
 
 view.popup.defaultPopupTemplateEnabled = true;
 
