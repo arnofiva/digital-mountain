@@ -2,10 +2,10 @@ import Accessor from "@arcgis/core/core/Accessor";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import Graphic from "@arcgis/core/Graphic";
 import Map from "@arcgis/core/Map";
-import SceneView from "@arcgis/core/views/SceneView";
 import { SimpleRenderer } from "@arcgis/core/renderers";
+import SceneView from "@arcgis/core/views/SceneView";
 
-import { AlertData, ScreenType, TaskScreenType, UIActions } from "../interfaces";
+import TimeExtent from "@arcgis/core/TimeExtent";
 import {
   findCablesLayer,
   findSlopesLayer,
@@ -15,12 +15,13 @@ import {
   slopeIdFilterField,
   slopeIdFilterValue
 } from "../data";
+import { AlertData, ScreenType, TaskScreenType, UIActions } from "../interfaces";
+import { openSlopeSymbol } from "../symbols";
 import { appendDefinitionExpression } from "../utils";
-import TaskSelectionStore from "./TaskSelectionStore";
 import LiveStore from "./LiveStore";
 import PlanningStore from "./PlanningStore";
 import StatisticsStore from "./StatisticsStore";
-import { openSlopeSymbol } from "../symbols";
+import TaskSelectionStore from "./TaskSelectionStore";
 
 /**
  * Class name set on the body element while on a task screen, used to adjust the layout of the view.
@@ -111,6 +112,23 @@ class AppStore extends Accessor implements UIActions {
   /***************
    * View actions
    ***************/
+
+  setViewTimeExtent(date: Date | null) {
+    if (!date) {
+      this._view.timeExtent = null;
+      return;
+    }
+
+    const start = new Date(date);
+    start.setHours(start.getHours() - 12);
+    const end = new Date(date);
+    end.setHours(end.getHours() + 12);
+
+    this._view.timeExtent = new TimeExtent({
+      start,
+      end
+    });
+  }
 
   private _setupHitTest(): IHandle {
     return this._view.on("click", (event) => {

@@ -1,10 +1,12 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import Header from "./Header";
 import { UIActions } from "../interfaces";
-import { Widget } from "./Widget";
 import StatisticsStore from "../stores/StatisticsStore";
+import { ensureViewUIContainer } from "../utils";
+import Header from "./Header";
+import { WaterHistogram } from "./WaterHistogram";
+import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<StatisticsScreen, "actions" | "store">;
 
@@ -20,6 +22,11 @@ class StatisticsScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Statistics" />
+        <WaterHistogram
+          container={ensureViewUIContainer("bottom-left", "statistics")}
+          records={this.store.records}
+          actions={this.actions}
+        ></WaterHistogram>
       </div>
     );
   }

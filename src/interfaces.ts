@@ -7,6 +7,7 @@ export interface UIActions {
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void;
   startSlopeEditor(): void;
   startLiftEditor(options?: { updateGraphic?: Graphic }): void;
+  setViewTimeExtent(date: Date | null): void;
 }
 
 export enum ScreenType {

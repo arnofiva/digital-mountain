@@ -33,6 +33,14 @@ export function findTreeLayer(map: Map): SceneLayer {
   return map.allLayers.find((l) => l.title.toLowerCase().includes("trees")) as SceneLayer;
 }
 
+export function findWaterPitsLayer(map: Map): FeatureLayer {
+  return map.findLayerById("18630ca7994-layer-4") as FeatureLayer;
+}
+
+export function findStatisticsDataGroupLayer(map: Map): GroupLayer {
+  return map.findLayerById("18630cc16cc-layer-103") as GroupLayer;
+}
+
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,
   rings: [
