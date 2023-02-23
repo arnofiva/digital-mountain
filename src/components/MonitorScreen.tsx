@@ -11,7 +11,6 @@ import { ensureViewUIContainer } from "../utils";
 
 type ConstructProperties = Pick<MonitorScreen, "actions" | "store">;
 
-const placeholderTime = new Date(Date.UTC(2023, 3, 1, 13, 25, 2));
 @subclass("digital-mountain.MonitorScreen")
 class MonitorScreen extends Widget<ConstructProperties> {
   @property()
@@ -24,8 +23,12 @@ class MonitorScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Monitoring" />
-        <Clock container={ensureViewUIContainer("top-left", "clock")} time={placeholderTime} />
-        <Alerts actions={this.actions} alerts={this.store.alerts} container={ensureViewUIContainer("top-right", "alerts")} />
+        <Clock container={ensureViewUIContainer("top-left", "clock")} date={this.store.date} />
+        <Alerts
+          actions={this.actions}
+          alerts={this.store.alerts}
+          container={ensureViewUIContainer("top-right", "alerts")}
+        />
       </div>
     );
   }

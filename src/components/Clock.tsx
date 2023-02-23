@@ -2,21 +2,22 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { Widget } from "./Widget";
+import { dateToTimeString } from "../utils";
 
-type ConstructProperties = Pick<Clock, "time">;
+type ConstructProperties = Pick<Clock, "date">;
 
 @subclass("digital-mountain.Clock")
 class Clock extends Widget<ConstructProperties> {
   @property()
-  time: Date;
+  date: Date;
 
   render() {
-    const timeParts = formatter.formatToParts(this.time).map((part) => part.value);
+    const { hoursMinutes, seconds } = dateToTimeString(this.date);
     return (
-      <div class="clock esri-widget">
+      <div class="clock">
         <div class="clock-text-container">
-          <span class="time-hh-mm">{`${timeParts[0]}${timeParts[1]}${timeParts[2]}${timeParts[3]}`}</span>
-          <span class="time-ss">{timeParts[4]}</span>
+          <span class="time-hh-mm">{hoursMinutes}</span>
+          <span class="time-ss">{seconds}</span>
         </div>
         <div class="live-message">
           <span>LIVE</span>
@@ -30,11 +31,5 @@ class Clock extends Widget<ConstructProperties> {
     );
   }
 }
-
-const formatter = new Intl.DateTimeFormat("en-US", {
-  timeStyle: "medium",
-  timeZone: "UTC",
-  hour12: false
-});
 
 export default Clock;

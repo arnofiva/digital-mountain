@@ -76,3 +76,16 @@ let viewUI: DefaultUI;
 export function setViewUI(ui: DefaultUI): void {
   viewUI = ui;
 }
+
+export function dateToTimeString(date: Date): { hoursMinutes: string; seconds: string } {
+  const timeParts = formatter.formatToParts(date).map((part) => part.value);
+  const hoursMinutes = timeParts.slice(0, 3).join("");
+  const seconds = timeParts.slice(3, 5).join("");
+  return { hoursMinutes, seconds };
+}
+
+const formatter = new Intl.DateTimeFormat("en-US", {
+  timeStyle: "medium",
+  timeZone: "UTC",
+  hour12: false
+});

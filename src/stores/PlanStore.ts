@@ -11,7 +11,7 @@ import WebScene from "@arcgis/core/WebScene";
 
 import { planScreenStartCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
-import { sceneExportTitle, treeFilterDistance } from "../constants";
+import { filterUpdateIntervalMs, sceneExportTitle, treeFilterDistance } from "../constants";
 import {
   findCablesLayer,
   findSlopesLayer,
@@ -230,8 +230,6 @@ export class PlanStore extends ScreenStore {
 
   private _setupTreeFilterWatch(view: SceneView): void {
     const treeLayer = findTreeLayer(view.map);
-    // avoid setting the filter too frequently to keep it feeling responsive
-    const intervalMs = 100;
     let previousGeometries: Geometry[] = [];
     const intervalHandle = setInterval(() => {
       const geometries = [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter(
@@ -252,7 +250,7 @@ export class PlanStore extends ScreenStore {
         geometries: bufferGeometries,
         spatialRelationship: "disjoint"
       });
-    }, intervalMs);
+    }, filterUpdateIntervalMs);
     this.addHandles({
       remove: () => {
         clearInterval(intervalHandle);

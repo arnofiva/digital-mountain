@@ -16,6 +16,7 @@ import slopeEvents from "../streamServiceMock/events/slopeEvents";
 import StreamServiceMock from "../streamServiceMock/layers/streamServiceMock";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
+import { clockIntervalMs } from "../constants";
 
 @subclass("digital-mountain.MonitorStore")
 class MonitorStore extends ScreenStore {
@@ -69,7 +70,7 @@ class MonitorStore extends ScreenStore {
           if (e.attributes.showAlert) {
             const alertData = {
               type: e.attributes.STATUS.toLowerCase() === "offen" ? AlertType.SlopeOpen : AlertType.SlopeClose,
-              date: new Date(),
+              date: new Date(this.date.getTime()),
               slopeId: e.attributes.track_id
             };
             this._alerts.add(alertData, 0);
@@ -93,6 +94,13 @@ class MonitorStore extends ScreenStore {
     });
     view.ui.add(expand, "bottom-left");
     this.addHandles({ remove: () => view.ui.remove(expand) });
+
+    const startTime = performance.now();
+    const initialDate = this._utcDate;
+    const interval = setInterval(() => {
+      this._utcDate = initialDate + (performance.now() - startTime);
+    }, clockIntervalMs);
+    this.addHandles({ remove: () => clearInterval(interval) });
   }
 
   /**
@@ -105,13 +113,20 @@ class MonitorStore extends ScreenStore {
 
   @property()
   private _alerts = new Collection<AlertData>([
-    // placeholder alerts
-    { type: AlertType.Accident, date: new Date(), slopeId: 23 },
-    { type: AlertType.AccidentArrival, date: new Date(), slopeId: 23 },
-    { type: AlertType.Avalanche, date: new Date() },
-    { type: AlertType.SlopeOpen, date: new Date(), slopeId: 23 },
-    { type: AlertType.SlopeClose, date: new Date(), slopeId: 23 }
+    // { type: AlertType.Accident, date: new Date(), slopeId: 23 },
+    // { type: AlertType.AccidentArrival, date: new Date(), slopeId: 23 },
+    // { type: AlertType.Avalanche, date: new Date() },
+    // { type: AlertType.SlopeOpen, date: new Date(), slopeId: 23 },
+    // { type: AlertType.SlopeClose, date: new Date(), slopeId: 23 }
   ]);
+
+  @property()
+  get date(): Date {
+    return new Date(this._utcDate);
+  }
+
+  @property()
+  private _utcDate = Date.UTC(2022, 2, 1, 13, 25, 2);
 
   async goToAlert(data: AlertData): Promise<void> {
     this._goToAlertAbortController?.abort();

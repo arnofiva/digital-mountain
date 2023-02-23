@@ -45,3 +45,13 @@ export const towerCost = 100000;
  * Hide trees that are within this distance from slopes and lifts.
  */
 export const treeFilterDistance = 20;
+
+/**
+ * Time interval between clock updates.
+ */
+export const clockIntervalMs = 100;
+
+/**
+ * Time interval between filter updates. Not updating the filter too frequently will keep updates appearing responsive.
+ */
+export const filterUpdateIntervalMs = 100;

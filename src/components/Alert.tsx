@@ -7,6 +7,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { Widget } from "./Widget";
 import { AlertData, AlertType, UIActions } from "../interfaces";
+import { dateToTimeString } from "../utils";
 
 type ConstructProperties = Pick<Alert, "actions" | "data">;
 
@@ -19,6 +20,7 @@ class Alert extends Widget<ConstructProperties> {
   data: AlertData;
 
   render() {
+    const { hoursMinutes } = dateToTimeString(this.data.date);
     const notice = (
       <calcite-notice
         class="alert"
@@ -30,9 +32,7 @@ class Alert extends Widget<ConstructProperties> {
       >
         <div class="title" slot="title">
           {alertTitle(this.data)}
-          <div class="time">
-            {this.data.date.toLocaleTimeString("default", { timeStyle: "short" })}
-          </div>
+          <div class="time">{hoursMinutes}</div>
         </div>
       </calcite-notice>
     ) as { domNode: CalciteNotice };
