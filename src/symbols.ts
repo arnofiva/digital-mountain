@@ -9,7 +9,7 @@ import {
   PolygonSymbol3D
 } from "@arcgis/core/symbols";
 
-import { liftColor, liftInvalidPreviewColor, maxTowerHeight } from "./constants";
+import { towerColor, liftInvalidPreviewColor, maxTowerHeight, cableColor } from "./constants";
 
 /**
  * Symbols used to visualize slopes based on status.
@@ -92,27 +92,33 @@ export const invalidSketchPreviewPointSymbol = new PointSymbol3D({
 /**
  * Symbols used for lift cables.
  */
-export const routeCableSymbol = new LineSymbol3D({ symbolLayers: [routeCableSymbolLayer()] });
+export const routeCableSymbol = new LineSymbol3D({ symbolLayers: routeCableSymbolLayers() });
 export const invalidRouteCableSymbol = new LineSymbol3D({
-  symbolLayers: [routeCableSymbolLayer({ color: liftInvalidPreviewColor })]
+  symbolLayers: routeCableSymbolLayers({ color: liftInvalidPreviewColor })
 });
 
-function routeCableSymbolLayer(options?: { color?: number[] }): PathSymbol3DLayer {
-  return new PathSymbol3DLayer({
-    profile: "circle",
-    width: 0.5,
-    height: 0.5,
-    material: { color: options?.color ?? liftColor },
-    profileRotation: "heading"
-  });
+function routeCableSymbolLayers(options?: { color?: number[] }): (LineSymbol3DLayer | PathSymbol3DLayer)[] {
+  return [
+    new LineSymbol3DLayer({
+      material: { color: options?.color ?? cableColor },
+      size: 2
+    }),
+    new PathSymbol3DLayer({
+      material: { color: options?.color ?? cableColor },
+      profile: "circle",
+      width: 0.25,
+      height: 0.25,
+      profileRotation: "heading"
+    })
+  ];
 }
 
 /**
  * Symbols used for lift towers.
  */
-export const towerPreviewSymbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ showCrossarm: false }) });
+export const towerPreviewSymbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ displayModel: false }) });
 export const invalidTowerPreviewSymbol = new PointSymbol3D({
-  symbolLayers: towerSymbolLayers({ color: liftInvalidPreviewColor, showCrossarm: false })
+  symbolLayers: towerSymbolLayers({ color: liftInvalidPreviewColor, displayModel: false })
 });
 
 export function towerSymbolLayers(options?: {
@@ -120,38 +126,37 @@ export function towerSymbolLayers(options?: {
   tilt?: number;
   roll?: number;
   color?: number[];
-  showCrossarm?: boolean;
+  displayModel?: boolean;
 }): ObjectSymbol3DLayer[] {
-  const symbolLayers = [
-    new ObjectSymbol3DLayer({
-      anchor: "top",
-      resource: {
-        primitive: "cylinder"
-      },
-      material: { color: options?.color ?? liftColor },
-      height: maxTowerHeight,
-      heading: options?.heading,
-      tilt: options?.tilt,
-      roll: options?.roll,
-      width: 1,
-      depth: 1
-    })
-  ];
-  if ((options?.showCrossarm ?? true) === true) {
-    symbolLayers.push(
-      new ObjectSymbol3DLayer({
-        anchor: "center",
-        resource: {
-          primitive: "cylinder"
-        },
-        material: { color: options?.color ?? liftColor },
-        roll: 90,
-        heading: options?.heading,
-        height: 6,
-        width: 1,
-        depth: 1
-      })
-    );
-  }
-  return symbolLayers;
+  return options?.displayModel ?? true
+    ? [
+        new ObjectSymbol3DLayer({
+          resource: {
+            href: "https://arnofiva.github.io/winter-resort/ski-lift-tower.glb"
+          },
+          anchor: "relative",
+          anchorPosition: { x: 0, y: 0, z: 0.4 },
+          material: { color: options?.color ?? towerColor },
+          height: maxTowerHeight,
+          heading: (options?.heading ?? 0) + 90,
+          // model is rotated by 90 degrees, so adjust tilt/roll
+          tilt: options?.roll,
+          roll: options?.tilt
+        })
+      ]
+    : [
+        new ObjectSymbol3DLayer({
+          anchor: "top",
+          resource: {
+            primitive: "cylinder"
+          },
+          material: { color: options?.color ?? towerColor },
+          height: maxTowerHeight,
+          heading: options?.heading,
+          tilt: options?.tilt,
+          roll: options?.roll,
+          width: 1,
+          depth: 1
+        })
+      ];
 }

@@ -27,7 +27,8 @@ export const slopeCostPerMeterSquared = 100;
 /**
  * Lift editor
  */
-export const liftColor = [120, 120, 120, 1];
+export const cableColor = [120, 120, 120, 1];
+export const towerColor = [128, 128, 128, 1];
 export const liftInvalidPreviewColor = [255, 0, 0, 1];
 export const cableOffset = 3;
 export const initialTowerHeight = 10;
