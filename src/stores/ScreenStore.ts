@@ -21,6 +21,16 @@ class ScreenStore extends Accessor {
     const { signal } = this.createAbortController();
     ignoreAbortErrors(view.goTo(camera, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
   }
+
+  protected addHomeKey(camera: Camera, view: SceneView) {
+    const onKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "h") {
+        this.goToTaskScreenStart(camera, view);
+      }
+    };
+    window.addEventListener("keydown", onKeyPress);
+    this.addHandles({ remove: () => window.removeEventListener("keydown", onKeyPress) });
+  }
 }
 
 export default ScreenStore;

@@ -36,6 +36,7 @@ export class PlanStore extends ScreenStore {
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
     this.goToTaskScreenStart(planScreenStartCamera, view);
+    this.addHomeKey(planScreenStartCamera, view);
     this._setupTreeFilterWatch(view);
   }
 
