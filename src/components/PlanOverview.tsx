@@ -34,7 +34,7 @@ class PlanOverview extends Widget<ConstructProperties> {
     return (
       <div class="plan-overview">
         <calcite-panel heading="Plan Overview">
-          <calcite-block collapsible heading="Lifts" open>
+          <calcite-block collapsible heading="Lifts">
             <calcite-label layout="inline-space-between">
               Cable length<strong>{this._lengthToString(this.cableLength)}</strong>
             </calcite-label>
@@ -42,7 +42,7 @@ class PlanOverview extends Widget<ConstructProperties> {
               Tower count<strong>{this.towerCount}</strong>
             </calcite-label>
           </calcite-block>
-          <calcite-block collapsible heading="Slopes" open>
+          <calcite-block collapsible heading="Slopes">
             <calcite-label layout="inline-space-between">
               Surface area<strong>{this._surfaceAreaToString(this.slopeSurfaceArea)}</strong>
             </calcite-label>
