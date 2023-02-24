@@ -43,7 +43,7 @@ class PlanScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} contentElement={contentElement} subtitle="Planning" />
-        <CodeSnippet text={dimensionSnippetText} />
+        <CodeSnippet display={this.store.codeSnippetVisible} text={dimensionSnippetText} />
         <PlanActions hint={this.store.hint} actions={this.actions} />
         <PlanOverview
           cableLength={this.store.cableLength}

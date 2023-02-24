@@ -38,6 +38,15 @@ export class PlanStore extends ScreenStore {
     this.goToTaskScreenStart(planScreenStartCamera, view);
     this.addHomeKey(planScreenStartCamera, view);
     this._setupTreeFilterWatch(view);
+
+    // add code snippet
+    const onKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "c") {
+        this._codeSnippetVisible = !this._codeSnippetVisible;
+      }
+    };
+    window.addEventListener("keydown", onKeyPress);
+    this.addHandles({ remove: () => window.removeEventListener("keydown", onKeyPress) });
   }
 
   destroy(): void {
@@ -62,6 +71,14 @@ export class PlanStore extends ScreenStore {
     }
     return null;
   }
+
+  @property()
+  get codeSnippetVisible(): boolean {
+    return this._codeSnippetVisible;
+  }
+
+  @property()
+  private _codeSnippetVisible = false;
 
   @property()
   get cableLength(): number {

@@ -8,7 +8,7 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { Widget } from "./Widget";
 
-type ConstructProperties = Pick<CodeSnippet, "text">;
+type ConstructProperties = Pick<CodeSnippet, "display" | "text">;
 
 @subclass("digital-mountain.CodeSnippet")
 class CodeSnippet extends Widget<ConstructProperties> {
@@ -28,8 +28,7 @@ class CodeSnippet extends Widget<ConstructProperties> {
     return (
       <div
         class="code-snippet view-ui-shadow"
-        style={`opacity: ${this.display ? 1 : 0}; cursor: pointer;`}
-        onclick={() => (this.display = !this.display)}
+        style={`visibility: ${this.display ? "visible" : "hidden"};`}
       >
         {codeEl}
       </div>
