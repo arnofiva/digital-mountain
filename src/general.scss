@@ -177,9 +177,9 @@ h3 {
 }
 
 .code-snippet {
-  position: absolute;
-  left: 150px;
-  bottom: 150px;
+  position: relative;
+  margin: 0 auto;
+  top: 50px;
   font-size: 1.7em;
 
   pre {
