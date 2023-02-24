@@ -19,7 +19,7 @@ class PlanActions extends Widget<ConstructProperties> {
 
   render() {
     return (
-      <div class="plan-actions">
+      <div class="plan-actions view-ui-shadow">
         <calcite-card>
           {this.hint ? (
             <span>{this.hint}</span>

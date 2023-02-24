@@ -175,3 +175,18 @@ h3 {
     }
   }
 }
+
+.code-snippet {
+  position: absolute;
+  left: 150px;
+  bottom: 150px;
+  font-size: 1.7em;
+
+  pre {
+    margin: 0;
+  }
+}
+
+.view-ui-shadow {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3)
+}
