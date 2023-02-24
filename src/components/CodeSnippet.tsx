@@ -28,7 +28,7 @@ class CodeSnippet extends Widget<ConstructProperties> {
     return (
       <div
         class="code-snippet view-ui-shadow"
-        style={`opacity: ${this.display ? 1 : 0}; cursor: default;`}
+        style={`opacity: ${this.display ? 1 : 0}; cursor: pointer;`}
         onclick={() => (this.display = !this.display)}
       >
         {codeEl}
