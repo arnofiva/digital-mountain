@@ -625,10 +625,11 @@ function placeTowers(towerLayer: GraphicsLayer, relativeZGeometry: Polyline, ele
     const previousTilt = previousVertex ? computeTilt(previousVertex, vertex) : null;
     const tilt = nextTilt != null && previousTilt != null ? (nextTilt + previousTilt) / 2 : nextTilt ?? previousTilt;
     const geometry = vertexToPoint(vertex, relativeZGeometry.spatialReference);
-    const symbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ heading, tilt }) });
-    newFeatures.push(
-      new Graphic({ attributes: { objectID, heading, tilt, relativeElevation: relativeZPath[i][2] }, geometry, symbol })
-    );
+    const relativeElevation = relativeZPath[i][2];
+    const symbol = new PointSymbol3D({
+      symbolLayers: towerSymbolLayers({ heading, tilt, modelParameters: { relativeElevation } })
+    });
+    newFeatures.push(new Graphic({ attributes: { objectID, heading, tilt, relativeElevation }, geometry, symbol }));
     objectID++;
   }
   towerLayer.graphics.removeAll();

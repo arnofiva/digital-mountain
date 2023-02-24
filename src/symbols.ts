@@ -116,9 +116,9 @@ function routeCableSymbolLayers(options?: { color?: number[] }): (LineSymbol3DLa
 /**
  * Symbols used for lift towers.
  */
-export const towerPreviewSymbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers({ displayModel: false }) });
+export const towerPreviewSymbol = new PointSymbol3D({ symbolLayers: towerSymbolLayers() });
 export const invalidTowerPreviewSymbol = new PointSymbol3D({
-  symbolLayers: towerSymbolLayers({ color: liftInvalidPreviewColor, displayModel: false })
+  symbolLayers: towerSymbolLayers({ color: liftInvalidPreviewColor })
 });
 
 export function towerSymbolLayers(options?: {
@@ -126,9 +126,9 @@ export function towerSymbolLayers(options?: {
   tilt?: number;
   roll?: number;
   color?: number[];
-  displayModel?: boolean;
+  modelParameters?: { relativeElevation: number };
 }): ObjectSymbol3DLayer[] {
-  return options?.displayModel ?? true
+  return options?.modelParameters
     ? [
         new ObjectSymbol3DLayer({
           resource: {
@@ -137,7 +137,9 @@ export function towerSymbolLayers(options?: {
           anchor: "relative",
           anchorPosition: { x: 0, y: 0, z: 0.4 },
           material: { color: options?.color ?? towerColor },
-          height: maxTowerHeight,
+          height: options.modelParameters.relativeElevation + 2,
+          width: 4.5,
+          depth: 4.5,
           heading: (options?.heading ?? 0) + 90,
           // model is rotated by 90 degrees, so adjust tilt/roll
           tilt: options?.roll,
