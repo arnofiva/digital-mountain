@@ -22,7 +22,6 @@ export const backgroundCameraAnimationSpeedFactor = 0.01;
  */
 export const slopeBufferDistance = 15;
 export const slopeMaxDeviation = 5;
-export const slopeCostPerMeterSquared = 100;
 
 /**
  * Lift editor
@@ -39,8 +38,6 @@ export const minCableLength = 100;
 export const maxCableLength = 10000;
 export const minTowerSeparation = 50;
 export const towerDimensionOffset = 4;
-export const cableCostPerMeter = 100;
-export const towerCost = 100000;
 
 /**
  * Hide trees that are within this distance from slopes and lifts.

@@ -9,7 +9,6 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import convert from "convert";
 
-import { cableCostPerMeter, slopeCostPerMeterSquared, towerCost } from "../constants";
 import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<
@@ -35,40 +34,25 @@ class PlanOverview extends Widget<ConstructProperties> {
     return (
       <div class="plan-overview">
         <calcite-panel heading="Plan Overview">
-          <calcite-block collapsible heading="Costs" open>
-            <calcite-icon slot="icon" scale="s" icon="credits"></calcite-icon>
-            <calcite-label layout="inline-space-between">
-              Cables<strong>{this._costToString(this.cableLength * cableCostPerMeter)}</strong>
-            </calcite-label>
-            <calcite-label layout="inline-space-between">
-              Towers<strong>{this._costToString(this.towerCount * towerCost)}</strong>
-            </calcite-label>
-            <calcite-label layout="inline-space-between">
-              Slopes
-              <strong>
-                {this._costToString(this.slopeSurfaceArea * slopeCostPerMeterSquared)}
-              </strong>
-            </calcite-label>
-          </calcite-block>
-          <calcite-block collapsible heading="Quantities" open>
-            <calcite-icon slot="icon" scale="s" icon="measure"></calcite-icon>
+          <calcite-block collapsible heading="Lifts" open>
             <calcite-label layout="inline-space-between">
               Cable length<strong>{this._lengthToString(this.cableLength)}</strong>
             </calcite-label>
             <calcite-label layout="inline-space-between">
               Tower count<strong>{this.towerCount}</strong>
             </calcite-label>
+          </calcite-block>
+          <calcite-block collapsible heading="Slopes" open>
             <calcite-label layout="inline-space-between">
-              Slope surface area<strong>{this._surfaceAreaToString(this.slopeSurfaceArea)}</strong>
+              Surface area<strong>{this._surfaceAreaToString(this.slopeSurfaceArea)}</strong>
+            </calcite-label>
+            <calcite-label layout="inline-space-between">
+              Trees displaced<strong>84</strong>
             </calcite-label>
           </calcite-block>
         </calcite-panel>
       </div>
     );
-  }
-
-  private _costToString(dollars: number): string {
-    return dollarsFormatter.format(dollars);
   }
 
   private _lengthToString(meters: number): string {
@@ -109,13 +93,6 @@ class PlanOverview extends Widget<ConstructProperties> {
     }
   }
 }
-
-const dollarsFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0
-});
 
 const metersFormatter = new Intl.NumberFormat("en-US", {
   style: "unit",
