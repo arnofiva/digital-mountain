@@ -51,6 +51,7 @@ class PlanScreen extends Widget<ConstructProperties> {
           measurementSystem={this.store.measurementSystem}
           slopeSurfaceArea={this.store.slopeSurfaceArea}
           towerCount={this.store.towerCount}
+          treesDisplaced={this.store.treesDisplaced}
         />
       </div>
     );

@@ -2,7 +2,7 @@ import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators
 import { MeasurementSystem } from "@arcgis/core/core/units";
 import { Polygon } from "@arcgis/core/geometry";
 import Geometry from "@arcgis/core/geometry/Geometry";
-import { buffer } from "@arcgis/core/geometry/geometryEngine";
+import { buffer, union } from "@arcgis/core/geometry/geometryEngine";
 import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
@@ -27,6 +27,9 @@ import LiftEditor from "../LiftEditor";
 import SlopeEditor from "../SlopeEditor";
 import { abortNullable, appendDefinitionExpression, getDefaultMeasurementSystem } from "../utils";
 import ScreenStore from "./ScreenStore";
+import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
+import Query from "@arcgis/core/rest/support/Query";
+import { debounce } from "@arcgis/core/core/promiseUtils";
 
 @subclass("digital-mountain.PlanStore")
 export class PlanStore extends ScreenStore {
@@ -99,6 +102,14 @@ export class PlanStore extends ScreenStore {
   get towerCount(): number {
     return this._liftEditor.towerCount;
   }
+
+  @property()
+  get treesDisplaced(): number {
+    return this._treesDisplaced;
+  }
+
+  @property()
+  private _treesDisplaced = 0;
 
   @property()
   get exporting(): boolean {
@@ -248,26 +259,38 @@ export class PlanStore extends ScreenStore {
 
   private _setupTreeFilterWatch(view: SceneView): void {
     const treeLayer = findTreeLayer(view.map);
+
+    const updateTreesDisplaced = debounce(async (geometry: Geometry) => {
+      const treeLayerView = view.allLayerViews.find((lv) => lv.layer === treeLayer) as SceneLayerView;
+      if (treeLayerView && geometry) {
+        const { features } = await treeLayerView.queryFeatures(new Query({ geometry }));
+        this._treesDisplaced = features.length;
+      } else {
+        this._treesDisplaced = 0;
+      }
+    });
+
     let previousGeometries: Geometry[] = [];
     const intervalHandle = setInterval(() => {
-      const geometries = [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry].filter(
-        (g) => g != null
-      );
+      let geometries = [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry];
       if (geometries.every((v, i) => v === previousGeometries[i])) {
         // the geometries did not change
         return;
       }
       previousGeometries = geometries;
-      if (geometries.length === 0) {
-        treeLayer.filter = null;
-        return;
-      }
-      const bufferGeometries = (buffer(geometries, treeFilterDistance, "meters") as Polygon[]).filter((g) => g != null);
+      geometries = geometries.filter((g) => g != null);
+      const bufferGeometries = geometries.length
+        ? (buffer(geometries, treeFilterDistance, "meters") as Polygon[]).filter((g) => g != null)
+        : [];
       bufferGeometries.forEach((g) => (g.hasZ = false));
-      treeLayer.filter = new SceneFilter({
-        geometries: bufferGeometries,
-        spatialRelationship: "disjoint"
-      });
+      const unionGeometry = bufferGeometries.length ? union(bufferGeometries) : null;
+      treeLayer.filter = unionGeometry
+        ? new SceneFilter({
+            geometries: [unionGeometry],
+            spatialRelationship: "disjoint"
+          })
+        : null;
+      updateTreesDisplaced(unionGeometry);
     }, filterUpdateIntervalMs);
     this.addHandles({
       remove: () => {

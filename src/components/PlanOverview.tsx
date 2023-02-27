@@ -13,7 +13,7 @@ import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<
   PlanOverview,
-  "cableLength" | "measurementSystem" | "slopeSurfaceArea" | "towerCount"
+  "cableLength" | "measurementSystem" | "slopeSurfaceArea" | "towerCount" | "treesDisplaced"
 >;
 
 @subclass("digital-mountain.PlanOverview")
@@ -29,6 +29,9 @@ class PlanOverview extends Widget<ConstructProperties> {
 
   @property()
   measurementSystem: MeasurementSystem;
+
+  @property()
+  treesDisplaced: number;
 
   render() {
     return (
@@ -47,7 +50,7 @@ class PlanOverview extends Widget<ConstructProperties> {
               Surface area<strong>{this._surfaceAreaToString(this.slopeSurfaceArea)}</strong>
             </calcite-label>
             <calcite-label layout="inline-space-between">
-              Trees displaced<strong>84</strong>
+              Trees displaced<strong>{this.treesDisplaced}</strong>
             </calcite-label>
           </calcite-block>
         </calcite-panel>

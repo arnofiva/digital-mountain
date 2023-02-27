@@ -20,9 +20,9 @@ class TreeFilterState extends Accessor {
     return this._geometry;
   }
   @property()
-  private _geometry: Geometry | null;
+  private _geometry: Geometry | null = null;
 
-  private _committedGeometry: Geometry | null;
+  private _committedGeometry: Geometry | null = null;
 
   /**
    * Set a geometry to be the staged geometry, replacing any existing staged geometry.
