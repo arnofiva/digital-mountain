@@ -1,6 +1,6 @@
 import "@esri/calcite-components/dist/components/calcite-card";
 
-import "highlight.js/styles/obsidian.css";
+import "highlight.js/styles/default.css";
 import hljs from "highlight.js";
 
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
