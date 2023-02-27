@@ -16,6 +16,10 @@ export default defineConfig({
         {
           src: "node_modules/@arcgis/core/assets/",
           dest: "./"
+        },
+        {
+          src: "icons/",
+          dest: "./"
         }
       ]
     })

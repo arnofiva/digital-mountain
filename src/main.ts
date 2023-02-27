@@ -7,6 +7,11 @@ import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
+import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
+import Graphic from "@arcgis/core/Graphic";
+import { Point } from "@arcgis/core/geometry";
+import { IconSymbol3DLayer, PointSymbol3D } from "@arcgis/core/symbols";
+import LineCallout3D from "@arcgis/core/symbols/callouts/LineCallout3D";
 
 import App from "./components/App";
 import { portalUrl, webSceneId } from "./data";
@@ -50,3 +55,34 @@ view.popup.defaultPopupTemplateEnabled = true;
 const store = new AppStore({ view });
 store.openTaskSelectionScreen({ animateCameraToStart: false });
 new App({ container: document.getElementById("app"), store });
+
+// example icon for ski patrol
+const layer = new GraphicsLayer();
+const graphic = new Graphic({
+  geometry: new Point({ x: 1025876, y: 5915161, spatialReference: { wkid: 102100 } }),
+  symbol: new PointSymbol3D({
+    callout: new LineCallout3D({
+      size: 0.5,
+      color: [0, 0, 0]
+    }),
+    verticalOffset: {
+      screenLength: 50,
+      maxWorldLength: 200,
+      minWorldLength: 5
+    },
+    symbolLayers: [
+      new IconSymbol3DLayer({
+        resource: { primitive: "circle" },
+        material: { color: [230, 180, 180] },
+        size: 40
+      }),
+      new IconSymbol3DLayer({
+        resource: { href: "./icons/skiing-48.svg" },
+        size: 30,
+        anchor: "relative",
+        anchorPosition: { x: 0.03, y: 0.03 }
+      })
+    ]
+  })
+});
+layer.add(graphic);
