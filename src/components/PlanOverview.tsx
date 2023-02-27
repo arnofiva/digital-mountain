@@ -47,9 +47,6 @@ class PlanOverview extends Widget<ConstructProperties> {
           </calcite-block>
           <calcite-block collapsible heading="Slopes">
             <calcite-label layout="inline-space-between">
-              Surface area<strong>{this._surfaceAreaToString(this.slopeSurfaceArea)}</strong>
-            </calcite-label>
-            <calcite-label layout="inline-space-between">
               Trees displaced<strong>{this.treesDisplaced}</strong>
             </calcite-label>
           </calcite-block>
