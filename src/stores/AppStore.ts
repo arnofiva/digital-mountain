@@ -17,9 +17,9 @@ import {
 } from "../data";
 import { appendDefinitionExpression } from "../utils";
 import TaskSelectionStore from "./TaskSelectionStore";
-import MonitorStore from "./MonitorStore";
-import PlanStore from "./PlanStore";
-import VisitStore from "./VisitStore";
+import LiveStore from "./LiveStore";
+import PlanningStore from "./PlanningStore";
+import StatisticsStore from "./StatisticsStore";
 import { openSlopeSymbol } from "../symbols";
 
 /**
@@ -27,7 +27,7 @@ import { openSlopeSymbol } from "../symbols";
  */
 const taskScreenClass = "task-screen";
 
-type ScreenStoreUnion = TaskSelectionStore | MonitorStore | PlanStore | VisitStore;
+type ScreenStoreUnion = TaskSelectionStore | LiveStore | PlanningStore | StatisticsStore;
 
 @subclass("digital-mountain.AppStore")
 class AppStore extends Accessor implements UIActions {
@@ -58,13 +58,13 @@ class AppStore extends Accessor implements UIActions {
    *************/
 
   exportPlan(): void {
-    if (this._screenStore?.type === ScreenType.Plan) {
+    if (this._screenStore?.type === ScreenType.Planning) {
       this._screenStore.exportPlan();
     }
   }
 
   goToAlert(data: AlertData): void {
-    if (this._screenStore?.type === ScreenType.Monitor) {
+    if (this._screenStore?.type === ScreenType.Live) {
       this._screenStore.goToAlert(data);
     }
   }
@@ -74,14 +74,14 @@ class AppStore extends Accessor implements UIActions {
     document.body.classList.add(taskScreenClass);
     const view = this._view;
     switch (taskScreenType) {
-      case ScreenType.Monitor:
-        this._screenStore = new MonitorStore({ view });
+      case ScreenType.Live:
+        this._screenStore = new LiveStore({ view });
         break;
-      case ScreenType.Plan:
-        this._screenStore = new PlanStore({ view });
+      case ScreenType.Planning:
+        this._screenStore = new PlanningStore({ view });
         break;
-      case ScreenType.Visit:
-        this._screenStore = new VisitStore({ view });
+      case ScreenType.Statistics:
+        this._screenStore = new StatisticsStore({ view });
         break;
     }
     this._screenStore.addHandles(this._setupHitTest());
@@ -97,13 +97,13 @@ class AppStore extends Accessor implements UIActions {
   }
 
   startSlopeEditor(options?: { updateGraphic?: Graphic }): void {
-    if (this._screenStore?.type === ScreenType.Plan) {
+    if (this._screenStore?.type === ScreenType.Planning) {
       this._screenStore.startSlopeEditor(options);
     }
   }
 
   startLiftEditor(options?: { updateGraphic?: Graphic }): void {
-    if (this._screenStore?.type === ScreenType.Plan) {
+    if (this._screenStore?.type === ScreenType.Planning) {
       this._screenStore.startLiftEditor(options);
     }
   }

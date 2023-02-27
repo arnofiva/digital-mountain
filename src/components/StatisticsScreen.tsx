@@ -4,25 +4,25 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 import Header from "./Header";
 import { UIActions } from "../interfaces";
 import { Widget } from "./Widget";
-import VisitStore from "../stores/VisitStore";
+import StatisticsStore from "../stores/StatisticsStore";
 
-type ConstructProperties = Pick<VisitScreen, "actions" | "store">;
+type ConstructProperties = Pick<StatisticsScreen, "actions" | "store">;
 
-@subclass("digital-mountain.VisitScreen")
-class VisitScreen extends Widget<ConstructProperties> {
+@subclass("digital-mountain.StatisticsScreen")
+class StatisticsScreen extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
 
   @property()
-  store: VisitStore;
+  store: StatisticsStore;
 
   render() {
     return (
       <div class="screen">
-        <Header actions={this.actions} subtitle="Visiting" />
+        <Header actions={this.actions} subtitle="Statistics" />
       </div>
     );
   }
 }
 
-export default VisitScreen;
+export default StatisticsScreen;

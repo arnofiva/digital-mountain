@@ -3,7 +3,7 @@ import "@esri/calcite-components/dist/components/calcite-button";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import PlanStore from "../stores/PlanStore";
+import PlanningStore from "../stores/PlanningStore";
 import Header from "./Header";
 import { UIActions } from "../interfaces";
 import PlanActions from "./PlanActions";
@@ -12,15 +12,15 @@ import { Widget } from "./Widget";
 import { ensureViewUIContainer } from "../utils";
 import CodeSnippet from "./CodeSnippet";
 
-type ConstructProperties = Pick<PlanScreen, "actions" | "store">;
+type ConstructProperties = Pick<PlanningScreen, "actions" | "store">;
 
-@subclass("digital-mountain.PlanScreen")
-class PlanScreen extends Widget<ConstructProperties> {
+@subclass("digital-mountain.PlanningScreen")
+class PlanningScreen extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
 
   @property()
-  store: PlanStore;
+  store: PlanningStore;
 
   render() {
     const dimensionSnippetText = `new LengthDimension({
@@ -58,4 +58,4 @@ class PlanScreen extends Widget<ConstructProperties> {
   }
 }
 
-export default PlanScreen;
+export default PlanningScreen;

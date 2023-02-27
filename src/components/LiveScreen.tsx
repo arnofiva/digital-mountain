@@ -1,7 +1,7 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import MonitorStore from "../stores/MonitorStore";
+import LiveStore from "../stores/LiveStore";
 import Alerts from "./Alerts";
 import Clock from "./Clock";
 import Header from "./Header";
@@ -9,20 +9,20 @@ import { UIActions } from "../interfaces";
 import { Widget } from "./Widget";
 import { ensureViewUIContainer } from "../utils";
 
-type ConstructProperties = Pick<MonitorScreen, "actions" | "store">;
+type ConstructProperties = Pick<LiveScreen, "actions" | "store">;
 
-@subclass("digital-mountain.MonitorScreen")
-class MonitorScreen extends Widget<ConstructProperties> {
+@subclass("digital-mountain.LiveScreen")
+class LiveScreen extends Widget<ConstructProperties> {
   @property()
   actions: UIActions;
 
   @property()
-  store: MonitorStore;
+  store: LiveStore;
 
   render() {
     return (
       <div class="screen">
-        <Header actions={this.actions} subtitle="Monitoring" />
+        <Header actions={this.actions} subtitle="Live" />
         <Clock container={ensureViewUIContainer("top-left", "clock")} date={this.store.date} />
         <Alerts
           actions={this.actions}
@@ -34,4 +34,4 @@ class MonitorScreen extends Widget<ConstructProperties> {
   }
 }
 
-export default MonitorScreen;
+export default LiveScreen;

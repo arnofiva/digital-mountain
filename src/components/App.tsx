@@ -3,10 +3,10 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import AppStore from "../stores/AppStore";
 import { ScreenType } from "../interfaces";
-import MonitorScreen from "./MonitorScreen";
-import PlanScreen from "./PlanScreen";
+import LiveScreen from "./LiveScreen";
+import PlanningScreen from "./PlanningScreen";
 import TaskSelectionScreen from "./TaskSelectionScreen";
-import VisitScreen from "./VisitScreen";
+import StatisticsScreen from "./StatisticsScreen";
 import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<App, "store">;
@@ -25,12 +25,12 @@ class App extends Widget<ConstructProperties> {
     switch (screenStore.type) {
       case ScreenType.TaskSelection:
         return <TaskSelectionScreen store={screenStore} actions={this.store} />;
-      case ScreenType.Monitor:
-        return <MonitorScreen store={screenStore} actions={this.store} />;
-      case ScreenType.Plan:
-        return <PlanScreen store={screenStore} actions={this.store} />;
-      case ScreenType.Visit:
-        return <VisitScreen store={screenStore} actions={this.store} />;
+      case ScreenType.Live:
+        return <LiveScreen store={screenStore} actions={this.store} />;
+      case ScreenType.Planning:
+        return <PlanningScreen store={screenStore} actions={this.store} />;
+      case ScreenType.Statistics:
+        return <StatisticsScreen store={screenStore} actions={this.store} />;
     }
   }
 }

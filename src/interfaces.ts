@@ -11,9 +11,9 @@ export interface UIActions {
 
 export enum ScreenType {
   TaskSelection,
-  Monitor,
-  Plan,
-  Visit
+  Live,
+  Planning,
+  Statistics
 }
 
 export type TaskScreenType = Exclude<ScreenType, ScreenType.TaskSelection>;

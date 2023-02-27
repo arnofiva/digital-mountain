@@ -22,7 +22,7 @@ export const backgroundAnimationTargetCamera = new Camera({
   tilt: 81.01481716117439
 });
 
-export const monitorScreenStartCamera = new Camera({
+export const liveScreenStartCamera = new Camera({
   position: {
     spatialReference: { wkid: 102100 },
     x: 1031400,
@@ -33,7 +33,7 @@ export const monitorScreenStartCamera = new Camera({
   tilt: 76
 });
 
-export const planScreenStartCamera = new Camera({
+export const planningScreenStartCamera = new Camera({
   position: {
     spatialReference: {
       wkid: 102100
@@ -46,7 +46,7 @@ export const planScreenStartCamera = new Camera({
   tilt: 81
 });
 
-export const visitScreenStartCamera = new Camera({
+export const statisticsScreenStartCamera = new Camera({
   position: {
     spatialReference: { wkid: 102100 },
     x: 1028789,

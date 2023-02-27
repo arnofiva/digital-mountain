@@ -6,7 +6,7 @@ import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
 import Query from "@arcgis/core/rest/support/Query";
 
-import { monitorScreenStartCamera } from "../cameras";
+import { liveScreenStartCamera } from "../cameras";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import { findSlopesGroupLayer, findSlopesLayer } from "../data";
 import createAssetsStream from "../layers/liveAssets";
@@ -18,9 +18,9 @@ import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
 import { clockIntervalMs } from "../constants";
 
-@subclass("digital-mountain.MonitorStore")
-class MonitorStore extends ScreenStore {
-  readonly type = ScreenType.Monitor;
+@subclass("digital-mountain.LiveStore")
+class LiveStore extends ScreenStore {
+  readonly type = ScreenType.Live;
 
   private readonly _view: SceneView;
   private readonly _assetsStream: StreamLayer;
@@ -33,7 +33,7 @@ class MonitorStore extends ScreenStore {
     super();
     this._view = view;
 
-    this.goToTaskScreenStart(monitorScreenStartCamera, view);
+    this.goToTaskScreenStart(liveScreenStartCamera, view);
 
     // Slopes will be displayed by the stream layer
     const slopesGroupLayer = findSlopesGroupLayer(view.map);
@@ -156,4 +156,4 @@ class MonitorStore extends ScreenStore {
   }
 }
 
-export default MonitorStore;
+export default LiveStore;

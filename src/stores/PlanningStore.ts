@@ -9,7 +9,7 @@ import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 
-import { planScreenStartCamera } from "../cameras";
+import { planningScreenStartCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
 import { filterUpdateIntervalMs, sceneExportTitle, treeFilterDistance } from "../constants";
 import {
@@ -31,15 +31,15 @@ import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
 import Query from "@arcgis/core/rest/support/Query";
 import { debounce } from "@arcgis/core/core/promiseUtils";
 
-@subclass("digital-mountain.PlanStore")
-export class PlanStore extends ScreenStore {
+@subclass("digital-mountain.PlanningStore")
+export class PlanningStore extends ScreenStore {
   constructor({ view }: { view: SceneView }) {
     super();
     this._view = view;
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
-    this.goToTaskScreenStart(planScreenStartCamera, view);
-    this.addHomeKey(planScreenStartCamera, view);
+    this.goToTaskScreenStart(planningScreenStartCamera, view);
+    this.addHomeKey(planningScreenStartCamera, view);
     this._setupTreeFilterWatch(view);
 
     // add code snippet
@@ -57,7 +57,7 @@ export class PlanStore extends ScreenStore {
     this._slopeEditor.destroy();
   }
 
-  readonly type = ScreenType.Plan;
+  readonly type = ScreenType.Planning;
 
   private readonly _view: SceneView;
   private readonly _liftEditor: LiftEditor;
@@ -308,4 +308,4 @@ function setExportDefinitionExpression(layer: FeatureLayer, objectIds: number[])
   appendDefinitionExpression(layer, "OR", `${layer.objectIdField} IN (${objectIds.join(",")})`);
 }
 
-export default PlanStore;
+export default PlanningStore;
