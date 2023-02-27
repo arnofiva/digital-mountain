@@ -25,7 +25,7 @@ import {
 } from "../data";
 import LiftEditor from "../LiftEditor";
 import SlopeEditor from "../SlopeEditor";
-import { abortNullable, appendDefinitionExpression, getDefaultMeasurementSystem } from "../utils";
+import { abortNullable, appendDefinitionExpression, getDefaultMeasurementSystem, ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
 import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
 import Query from "@arcgis/core/rest/support/Query";
@@ -260,10 +260,11 @@ export class PlanningStore extends ScreenStore {
   private _setupTreeFilterWatch(view: SceneView): void {
     const treeLayer = findTreeLayer(view.map);
 
+    const { signal } = this.createAbortController();
     const updateTreesDisplaced = debounce(async (geometry: Geometry) => {
       const treeLayerView = view.allLayerViews.find((lv) => lv.layer === treeLayer) as SceneLayerView;
       if (treeLayerView && geometry) {
-        const { features } = await treeLayerView.queryFeatures(new Query({ geometry }));
+        const { features } = await treeLayerView.queryFeatures(new Query({ geometry }), { signal });
         this._treesDisplaced = features.length;
       } else {
         this._treesDisplaced = 0;
@@ -290,7 +291,7 @@ export class PlanningStore extends ScreenStore {
             spatialRelationship: "disjoint"
           })
         : null;
-      updateTreesDisplaced(unionGeometry);
+      ignoreAbortErrors(updateTreesDisplaced(unionGeometry));
     }, filterUpdateIntervalMs);
     this.addHandles({
       remove: () => {
