@@ -3,18 +3,22 @@ import { tsx } from "@arcgis/core/widgets/support/widget";
 
 import { Widget } from "./Widget";
 import { dateToTimeString } from "../utils";
+import { UIActions } from "../interfaces";
 
-type ConstructProperties = Pick<Clock, "date">;
+type ConstructProperties = Pick<Clock, "actions"| "date">;
 
 @subclass("digital-mountain.Clock")
 class Clock extends Widget<ConstructProperties> {
+  @property()
+  actions: UIActions;
+
   @property()
   date: Date;
 
   render() {
     const { hoursMinutes, seconds } = dateToTimeString(this.date);
     return (
-      <div class="clock">
+      <div class="clock" onclick={() => this.actions.toggleStartTime()}>
         <div class="clock-text-container">
           <span class="time-hh-mm">{hoursMinutes}</span>
           <span class="time-ss">{seconds}</span>

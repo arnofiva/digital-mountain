@@ -53,3 +53,9 @@ export const clockIntervalMs = 100;
  * Time interval between filter updates. Not updating the filter too frequently will keep updates appearing responsive.
  */
 export const filterUpdateIntervalMs = 100;
+
+/**
+ * Times used in the live view.
+ */
+export const startTimeMorning = Date.UTC(2022, 2, 1, 9, 30);
+export const startTimeEvening = Date.UTC(2022, 6, 1, 17, 0);

@@ -272,7 +272,7 @@ export class PlanningStore extends ScreenStore {
     });
 
     let previousGeometries: Geometry[] = [];
-    const intervalHandle = setInterval(() => {
+    const intervalHandle = window.setInterval(() => {
       let geometries = [this._liftEditor.treeFilterGeometry, this._slopeEditor.treeFilterGeometry];
       if (geometries.every((v, i) => v === previousGeometries[i])) {
         // the geometries did not change

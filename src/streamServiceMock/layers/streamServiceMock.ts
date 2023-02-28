@@ -1,5 +1,6 @@
 import config from "@arcgis/core/config";
 import { SpatialReference } from "@arcgis/core/geometry";
+import Graphic from "@arcgis/core/Graphic";
 import request from "@arcgis/core/request";
 import Query from "@arcgis/core/rest/support/Query";
 import StreamLayerView from "@arcgis/core/views/layers/StreamLayerView";
@@ -68,7 +69,7 @@ class WebSocketMock {
 class StreamServiceMock {
   private readonly _webSocketUrl: string;
   private _featureLayerSourceJSON: Promise<any>;
-  private _events: StreamLayerEvent[];
+  private _events: StreamLayerEvent[] = [];
   private _startTime: number;
 
   constructor(_streamUrl: string, private _featureLayerUrl: string) {
@@ -144,7 +145,7 @@ class StreamServiceMock {
     this._events = events;
   }
 
-  start(layerView: StreamLayerView) {
+  async start(layerView: StreamLayerView, resetMessages: StreamLayerEvent["message"][] = []) {
     if (!this._events || this._events.length === 0) {
       return;
     }
@@ -153,6 +154,7 @@ class StreamServiceMock {
     this._startTime = startTime;
 
     const events = [...this._events];
+    await this._reset(layerView, resetMessages);
 
     const loop = async () => {
       if (startTime !== this._startTime) {
@@ -206,6 +208,37 @@ class StreamServiceMock {
 
   stop() {
     this._startTime = 0;
+  }
+
+  private async _reset(layerView: StreamLayerView, resetMessages: StreamLayerEvent["message"][]): Promise<void> {
+    if (resetMessages.length === 0) {
+      return;
+    }
+
+    const resetMessagesMap = new Map();
+    for (const message of resetMessages) {
+      resetMessagesMap.set(message.attributes.track_id, message);
+    }
+
+    const result = await layerView.queryFeatures(
+      new Query({
+        returnGeometry: true,
+        outFields: ["*"],
+        where: `track_id IN (${Array.from(resetMessagesMap.keys()).join(",")})`
+      })
+    );
+
+    const connection = connections.get(this._webSocketUrl);
+    for (const { attributes, geometry } of result.features) {
+      const resetMessage = resetMessagesMap.get(attributes.track_id);
+      const message = {
+        attributes: { ...attributes, ...resetMessage.attributes },
+        geometry: resetMessage.geometry || geometry
+      };
+      connection.onmessage?.({
+        data: JSON.stringify(message)
+      });
+    }
   }
 }
 

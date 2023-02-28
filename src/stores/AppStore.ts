@@ -109,6 +109,12 @@ class AppStore extends Accessor implements UIActions {
     }
   }
 
+  toggleStartTime(): void {
+    if (this._screenStore?.type === ScreenType.Live) {
+      this._screenStore.toggleStartTime();
+    }
+  }
+
   /***************
    * View actions
    ***************/

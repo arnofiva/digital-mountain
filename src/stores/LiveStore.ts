@@ -12,11 +12,18 @@ import { findSlopesGroupLayer, findSlopesLayer } from "../data";
 import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
-import slopeEvents from "../streamServiceMock/events/slopeEvents";
+import { slopeEventsEvening, slopeEventsMorning, slopeResetMessages } from "../streamServiceMock/events/slopeEvents";
 import StreamServiceMock from "../streamServiceMock/layers/streamServiceMock";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
-import { clockIntervalMs } from "../constants";
+import { clockIntervalMs, startTimeEvening, startTimeMorning } from "../constants";
+
+enum StartTime {
+  Morning,
+  Evening
+}
+
+const mockHandlesKey = "mock-data-received-key";
 
 @subclass("digital-mountain.LiveStore")
 class LiveStore extends ScreenStore {
@@ -25,7 +32,8 @@ class LiveStore extends ScreenStore {
   private readonly _view: SceneView;
   private readonly _assetsStream: StreamLayer;
   private readonly _slopeStream: StreamLayer;
-  private readonly _streamMock: StreamServiceMock;
+  private readonly _assetsMock: StreamServiceMock;
+  private readonly _slopeMock: StreamServiceMock;
 
   private _goToAlertAbortController: AbortController | null = null;
 
@@ -40,51 +48,25 @@ class LiveStore extends ScreenStore {
     slopesGroupLayer.visible = false;
     this.addHandles({ remove: () => (slopesGroupLayer.visible = true) });
 
-    const { signal } = this.createAbortController();
     this._assetsStream = createAssetsStream();
     this._slopeStream = createSlopeStream();
-    const assetsMock = new StreamServiceMock(
+    this._assetsMock = new StreamServiceMock(
       this._assetsStream.url,
       "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowCat_StreamLayer4/FeatureServer/0"
     );
-    const slopeMock = new StreamServiceMock(
+    this._slopeMock = new StreamServiceMock(
       this._slopeStream.url,
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
-    assetsMock.setEvents(assetEvents);
-    slopeMock.setEvents(slopeEvents);
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
-    view.whenLayerView(this._assetsStream).then((lv) => {
-      if (signal.aborted) {
-        return;
-      }
-      assetsMock.start(lv);
-    });
-    view.whenLayerView(this._slopeStream).then((lv) => {
-      if (signal.aborted) {
-        return;
-      }
-      this.addHandles(
-        lv.on("data-received", (e: SlopeStreamEvent) => {
-          if (e.attributes.showAlert) {
-            const alertData = {
-              type: e.attributes.STATUS.toLowerCase() === "offen" ? AlertType.SlopeOpen : AlertType.SlopeClose,
-              date: new Date(this.date.getTime()),
-              slopeId: e.attributes.track_id
-            };
-            this._alerts.add(alertData, 0);
-          }
-        })
-      );
-      slopeMock.start(lv);
-    });
     this.addHandles({
       remove: () => {
+        this.removeHandles(mockHandlesKey);
         view.map.remove(this._assetsStream);
         view.map.remove(this._slopeStream);
-        assetsMock.stop();
-        slopeMock.stop();
+        this._assetsMock.stop();
+        this._slopeMock.stop();
       }
     });
 
@@ -95,12 +77,8 @@ class LiveStore extends ScreenStore {
     view.ui.add(expand, "bottom-left");
     this.addHandles({ remove: () => view.ui.remove(expand) });
 
-    const startTime = performance.now();
-    const initialDate = this._utcDate;
-    const interval = setInterval(() => {
-      this._utcDate = initialDate + (performance.now() - startTime);
-    }, clockIntervalMs);
-    this.addHandles({ remove: () => clearInterval(interval) });
+    this._resetAlerts();
+    this._resetTime();
   }
 
   /**
@@ -126,7 +104,10 @@ class LiveStore extends ScreenStore {
   }
 
   @property()
-  private _utcDate = Date.UTC(2022, 2, 1, 13, 25, 2);
+  private _utcDate = startTimeMorning;
+
+  @property()
+  private _startTime = StartTime.Morning;
 
   async goToAlert(data: AlertData): Promise<void> {
     this._goToAlertAbortController?.abort();
@@ -153,6 +134,89 @@ class LiveStore extends ScreenStore {
         }
       }
     }
+  }
+
+  toggleStartTime() {
+    switch (this._startTime) {
+      case StartTime.Morning: {
+        this._startTime = StartTime.Evening;
+        this._utcDate = startTimeEvening;
+        break;
+      }
+      case StartTime.Evening: {
+        this._startTime = StartTime.Morning;
+        this._utcDate = startTimeMorning;
+        break;
+      }
+    }
+    this._resetAlerts();
+    this._resetTime();
+  }
+
+  private _timeInterval: number | null = null;
+  private _resetTime() {
+    const startTime = performance.now();
+    const initialDate = this._utcDate;
+    if (this._timeInterval) {
+      clearInterval(this._timeInterval);
+    }
+    const updateViewDate = (date: Date | null) => {
+      const { lighting } = this._view.environment;
+      if (lighting.type === "sun") {
+        lighting.date = date;
+      }
+    };
+    this._timeInterval = window.setInterval(() => {
+      this._utcDate = initialDate + (performance.now() - startTime);
+      updateViewDate(this.date);
+    }, clockIntervalMs);
+    this.addHandles({
+      remove: () => {
+        clearInterval(this._timeInterval);
+        updateViewDate(null);
+      }
+    });
+  }
+
+  private _mockAbortController: AbortController | null = null;
+  private _resetAlerts() {
+    this._mockAbortController?.abort();
+    const { signal } = (this._mockAbortController = this.createAbortController());
+
+    for (const mock of [this._assetsMock, this._slopeMock]) {
+      mock.stop();
+    }
+    this._alerts.removeAll();
+    this.removeHandles(mockHandlesKey);
+
+    const view = this._view;
+    view.whenLayerView(this._assetsStream).then((lv) => {
+      if (signal.aborted) {
+        return;
+      }
+      this._assetsMock.setEvents(assetEvents);
+      this._assetsMock.start(lv);
+    });
+    view.whenLayerView(this._slopeStream).then((lv) => {
+      if (signal.aborted) {
+        return;
+      }
+      this.addHandles(
+        lv.on("data-received", (e: SlopeStreamEvent) => {
+          if (e.attributes.showAlert) {
+            const alertData = {
+              type: e.attributes.STATUS.toLowerCase() === "offen" ? AlertType.SlopeOpen : AlertType.SlopeClose,
+              date: new Date(this.date.getTime()),
+              slopeId: e.attributes.track_id
+            };
+            this._alerts.add(alertData, 0);
+          }
+        }),
+        mockHandlesKey
+      );
+      this._slopeMock.setEvents(this._startTime === StartTime.Morning ? slopeEventsMorning : slopeEventsEvening);
+      this._slopeMock.start(lv, slopeResetMessages);
+    });
   }
 }
 

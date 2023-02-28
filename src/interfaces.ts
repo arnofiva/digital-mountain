@@ -5,9 +5,10 @@ export interface UIActions {
   goToAlert(data: AlertData): void;
   openTaskScreen(taskScreenType: TaskScreenType): void;
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void;
+  setViewTimeExtent(date: Date | null): void;
   startSlopeEditor(): void;
   startLiftEditor(options?: { updateGraphic?: Graphic }): void;
-  setViewTimeExtent(date: Date | null): void;
+  toggleStartTime(): void;
 }
 
 export enum ScreenType {
