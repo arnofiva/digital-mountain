@@ -30,7 +30,7 @@ export function findTowersLayer(map: Map): FeatureLayer {
 }
 
 export function findTreeLayer(map: Map): SceneLayer {
-  return map.allLayers.find((l) => l.title.toLowerCase().includes("trees")) as SceneLayer;
+  return map.allLayers.find((l) => l.title === "Trees") as SceneLayer;
 }
 
 export function findWaterPitsLayer(map: Map): FeatureLayer {
