@@ -262,21 +262,12 @@ export class PlanningStore extends ScreenStore {
 
     const { signal } = this.createAbortController();
     const updateTreesDisplaced = debounce(async (geometry: Geometry) => {
-      const before = this._treesDisplaced;
       const treeLayerView = view.allLayerViews.find((lv) => lv.layer === treeLayer) as SceneLayerView;
       if (treeLayerView && geometry) {
         const { features } = await treeLayerView.queryFeatures(new Query({ geometry }), { signal });
         this._treesDisplaced = features.length;
       } else {
         this._treesDisplaced = 0;
-      }
-      if (before !== this._treesDisplaced) {
-        // restart css animation
-        // see https://stackoverflow.com/a/45036752
-        var el = document.getElementById("trees-displaced");
-        el.style.animation = "none";
-        el.offsetHeight;
-        el.style.animation = null;
       }
     });
 

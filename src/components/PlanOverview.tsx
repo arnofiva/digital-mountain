@@ -34,7 +34,6 @@ class PlanOverview extends Widget<ConstructProperties> {
   treesDisplaced: number;
 
   render() {
-    const animateClass = `animate-attribute`;
     return (
       <div class="plan-overview">
         <calcite-panel heading="Plan Overview">
@@ -48,7 +47,7 @@ class PlanOverview extends Widget<ConstructProperties> {
           </calcite-block>
           <calcite-block collapsible heading="Slopes">
             <calcite-label layout="inline-space-between">
-              Trees displaced<strong id="trees-displaced">{this.treesDisplaced}</strong>
+              Trees displaced<strong>{this.treesDisplaced}</strong>
             </calcite-label>
           </calcite-block>
         </calcite-panel>
