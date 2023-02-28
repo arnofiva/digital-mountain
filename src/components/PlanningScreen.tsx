@@ -37,7 +37,7 @@ class PlanningScreen extends Widget<ConstructProperties> {
         class="align-right save-button"
         onclick={() => this.actions.exportPlan()}
       >
-        Export
+        Save
       </calcite-button>
     );
     return (
