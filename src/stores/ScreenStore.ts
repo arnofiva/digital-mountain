@@ -14,6 +14,7 @@ class ScreenStore extends Accessor {
     // hide layers until task is selected
     view.when(() => {
       if (!this.destroyed) {
+        this._initialLayerVisibilities.length = 0;
         view.map.allLayers.forEach((l) => {
           this._initialLayerVisibilities.push(l.visible);
         });
