@@ -52,6 +52,18 @@ const createSlopeStream = () =>
               })
             ]
           })
+        },
+        {
+          value: "Geschlossen",
+          symbol: new PolygonSymbol3D({
+            symbolLayers: [
+              new FillSymbol3DLayer({
+                material: {
+                  color: [255, 100, 100]
+                }
+              })
+            ]
+          })
         }
       ]
     })

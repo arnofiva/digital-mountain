@@ -14,9 +14,13 @@ import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { startTimeEvening, startTimeMorning } from "../constants";
-import { slopeEventsEvening, slopeEventsMorning, slopeResetMessages } from "../streamServiceMock/events/slopeEvents";
+import {
+  slopeEventsEvening,
+  slopeEventsMorning,
+  slopeResetMessagesEvening,
+  slopeResetMessagesMorning
+} from "../streamServiceMock/events/slopeEvents";
 import staffEvents from "../streamServiceMock/events/staffEvents";
 import StreamServiceMock from "../streamServiceMock/layers/streamServiceMock";
 import { ignoreAbortErrors } from "../utils";
@@ -242,7 +246,10 @@ class LiveStore extends ScreenStore {
         mockHandlesKey
       );
       this._slopeMock.setEvents(this._startTime === StartTime.Morning ? slopeEventsMorning : slopeEventsEvening);
-      this._slopeMock.start(lv, slopeResetMessages);
+      this._slopeMock.start(
+        lv,
+        this._startTime === StartTime.Morning ? slopeResetMessagesMorning : slopeResetMessagesEvening
+      );
     });
   }
 }

@@ -61,7 +61,7 @@ export type AlertData =
 export interface SlopeStreamEvent {
   attributes: {
     track_id: number;
-    STATUS: "Offen";
+    STATUS: "Offen" | "In Vorbereitung" | "Geschlossen";
     showAlert: boolean;
   };
 }
