@@ -15,7 +15,7 @@ class StatisticsStore extends ScreenStore {
 
   constructor({ view }: { view: SceneView }) {
     super();
-    this.goToTaskScreenStart(statisticsScreenStartCamera, view);
+    this.goToCamera(statisticsScreenStartCamera, view);
 
     const { map } = view;
     const waterLayer = findWaterPitsLayer(map);

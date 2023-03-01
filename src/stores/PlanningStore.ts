@@ -9,7 +9,7 @@ import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 
-import { planningScreenStartCamera } from "../cameras";
+import { planningScreenDetailCamera, planningScreenStartCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
 import { filterUpdateIntervalMs, sceneExportTitle, treeFilterDistance } from "../constants";
 import {
@@ -38,8 +38,9 @@ export class PlanningStore extends ScreenStore {
     this._view = view;
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
-    this.goToTaskScreenStart(planningScreenStartCamera, view);
-    this.addHomeKey(planningScreenStartCamera, view);
+    this.goToCamera(planningScreenStartCamera, view);
+    this.addGoToCameraKey(planningScreenDetailCamera, "g", view);
+    this.addGoToCameraKey(planningScreenStartCamera, "h", view);
     this._setupTreeFilterWatch(view);
 
     // add code snippet

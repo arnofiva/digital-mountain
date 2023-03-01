@@ -17,15 +17,18 @@ class ScreenStore extends Accessor {
     return abortController;
   }
 
-  protected goToTaskScreenStart(camera: Camera, view: SceneView): void {
-    const { signal } = this.createAbortController();
+  private _cameraAnimationAbortController: AbortController | null = null;
+
+  protected goToCamera(camera: Camera, view: SceneView): void {
+    this._cameraAnimationAbortController?.abort();
+    const { signal } = (this._cameraAnimationAbortController = this.createAbortController());
     ignoreAbortErrors(view.goTo(camera, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
   }
 
-  protected addHomeKey(camera: Camera, view: SceneView) {
+  protected addGoToCameraKey(camera: Camera, key: string, view: SceneView) {
     const onKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "h") {
-        this.goToTaskScreenStart(camera, view);
+      if (event.key === key) {
+        this.goToCamera(camera, view);
       }
     };
     window.addEventListener("keydown", onKeyPress);

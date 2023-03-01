@@ -68,7 +68,7 @@ class LiveStore extends ScreenStore {
     const staffLayer = findStaffLayer(view.map);
     staffLayer.visible = false;
 
-    this.goToTaskScreenStart(liveScreenStartCamera, view);
+    this.goToCamera(liveScreenStartCamera, view);
 
     // Slopes will be displayed by the stream layer
     const slopesGroupLayer = findSlopesGroupLayer(view.map);
