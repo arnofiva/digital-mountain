@@ -61,7 +61,6 @@ export function findGalaaxyLOD2Layer(map: Map): SceneLayer {
   return map.findLayerById("1868e9f9866-layer-68") as SceneLayer;
 }
 
-
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,
   rings: [

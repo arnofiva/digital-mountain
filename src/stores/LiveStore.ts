@@ -8,7 +8,15 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 
 import { liveScreenStartCamera } from "../cameras";
 import { clockIntervalMs, defaultViewDate } from "../constants";
-import { findElectricalLayer, findFiberOpticLayer, findGalaaxyLOD2Layer, findSlopesGroupLayer, findSlopesLayer, findStaffLayer, findWaterPipesLayer } from "../data";
+import {
+  findElectricalLayer,
+  findFiberOpticLayer,
+  findGalaaxyLOD2Layer,
+  findSlopesGroupLayer,
+  findSlopesLayer,
+  findStaffLayer,
+  findWaterPipesLayer
+} from "../data";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
@@ -81,13 +89,10 @@ class LiveStore extends ScreenStore {
     this._staffStream = new StreamLayer({
       url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer",
       labelingInfo: staffLayer.labelingInfo,
-      labelsVisible: true,
+      labelsVisible: true
     });
 
-    this._staffMock = new StreamServiceMock(
-      this._staffStream.url,
-      staffLayer
-    );
+    this._staffMock = new StreamServiceMock(this._staffStream.url, staffLayer);
 
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
