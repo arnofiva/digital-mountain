@@ -7,7 +7,7 @@ import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
 
 import { liveScreenStartCamera } from "../cameras";
-import { clockIntervalMs } from "../constants";
+import { clockIntervalMs, defaultViewDate } from "../constants";
 import { findSlopesGroupLayer, findSlopesLayer, findStaffLayer } from "../data";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import createAssetsStream from "../layers/liveAssets";
@@ -197,7 +197,7 @@ class LiveStore extends ScreenStore {
     this.addHandles({
       remove: () => {
         clearInterval(this._timeInterval);
-        updateViewDate(null);
+        updateViewDate(defaultViewDate);
       }
     });
   }

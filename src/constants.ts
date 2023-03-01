@@ -18,6 +18,11 @@ export const transitionCameraAnimationSpeedFactor = 0.5;
 export const backgroundCameraAnimationSpeedFactor = 0.01;
 
 /**
+ * The default date used for the view.
+ */
+export const defaultViewDate = new Date(1678878000000);
+
+/**
  * Slope editor
  */
 export const slopeBufferDistance = 15;
@@ -55,7 +60,7 @@ export const clockIntervalMs = 100;
 export const filterUpdateIntervalMs = 100;
 
 /**
- * Times used in the live view.
+ * Dates used in the live view.
  */
 export const startTimeMorning = Date.UTC(2022, 2, 1, 9, 30);
 export const startTimeEvening = Date.UTC(2022, 6, 1, 17, 0);

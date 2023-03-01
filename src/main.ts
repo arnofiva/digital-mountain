@@ -17,6 +17,7 @@ import App from "./components/App";
 import { portalUrl, webSceneId } from "./data";
 import AppStore from "./stores/AppStore";
 import { setViewUI } from "./utils";
+import { defaultViewDate } from "./constants";
 
 setAssetPath(window.document.URL);
 esriConfig.assetsPath = "./assets";
@@ -40,6 +41,8 @@ const view = (window["view"] = new SceneView({
   map,
   environment: {
     lighting: {
+      type: "sun",
+      date: defaultViewDate,
       directShadowsEnabled: true
     },
     weather: { type: "cloudy", cloudCover: 0.2 }
