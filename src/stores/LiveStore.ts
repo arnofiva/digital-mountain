@@ -14,6 +14,7 @@ import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { startTimeEvening, startTimeMorning } from "../constants";
 import { slopeEventsEvening, slopeEventsMorning, slopeResetMessages } from "../streamServiceMock/events/slopeEvents";
 import staffEvents from "../streamServiceMock/events/staffEvents";
