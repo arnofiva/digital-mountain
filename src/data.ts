@@ -45,6 +45,23 @@ export function findStaffLayer(map: Map): FeatureLayer {
   return map.findLayerById("186989de564-layer-81") as FeatureLayer;
 }
 
+export function findWaterPipesLayer(map: Map): FeatureLayer {
+  return map.findLayerById("1867883a5eb-layer-122") as FeatureLayer;
+}
+
+export function findFiberOpticLayer(map: Map): FeatureLayer {
+  return map.findLayerById("1867883a319-layer-121") as FeatureLayer;
+}
+
+export function findElectricalLayer(map: Map): FeatureLayer {
+  return map.findLayerById("1867883a042-layer-120") as FeatureLayer;
+}
+
+export function findGalaaxyLOD2Layer(map: Map): SceneLayer {
+  return map.findLayerById("1868e9f9866-layer-68") as SceneLayer;
+}
+
+
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,
   rings: [

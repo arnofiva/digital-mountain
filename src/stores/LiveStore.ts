@@ -8,7 +8,7 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 
 import { liveScreenStartCamera } from "../cameras";
 import { clockIntervalMs, defaultViewDate } from "../constants";
-import { findSlopesGroupLayer, findSlopesLayer, findStaffLayer } from "../data";
+import { findElectricalLayer, findFiberOpticLayer, findGalaaxyLOD2Layer, findSlopesGroupLayer, findSlopesLayer, findStaffLayer, findWaterPipesLayer } from "../data";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
@@ -52,6 +52,14 @@ class LiveStore extends ScreenStore {
     super();
     this._view = view;
 
+    findWaterPipesLayer(view.map).visible = false;
+    findElectricalLayer(view.map).visible = false;
+    findFiberOpticLayer(view.map).visible = false;
+    findGalaaxyLOD2Layer(view.map).visible = true;
+
+    const staffLayer = findStaffLayer(view.map);
+    staffLayer.visible = false;
+
     this.goToTaskScreenStart(liveScreenStartCamera, view);
 
     // Slopes will be displayed by the stream layer
@@ -69,9 +77,6 @@ class LiveStore extends ScreenStore {
       this._slopeStream.url,
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
-
-
-    const staffLayer = findStaffLayer(view.map);
 
     this._staffStream = new StreamLayer({
       url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer",
