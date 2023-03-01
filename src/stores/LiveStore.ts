@@ -55,6 +55,9 @@ class LiveStore extends ScreenStore {
   private readonly _slopeMock: StreamServiceMock;
   private readonly _staffMock: StreamServiceMock;
 
+  @property()
+  private _codeSnippetVisible = false;
+
   private _goToAlertAbortController: AbortController | null = null;
 
   constructor({ view }: { view: SceneView }) {
@@ -131,6 +134,8 @@ class LiveStore extends ScreenStore {
           heading: 285.75,
           tilt: 80.58
         }));
+      } else if (e.key === "c") {
+        this._codeSnippetVisible = !this._codeSnippetVisible;
       }
     }
     window.addEventListener("keydown", onKeyDown);
