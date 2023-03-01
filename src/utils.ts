@@ -1,4 +1,4 @@
-import { isAbortError } from "@arcgis/core/core/promiseUtils";
+import { createAbortError, isAbortError } from "@arcgis/core/core/promiseUtils";
 import { MeasurementSystem } from "@arcgis/core/core/units";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Portal from "@arcgis/core/portal/Portal";
@@ -89,3 +89,41 @@ const formatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
   hour12: false
 });
+
+export function throttle<Arguments extends unknown[], Return>(
+  func: (...args: Arguments) => Return,
+  delayMs = 0
+): (signal: AbortSignal, ...args: Arguments) => Promise<Return> {
+  /** Timestamp of the last invocation */
+  let nextTimeSlot = 0;
+  /** The abort controller for the next scheduled invocation of `func`. */
+  let nextInvocation = new AbortController();
+
+  async function process(signal: AbortSignal, ...args: Arguments): Promise<Return> {
+    // Abort the next scheduled invocation, as this invocation will become the next scheduled one
+    nextInvocation.abort();
+
+    // We must ensure we wait for the delay amount since the last invocation
+    const currentTimestamp = performance.now();
+    const mustWait = currentTimestamp < nextTimeSlot;
+
+    if (mustWait) {
+      // Set up this invocation as the next scheduled one
+      const abortController = new AbortController();
+      nextInvocation = abortController;
+
+      // Wait for the remaining amount of time
+      await new Promise<void>((resolve) => setTimeout(resolve, nextTimeSlot - currentTimestamp));
+
+      if (signal.aborted || abortController.signal.aborted) {
+        // We are no longer the last scheduled invocation, so we abort
+        throw createAbortError();
+      }
+    }
+    // Invoke the function and register the next time slot
+    nextTimeSlot = performance.now() + delayMs;
+    return func(...args);
+  }
+
+  return process;
+}

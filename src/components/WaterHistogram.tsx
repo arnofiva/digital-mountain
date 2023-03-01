@@ -4,6 +4,7 @@ import Graphic from "@arcgis/core/Graphic";
 import HistogramRangeSlider from "@arcgis/core/widgets/HistogramRangeSlider";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 import { UIActions } from "../interfaces";
+import { ignoreAbortErrors, throttle } from "../utils";
 import { Widget } from "./Widget";
 
 type ConstructProperties = Pick<WaterHistogram, "actions" | "records">;
@@ -15,7 +16,10 @@ const minHistogramVolume = 1;
 @subclass("digital-mountain.WaterHistogram")
 export class WaterHistogram extends Widget<ConstructProperties> {
   override postInitialize(): void {
+    const abortController = new AbortController();
+
     this.addHandles([
+      { remove: () => abortController.abort() },
       watch(
         () => {
           const data = this._histogramData;
@@ -33,7 +37,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
       ),
       watch(
         () => this._date,
-        (date) => this.actions.setViewTimeExtent(date),
+        (date) => ignoreAbortErrors(this._throttledSetViewTimeExtent(abortController.signal, date)),
         { initial: true }
       ),
       this._histogram.on("thumb-change", (event) => (this._date = new Date(event.value))),
@@ -104,6 +108,11 @@ export class WaterHistogram extends Widget<ConstructProperties> {
     values: [0],
     labelFormatFunction: formatNumberAsDate
   });
+
+  private readonly _throttledSetViewTimeExtent = throttle(
+    (date: Date | null) => this.actions.setViewTimeExtent(date),
+    500 /* ms */
+  );
 
   render() {
     const histogramData = this._histogramData;
