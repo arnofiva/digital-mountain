@@ -103,8 +103,12 @@ class StreamServiceMock {
           let fields: any;
           let geometryType: string;
           if (this._featureLayer) {
+            debugger;
             hasZ = this._featureLayer.hasZ;
-            drawingInfo = {renderer: this._featureLayer.renderer.toJSON()};
+            drawingInfo = {
+              renderer: this._featureLayer.renderer.toJSON(),
+              labelingInfo: this._featureLayer.labelingInfo ? this._featureLayer.labelingInfo.map(l => l.toJSON()) : undefined,
+            };
             fields = this._featureLayer.fields.map(f => f.toJSON());
             geometryType = this._featureLayer.geometryType;
           } else {
@@ -143,6 +147,7 @@ class StreamServiceMock {
               /* TODO */
             },
             spatialReference: SpatialReference.WebMercator.toJSON(),
+            showLabels: true,
             streamUrls: [
               {
                 token: "MOCK_TOKEN",
