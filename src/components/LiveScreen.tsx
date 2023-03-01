@@ -23,7 +23,11 @@ class LiveScreen extends Widget<ConstructProperties> {
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Live" />
-        <Clock actions={this.actions} container={ensureViewUIContainer("top-left", "clock")} date={this.store.date} />
+        <Clock
+          actions={this.actions}
+          container={ensureViewUIContainer("top-left", "clock")}
+          date={this.store.date}
+        />
         <Alerts
           actions={this.actions}
           alerts={this.store.alerts}

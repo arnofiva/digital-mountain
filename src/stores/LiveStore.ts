@@ -67,14 +67,12 @@ class LiveStore extends ScreenStore {
     );
 
     const staffLayer = view.map.findLayerById("186989de564-layer-81") as FeatureLayer;
-    const staffStreamLayerUrl = "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer";
+    const staffStreamLayerUrl =
+      "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer";
     this._staffStream = new StreamLayer({
       url: staffStreamLayerUrl
     });
-    this._staffMock = new StreamServiceMock(
-      staffStreamLayerUrl,
-      staffLayer
-    );
+    this._staffMock = new StreamServiceMock(staffStreamLayerUrl, staffLayer);
 
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
@@ -89,7 +87,6 @@ class LiveStore extends ScreenStore {
         this._assetsMock.stop();
         this._slopeMock.stop();
         this._staffMock.stop();
-
       }
     });
 

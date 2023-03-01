@@ -5,7 +5,7 @@ import { Widget } from "./Widget";
 import { dateToTimeString } from "../utils";
 import { UIActions } from "../interfaces";
 
-type ConstructProperties = Pick<Clock, "actions"| "date">;
+type ConstructProperties = Pick<Clock, "actions" | "date">;
 
 @subclass("digital-mountain.Clock")
 class Clock extends Widget<ConstructProperties> {

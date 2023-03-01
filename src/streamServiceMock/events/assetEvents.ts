@@ -28,8 +28,8 @@ const lineTrackId1 = new Polyline({
   ]
 });
 
-const track0Events = convertPathToEvents(lineTrackId0, 3, 3.5, {track_id: 0});
-const track1Events = convertPathToEvents(lineTrackId1, 1, 7, {track_id: 1});
+const track0Events = convertPathToEvents(lineTrackId0, 3, 3.5, { track_id: 0 });
+const track1Events = convertPathToEvents(lineTrackId1, 1, 7, { track_id: 1 });
 
 const assetEvents = mergeEvents(track0Events, track1Events);
 

@@ -16,7 +16,7 @@ const track1 = new Polyline({
   ]
 });
 
-const track1Events = convertPathToEvents(track1, 1, 7, {track_id: 1});
+const track1Events = convertPathToEvents(track1, 1, 7, { track_id: 1 });
 
 const staffEvents = mergeEvents(track1Events);
 

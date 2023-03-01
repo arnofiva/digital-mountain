@@ -82,7 +82,7 @@ class StreamServiceMock {
 
     this._webSocketUrl = webSocketUrl;
 
-    if (typeof featureLayer === 'string') {
+    if (typeof featureLayer === "string") {
       this._featureLayerUrl = featureLayer;
     } else if (featureLayer.sourceJSON) {
       this._featureLayer = featureLayer;
@@ -97,19 +97,19 @@ class StreamServiceMock {
       before: async (params) => {
         const url = params.url;
         if (url === _streamUrl) {
-
           let hasZ: boolean;
           let drawingInfo: any;
           let fields: any;
           let geometryType: string;
           if (this._featureLayer) {
-            debugger;
             hasZ = this._featureLayer.hasZ;
             drawingInfo = {
               renderer: this._featureLayer.renderer.toJSON(),
-              labelingInfo: this._featureLayer.labelingInfo ? this._featureLayer.labelingInfo.map(l => l.toJSON()) : undefined,
+              labelingInfo: this._featureLayer.labelingInfo
+                ? this._featureLayer.labelingInfo.map((l) => l.toJSON())
+                : undefined
             };
-            fields = this._featureLayer.fields.map(f => f.toJSON());
+            fields = this._featureLayer.fields.map((f) => f.toJSON());
             geometryType = this._featureLayer.geometryType;
           } else {
             const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
