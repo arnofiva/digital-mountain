@@ -164,15 +164,23 @@ h3 {
     }
   }
   .live-message {
-    height: 40px;
     display: flex;
+    align-items: center;
+    height: 17px;
+    --calcite-ui-icon-color: red;
+
+    .live-label {
+      position: relative;
+      top: 1px;
+      margin-right: 5px;
+    }
   }
   .simulated-time-info {
     margin-top: 10px;
     display: flex;
 
     .simulated-time-label {
-      margin-left: 2px;
+      margin-left: 5px;
     }
   }
 }

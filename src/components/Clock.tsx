@@ -24,7 +24,7 @@ class Clock extends Widget<ConstructProperties> {
           <span class="time-ss">{seconds}</span>
         </div>
         <div class="live-message">
-          <span>LIVE</span>
+          <span class="live-label">LIVE</span>
           <calcite-icon icon="circle-f" text-label="live" scale="s"></calcite-icon>
         </div>
         <div class="simulated-time-info">
