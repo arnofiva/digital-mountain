@@ -212,3 +212,12 @@ h3 {
     width: 90%;
   }
 }
+
+
+.esri-view-surface::after {
+  outline: none !important;
+}
+
+#alerts-ui-container {
+  pointer-events: none;
+}
