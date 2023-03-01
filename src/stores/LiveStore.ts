@@ -22,6 +22,7 @@ import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
+import Camera from "@arcgis/core/Camera";
 import { startTimeEvening, startTimeMorning } from "../constants";
 import {
   slopeEventsEvening,
@@ -99,6 +100,42 @@ class LiveStore extends ScreenStore {
     view.map.add(this._slopeStream);
     view.map.add(this._staffStream);
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "1") {
+        view.goTo(new Camera({
+          position: {
+            longitude: 9.20478243,
+            latitude: 46.85371390,
+            z: 2984.49087
+          },
+          heading: 244.20,
+          tilt: 66.24
+        }));
+      } else if (e.key === "2") {
+        view.goTo(new Camera({
+          position: {
+            longitude: 9.25623898,
+            latitude: 46.83649725,
+            z: 2686.63328
+          },
+          heading: 282.07,
+          tilt: 76.96
+        }));
+      } else if (e.key === "3") {
+        view.goTo(new Camera({
+          position: {
+            longitude: 9.23344056,
+            latitude: 46.84112040,
+            z: 1858.33258
+          },
+          heading: 285.75,
+          tilt: 80.58
+        }));
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    
+
     this.addHandles({
       remove: () => {
         this.removeHandles(mockHandlesKey);
@@ -108,6 +145,7 @@ class LiveStore extends ScreenStore {
         this._assetsMock.stop();
         this._slopeMock.stop();
         this._staffMock.stop();
+        window.removeEventListener("keydown", onKeyDown);
       }
     });
 

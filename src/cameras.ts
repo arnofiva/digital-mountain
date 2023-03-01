@@ -24,13 +24,12 @@ export const backgroundAnimationTargetCamera = new Camera({
 
 export const liveScreenStartCamera = new Camera({
   position: {
-    spatialReference: { wkid: 102100 },
-    x: 1031400,
-    y: 5910895,
-    z: 3205
+    longitude: 9.25326442,
+    latitude: 46.81975620,
+    z: 3368.54016
   },
-  heading: 319,
-  tilt: 76
+  heading: 306.84,
+  tilt: 72.59
 });
 
 export const planningScreenStartCamera = new Camera({

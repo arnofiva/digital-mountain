@@ -59,7 +59,7 @@ const createSlopeStream = () =>
             symbolLayers: [
               new FillSymbol3DLayer({
                 material: {
-                  color: [255, 100, 100]
+                  color: [100, 100, 100]
                 }
               })
             ]
