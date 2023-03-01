@@ -683,7 +683,7 @@ function updateDimensions(
     dimension.startPoint = new Point({ x, y, z: absoluteZ, spatialReference });
     dimension.endPoint = new Point({ x, y, z: absoluteZ - relativeZ, spatialReference });
     // offset dimension perpendicular to the direction of the lift
-    dimension.orientation = heading + 90;
+    dimension.orientation = heading - 90;
   });
 }
 

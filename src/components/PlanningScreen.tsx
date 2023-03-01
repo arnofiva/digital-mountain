@@ -27,7 +27,7 @@ class PlanningScreen extends Widget<ConstructProperties> {
   startPoint: new Point({ x, y, z: sketchPoint.z }),
   endPoint: new Point({ x, y, z: sketchPoint.z - towerHeight }),
   offset: 4,
-  orientation: liftHeading + 90
+  orientation: liftHeading - 90
 });`;
     const contentElement = (
       <calcite-button
