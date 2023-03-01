@@ -147,7 +147,7 @@ class StreamServiceMock {
               /* TODO */
             },
             spatialReference: SpatialReference.WebMercator.toJSON(),
-            showLabels: true,
+            showLabels: false,
             streamUrls: [
               {
                 token: "MOCK_TOKEN",

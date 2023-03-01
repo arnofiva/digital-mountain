@@ -70,13 +70,19 @@ class LiveStore extends ScreenStore {
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
 
+
     const staffLayer = findStaffLayer(view.map);
-    const staffStreamLayerUrl =
-      "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer";
+
     this._staffStream = new StreamLayer({
-      url: staffStreamLayerUrl
+      url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer",
+      labelingInfo: staffLayer.labelingInfo,
+      labelsVisible: true,
     });
-    this._staffMock = new StreamServiceMock(staffStreamLayerUrl, staffLayer);
+
+    this._staffMock = new StreamServiceMock(
+      this._staffStream.url,
+      staffLayer
+    );
 
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
