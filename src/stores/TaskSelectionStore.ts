@@ -26,6 +26,9 @@ class TaskSelectionStore extends ScreenStore {
             l.visible = false;
           }
         });
+
+        const { signal } = this.createAbortController();
+        this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal });
       }
     });
     this.addHandles({
@@ -33,8 +36,6 @@ class TaskSelectionStore extends ScreenStore {
         view.map.allLayers.forEach((l, i) => (l.visible = this._initialLayerVisibilities[i]));
       }
     });
-    const { signal } = this.createAbortController();
-    this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal });
   }
 
   private readonly _initialLayerVisibilities: boolean[] = [];
