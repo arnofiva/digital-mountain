@@ -17,28 +17,20 @@ class TaskSelectionStore extends ScreenStore {
     const uiClass = "task-selection-ui";
     view.ui.container.classList.add(uiClass);
     this.addHandles({ remove: () => view.ui.container.classList.remove(uiClass) });
-    // hide layers until task is selected
+
     view.when(() => {
-      if (!this.destroyed) {
-        view.map.allLayers.forEach((l) => {
-          this._initialLayerVisibilities.push(l.visible);
-          if (l.type !== "elevation" && l.type !== "tile") {
-            l.visible = false;
-          }
-        });
+      const { signal } = this.createAbortController();
+      this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal });
+    });
 
-        const { signal } = this.createAbortController();
-        this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal });
-      }
-    });
-    this.addHandles({
-      remove: () => {
-        view.map.allLayers.forEach((l, i) => (l.visible = this._initialLayerVisibilities[i]));
-      }
-    });
+    this.overrideLayerVisibilities(() => {
+      view.map.allLayers.forEach((l) => {
+        if (l.type !== "elevation" && l.type !== "tile") {
+          l.visible = false;
+        }
+      });
+    }, view);
   }
-
-  private readonly _initialLayerVisibilities: boolean[] = [];
 
   private async _startBackgroundCameraAnimation(
     view: SceneView,

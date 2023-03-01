@@ -60,20 +60,21 @@ class LiveStore extends ScreenStore {
     super();
     this._view = view;
 
-    findWaterPipesLayer(view.map).visible = false;
-    findElectricalLayer(view.map).visible = false;
-    findFiberOpticLayer(view.map).visible = false;
-    findGalaaxyLOD2Layer(view.map).visible = true;
-
+    const slopesGroupLayer = findSlopesGroupLayer(view.map);
     const staffLayer = findStaffLayer(view.map);
-    staffLayer.visible = false;
+
+    this.overrideLayerVisibilities(() => {
+      findWaterPipesLayer(view.map).visible = false;
+      findElectricalLayer(view.map).visible = false;
+      findFiberOpticLayer(view.map).visible = false;
+      findGalaaxyLOD2Layer(view.map).visible = true;
+
+      // Slopes will be displayed by the stream layer
+      slopesGroupLayer.visible = false;
+      staffLayer.visible = false;
+    }, view);
 
     this.goToCamera(liveScreenStartCamera, view);
-
-    // Slopes will be displayed by the stream layer
-    const slopesGroupLayer = findSlopesGroupLayer(view.map);
-    slopesGroupLayer.visible = false;
-    this.addHandles({ remove: () => (slopesGroupLayer.visible = true) });
 
     this._assetsStream = createAssetsStream();
     this._slopeStream = createSlopeStream();

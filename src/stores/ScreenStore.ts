@@ -8,6 +8,25 @@ import { ignoreAbortErrors } from "../utils";
 
 @subclass("digital-mountain.ScreenStore")
 class ScreenStore extends Accessor {
+  private readonly _initialLayerVisibilities: boolean[] = [];
+
+  protected overrideLayerVisibilities(callback: () => void, view: SceneView) {
+    // hide layers until task is selected
+    view.when(() => {
+      if (!this.destroyed) {
+        view.map.allLayers.forEach((l) => {
+          this._initialLayerVisibilities.push(l.visible);
+        });
+        callback();
+      }
+    });
+    this.addHandles({
+      remove: () => {
+        view.map.allLayers.forEach((l, i) => (l.visible = this._initialLayerVisibilities[i]));
+      }
+    });
+  }
+
   /**
    * Creates an abort controller that will be automatically removed when the object is destroyed.
    */
