@@ -1,6 +1,6 @@
 import config from "@arcgis/core/config";
 import { SpatialReference } from "@arcgis/core/geometry";
-import Graphic from "@arcgis/core/Graphic";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import request from "@arcgis/core/request";
 import Query from "@arcgis/core/rest/support/Query";
 import StreamLayerView from "@arcgis/core/views/layers/StreamLayerView";
@@ -70,33 +70,62 @@ class StreamServiceMock {
   private readonly _webSocketUrl: string;
   private _featureLayerSourceJSON: Promise<any>;
   private _events: StreamLayerEvent[] = [];
+  private _featureLayer?: FeatureLayer;
   private _startTime: number;
 
-  constructor(_streamUrl: string, private _featureLayerUrl: string) {
+  private readonly _featureLayerUrl: string;
+
+  constructor(_streamUrl: string, featureLayer: string | FeatureLayer) {
     window.WebSocket = WebSocketMock as any;
 
     const { streamName, webSocketUrl } = parseStreamUrl(_streamUrl);
 
     this._webSocketUrl = webSocketUrl;
 
+    if (typeof featureLayer === 'string') {
+      this._featureLayerUrl = featureLayer;
+    } else if (featureLayer.sourceJSON) {
+      this._featureLayer = featureLayer;
+      this._featureLayerUrl = (featureLayer as any).parsedUrl.path;
+    } else {
+      throw new Error("featureLayer either has to be a url or a loaded FeatureLayer with sourceJSON");
+    }
+
     config.request.interceptors.push({
-      urls: [_streamUrl, _featureLayerUrl],
+      urls: [_streamUrl, this._featureLayerUrl],
 
       before: async (params) => {
         const url = params.url;
         if (url === _streamUrl) {
-          const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
+
+          let hasZ: boolean;
+          let drawingInfo: any;
+          let fields: any;
+          let geometryType: string;
+          if (this._featureLayer) {
+            hasZ = this._featureLayer.hasZ;
+            drawingInfo = {renderer: this._featureLayer.renderer.toJSON()};
+            fields = this._featureLayer.fields.map(f => f.toJSON());
+            geometryType = this._featureLayer.geometryType;
+          } else {
+            const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
+            hasZ = sourceJSON.hasZ;
+            drawingInfo = sourceJSON.drawingInfo;
+            fields = sourceJSON.fields;
+            geometryType = sourceJSON.geometryType;
+          }
+
           return {
             capabilities: "broadcast,subscribe",
             currentVersion: 11,
             description: null,
             displayField: "x",
-            drawingInfo: sourceJSON.drawingInfo,
-            fields: sourceJSON.fields.filter((f: any) => f.name !== "objectid"),
+            drawingInfo,
+            fields: fields.filter((f: any) => f.name !== "objectid" || f.name !== "OBJECTID"),
             geometryField: null,
-            geometryType: sourceJSON.geometryType,
+            geometryType,
             globalIdField: "globalid",
-            hasZ: sourceJSON.hasZ,
+            hasZ,
             keepLatest: {
               dataSourceLayerName: streamName,
               dataSourceName: streamName,

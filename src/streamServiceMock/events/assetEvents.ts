@@ -1,5 +1,5 @@
 import { Polyline, SpatialReference } from "@arcgis/core/geometry";
-import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
+import { convertPathToEvents, mergeEvents } from "./utils";
 
 const lineTrackId0 = new Polyline({
   spatialReference: SpatialReference.WebMercator,
@@ -28,41 +28,9 @@ const lineTrackId1 = new Polyline({
   ]
 });
 
-const densLineTrackId0 = geometryEngine.densify(lineTrackId0, 10.5, "meters") as Polyline;
+const track0Events = convertPathToEvents(lineTrackId0, 3, 3.5, {track_id: 0});
+const track1Events = convertPathToEvents(lineTrackId1, 1, 7, {track_id: 1});
 
-const track0Messages = densLineTrackId0.paths[0].map((v, idx) => ({
-  message: {
-    attributes: {
-      track_id: 0,
-      x: v[0],
-      y: v[1]
-    },
-    geometry: {
-      x: v[0],
-      y: v[1],
-      spatialReference: densLineTrackId0.spatialReference.toJSON()
-    }
-  },
-  msAfterStart: idx * 3000
-}));
-
-const track1Dense = geometryEngine.densify(lineTrackId1, 7, "meters") as Polyline;
-const track1Messages = track1Dense.paths[0].map((v, idx) => ({
-  message: {
-    attributes: {
-      track_id: 1,
-      x: v[0],
-      y: v[1]
-    },
-    geometry: {
-      x: v[0],
-      y: v[1],
-      spatialReference: densLineTrackId0.spatialReference.toJSON()
-    }
-  },
-  msAfterStart: idx * 1000
-}));
-
-const assetEvents = [...track0Messages, ...track1Messages].sort((a, b) => a.msAfterStart - b.msAfterStart);
+const assetEvents = mergeEvents(track0Events, track1Events);
 
 export default assetEvents;

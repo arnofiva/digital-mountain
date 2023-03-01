@@ -1,22 +1,25 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import Collection from "@arcgis/core/core/Collection";
 import StreamLayer from "@arcgis/core/layers/StreamLayer";
+import Query from "@arcgis/core/rest/support/Query";
 import SceneView from "@arcgis/core/views/SceneView";
 import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
-import Query from "@arcgis/core/rest/support/Query";
 
 import { liveScreenStartCamera } from "../cameras";
-import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
+import { clockIntervalMs } from "../constants";
 import { findSlopesGroupLayer, findSlopesLayer } from "../data";
+import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
+
+import { startTimeEvening, startTimeMorning } from "../constants";
 import { slopeEventsEvening, slopeEventsMorning, slopeResetMessages } from "../streamServiceMock/events/slopeEvents";
+import staffEvents from "../streamServiceMock/events/staffEvents";
 import StreamServiceMock from "../streamServiceMock/layers/streamServiceMock";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
-import { clockIntervalMs, startTimeEvening, startTimeMorning } from "../constants";
 
 enum StartTime {
   Morning,
@@ -32,8 +35,11 @@ class LiveStore extends ScreenStore {
   private readonly _view: SceneView;
   private readonly _assetsStream: StreamLayer;
   private readonly _slopeStream: StreamLayer;
+  private readonly _staffStream: StreamLayer;
+
   private readonly _assetsMock: StreamServiceMock;
   private readonly _slopeMock: StreamServiceMock;
+  private readonly _staffMock: StreamServiceMock;
 
   private _goToAlertAbortController: AbortController | null = null;
 
@@ -58,15 +64,31 @@ class LiveStore extends ScreenStore {
       this._slopeStream.url,
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
+
+    const staffLayer = view.map.findLayerById("186989de564-layer-81") as FeatureLayer;
+    const staffStreamLayerUrl = "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer";
+    this._staffStream = new StreamLayer({
+      url: staffStreamLayerUrl
+    });
+    this._staffMock = new StreamServiceMock(
+      staffStreamLayerUrl,
+      staffLayer
+    );
+
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
+    view.map.add(this._staffStream);
+
     this.addHandles({
       remove: () => {
         this.removeHandles(mockHandlesKey);
         view.map.remove(this._assetsStream);
         view.map.remove(this._slopeStream);
+        view.map.remove(this._staffStream);
         this._assetsMock.stop();
         this._slopeMock.stop();
+        this._staffMock.stop();
+
       }
     });
 
@@ -196,6 +218,13 @@ class LiveStore extends ScreenStore {
       }
       this._assetsMock.setEvents(assetEvents);
       this._assetsMock.start(lv);
+    });
+    view.whenLayerView(this._staffStream).then((lv) => {
+      if (signal.aborted) {
+        return;
+      }
+      this._staffMock.setEvents(staffEvents);
+      this._staffMock.start(lv);
     });
     view.whenLayerView(this._slopeStream).then((lv) => {
       if (signal.aborted) {
