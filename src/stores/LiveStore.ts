@@ -8,7 +8,7 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 
 import { liveScreenStartCamera } from "../cameras";
 import { clockIntervalMs } from "../constants";
-import { findSlopesGroupLayer, findSlopesLayer } from "../data";
+import { findSlopesGroupLayer, findSlopesLayer, findStaffLayer } from "../data";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
@@ -66,7 +66,7 @@ class LiveStore extends ScreenStore {
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
     );
 
-    const staffLayer = view.map.findLayerById("186989de564-layer-81") as FeatureLayer;
+    const staffLayer = findStaffLayer(view.map);
     const staffStreamLayerUrl =
       "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer";
     this._staffStream = new StreamLayer({

@@ -41,6 +41,10 @@ export function findStatisticsDataGroupLayer(map: Map): GroupLayer {
   return map.findLayerById("18630cc16cc-layer-103") as GroupLayer;
 }
 
+export function findStaffLayer(map: Map): FeatureLayer {
+  return map.findLayerById("186989de564-layer-81") as FeatureLayer;
+}
+
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,
   rings: [
