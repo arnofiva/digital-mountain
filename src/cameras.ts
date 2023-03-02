@@ -37,9 +37,9 @@ export const planningScreenStartCamera = new Camera({
     spatialReference: {
       wkid: 102100
     },
-    x: 1028206,
-    y: 5912053,
-    z: 1855
+    x: 1028212,
+    y: 5912052,
+    z: 1833
   },
   heading: 321,
   tilt: 81
