@@ -57,7 +57,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
   private _date: Date | null = null;
 
   @property()
-  timeRange: number[] = [Date.UTC(2021, 10, 23), Date.UTC(2022, 1, 15)];
+  timeRange: number[] = [Date.UTC(2021, 10, 23), Date.UTC(2021, 11, 15)];
 
   @property()
   private get _histogramData(): HistogramData | null {
@@ -109,7 +109,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
 
   @property()
   private _histogram = new HistogramRangeSlider({
-    rangeType: "at-most",
+    rangeType: "equal",
     values: [0],
     labelFormatFunction: formatNumberAsDate
   });
