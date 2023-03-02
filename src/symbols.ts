@@ -4,6 +4,8 @@ import ImageryTileLayer from "@arcgis/core/layers/ImageryTileLayer";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import { RasterStretchRenderer } from "@arcgis/core/rasterRenderers";
 import { SimpleRenderer } from "@arcgis/core/renderers";
+import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
+import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import AlgorithmicColorRamp from "@arcgis/core/rest/support/AlgorithmicColorRamp";
 import MultipartColorRamp from "@arcgis/core/rest/support/MultipartColorRamp";
 import {
@@ -173,7 +175,13 @@ export function towerSymbolLayers(options?: {
       ];
 }
 
-export function configureWaterMaxLayer(layer: FeatureLayer, height: number) {
+export function configureWaterMaxLayer(layer: FeatureLayer, waterLayer: FeatureLayer) {
+  // get maximum size of cylinders from the water pits layer renderer
+  const height = (
+    (waterLayer.renderer as ClassBreaksRenderer).visualVariables.find(
+      (vv) => vv instanceof SizeVariable && vv.axis === "height"
+    ) as SizeVariable
+  ).maxSize as number;
   layer.renderer = new SimpleRenderer({
     symbol: new PointSymbol3D({
       symbolLayers: [

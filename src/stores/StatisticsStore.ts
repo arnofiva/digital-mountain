@@ -3,8 +3,6 @@ import { watch } from "@arcgis/core/core/reactiveUtils";
 import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import DimensionalDefinition from "@arcgis/core/layers/support/DimensionalDefinition";
-import { ClassBreaksRenderer } from "@arcgis/core/renderers";
-import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import StatisticDefinition from "@arcgis/core/rest/support/StatisticDefinition";
 import SceneView from "@arcgis/core/views/SceneView";
 
@@ -34,13 +32,7 @@ class StatisticsStore extends ScreenStore {
     waterLayer.outFields = ["Date", "volumen", "volumen_cumulative"];
 
     const waterMaxLayer = findWaterPitsMaxLayer(map);
-    // get maximum size of cylinders from the water pits layer renderer
-    const height = (
-      (waterLayer.renderer as ClassBreaksRenderer).visualVariables.find(
-        (vv) => vv instanceof SizeVariable && vv.axis === "height"
-      ) as SizeVariable
-    ).maxSize as number;
-    configureWaterMaxLayer(waterMaxLayer, height);
+    configureWaterMaxLayer(waterMaxLayer, waterLayer);
     const snowHeightLayer = findSnowHeightLayer(map);
     configureSnowHeightLayer(snowHeightLayer);
     const groupLayer = findStatisticsDataGroupLayer(map);
@@ -63,8 +55,8 @@ class StatisticsStore extends ScreenStore {
       () => view.timeExtent,
       (timeExtent) => {
         const date = new Date(timeExtent.end);
-        date.setDate(date.getDate() + 45);
-        date.setHours(1, 0, 0, 0);
+        date.setUTCDate(date.getUTCDate() + 45);
+        date.setUTCHours(0, 0, 0, 0);
         snowHeightLayer.multidimensionalDefinition = [
           new DimensionalDefinition({
             dimensionName: "StdTime",
