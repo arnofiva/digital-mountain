@@ -14,16 +14,17 @@ import {
   findGalaaxyLOD2Layer,
   findSlopesGroupLayer,
   findSlopesLayer,
+  findSnowGroomerLayer,
   findStaffLayer,
   findWaterPipesLayer
 } from "../data";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
-import createAssetsStream from "../layers/liveAssets";
 import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
 import Camera from "@arcgis/core/Camera";
 import { startTimeEvening, startTimeMorning } from "../constants";
+import SmoothSnowGroomer from "../layers/smoothSnowGrommer";
 import {
   slopeEventsEvening,
   slopeEventsMorning,
@@ -66,6 +67,7 @@ class LiveStore extends ScreenStore {
 
     const slopesGroupLayer = findSlopesGroupLayer(view.map);
     const staffLayer = findStaffLayer(view.map);
+    const snowGroomerLayer = findSnowGroomerLayer(view.map);
 
     this.overrideLayerVisibilities(() => {
       findWaterPipesLayer(view.map).visible = false;
@@ -80,11 +82,15 @@ class LiveStore extends ScreenStore {
 
     this.goToCamera(liveScreenStartCamera, view);
 
-    this._assetsStream = createAssetsStream();
+    this._assetsStream = new StreamLayer({
+      url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowGroomers/StreamServer",
+      renderer: snowGroomerLayer.renderer,
+      opacity: 0
+    });
     this._slopeStream = createSlopeStream();
     this._assetsMock = new StreamServiceMock(
       this._assetsStream.url,
-      "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowCat_StreamLayer4/FeatureServer/0"
+      snowGroomerLayer
     );
     this._slopeMock = new StreamServiceMock(
       this._slopeStream.url,
@@ -92,7 +98,7 @@ class LiveStore extends ScreenStore {
     );
 
     this._staffStream = new StreamLayer({
-      url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff_StreamLayer4/StreamServer",
+      url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff/StreamServer",
       labelingInfo: staffLayer.labelingInfo,
       labelsVisible: true
     });
@@ -102,6 +108,18 @@ class LiveStore extends ScreenStore {
     view.map.add(this._assetsStream);
     view.map.add(this._slopeStream);
     view.map.add(this._staffStream);
+
+    this._assetsStream.load().then(() => {
+      const smoothSnowGroomer = new SmoothSnowGroomer(this._assetsStream, view);
+      view.map.add(smoothSnowGroomer.smoothLayer);
+
+      this.addHandles({
+        remove: () => {
+          view.map.remove(smoothSnowGroomer.smoothLayer);
+          smoothSnowGroomer.destroy();
+        }
+      });
+    });
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "1") {
