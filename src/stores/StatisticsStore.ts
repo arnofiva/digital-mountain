@@ -1,12 +1,23 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import { watch } from "@arcgis/core/core/reactiveUtils";
 import Graphic from "@arcgis/core/Graphic";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import DimensionalDefinition from "@arcgis/core/layers/support/DimensionalDefinition";
+import { ClassBreaksRenderer } from "@arcgis/core/renderers";
+import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import StatisticDefinition from "@arcgis/core/rest/support/StatisticDefinition";
 import SceneView from "@arcgis/core/views/SceneView";
 
 import { statisticsScreenStartCamera } from "../cameras";
-import { findStatisticsDataGroupLayer, findWaterPitsLayer } from "../data";
+import {
+  findSlopesGroupLayer,
+  findSnowHeightLayer,
+  findStatisticsDataGroupLayer,
+  findWaterPitsLayer,
+  findWaterPitsMaxLayer
+} from "../data";
 import { ScreenType } from "../interfaces";
+import { configureSnowHeightLayer, configureWaterMaxLayer } from "../symbols";
 import ScreenStore from "./ScreenStore";
 
 @subclass("digital-mountain.StatisticsStore")
@@ -22,27 +33,66 @@ class StatisticsStore extends ScreenStore {
     const previousOutFields = waterLayer.outFields;
     waterLayer.outFields = ["Date", "volumen", "volumen_cumulative"];
 
+    const waterMaxLayer = findWaterPitsMaxLayer(map);
+    // get maximum size of cylinders from the water pits layer renderer
+    const height = (
+      (waterLayer.renderer as ClassBreaksRenderer).visualVariables.find(
+        (vv) => vv instanceof SizeVariable && vv.axis === "height"
+      ) as SizeVariable
+    ).maxSize as number;
+    configureWaterMaxLayer(waterMaxLayer, height);
+    const snowHeightLayer = findSnowHeightLayer(map);
+    configureSnowHeightLayer(snowHeightLayer);
     const groupLayer = findStatisticsDataGroupLayer(map);
+    const slopesLayer = findSlopesGroupLayer(map);
 
     const previousGroupLayerVisible = groupLayer.visible;
     const previousWaterLayerVisible = waterLayer.visible;
+    const previousWaterMaxLayerVisible = waterMaxLayer.visible;
     groupLayer.visible = true;
     waterLayer.visible = true;
+    waterMaxLayer.visible = true;
+    const previousSlopesLayerVisible = slopesLayer.visible;
+    slopesLayer.visible = false;
+    const previousSnowHeightLayerVisible = snowHeightLayer.visible;
+    snowHeightLayer.visible = true;
 
     this._loadStatistics(waterLayer);
+
+    const timeExtentHandle = watch(
+      () => view.timeExtent,
+      (timeExtent) => {
+        const date = new Date(timeExtent.end);
+        date.setDate(date.getDate() + 45);
+        date.setHours(1, 0, 0, 0);
+        snowHeightLayer.multidimensionalDefinition = [
+          new DimensionalDefinition({
+            dimensionName: "StdTime",
+            isSlice: false,
+            values: [date.getTime()],
+            variableName: "snowHeight"
+          })
+        ];
+        snowHeightLayer.useViewTime = false;
+      }
+    );
 
     this.addHandles([
       {
         remove: () => {
+          slopesLayer.visible = previousSlopesLayerVisible;
           groupLayer.visible = previousGroupLayerVisible;
           waterLayer.visible = previousWaterLayerVisible;
+          waterMaxLayer.visible = previousWaterMaxLayerVisible;
+          snowHeightLayer.visible = previousSnowHeightLayerVisible;
         }
       },
       {
         remove: () => {
           waterLayer.outFields = previousOutFields;
         }
-      }
+      },
+      timeExtentHandle
     ]);
   }
 

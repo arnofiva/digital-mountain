@@ -23,7 +23,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
       watch(
         () => {
           const data = this._histogramData;
-          return data ? new Date(data.average) : null;
+          return data ? new Date(data.min) : null;
         },
         (date) => {
           this._date = date;
@@ -57,6 +57,9 @@ export class WaterHistogram extends Widget<ConstructProperties> {
   private _date: Date | null = null;
 
   @property()
+  timeRange: number[] = [Date.UTC(2021, 10, 23), Date.UTC(2022, 1, 15)];
+
+  @property()
   private get _histogramData(): HistogramData | null {
     if (!this.records) {
       return null;
@@ -70,34 +73,36 @@ export class WaterHistogram extends Widget<ConstructProperties> {
     };
 
     for (const { attributes } of this.records) {
-      const volume: number = attributes.volumen_sum;
       const date: number = attributes.Date;
-      histogramData.min = Math.min(histogramData.min, date);
-      histogramData.max = Math.max(histogramData.max, date);
-      histogramData.bins.push({
-        count: volume,
-        minValue: date,
-        maxValue: date
-      });
-    }
-
-    // Clamp histogram range to data
-    let firstNonEmptyIndex = histogramData.bins.length;
-    let lastNonEmptyIndex = 0;
-    for (let i = 0; i < histogramData.bins.length; ++i) {
-      const bin = histogramData.bins[i];
-      const hasVolume = bin.count > minHistogramVolume;
-      if (hasVolume) {
-        firstNonEmptyIndex = Math.min(firstNonEmptyIndex, i);
-        lastNonEmptyIndex = Math.max(lastNonEmptyIndex, i);
+      if (date > this.timeRange[0] && date < this.timeRange[1]) {
+        const volume: number = attributes.volumen_sum;
+        histogramData.min = Math.min(histogramData.min, date);
+        histogramData.max = Math.max(histogramData.max, date);
+        histogramData.bins.push({
+          count: volume,
+          minValue: date,
+          maxValue: date
+        });
       }
     }
 
-    if (lastNonEmptyIndex !== 0 && firstNonEmptyIndex !== histogramData.bins.length) {
-      histogramData.bins = histogramData.bins.slice(firstNonEmptyIndex, lastNonEmptyIndex + 1);
-      histogramData.min = histogramData.bins[0].minValue;
-      histogramData.max = histogramData.bins[histogramData.bins.length - 1].maxValue;
-    }
+    // Clamp histogram range to data
+    // let firstNonEmptyIndex = histogramData.bins.length;
+    // let lastNonEmptyIndex = 0;
+    // for (let i = 0; i < histogramData.bins.length; ++i) {
+    //   const bin = histogramData.bins[i];
+    //   const hasVolume = bin.count > minHistogramVolume;
+    //   if (hasVolume) {
+    //     firstNonEmptyIndex = Math.min(firstNonEmptyIndex, i);
+    //     lastNonEmptyIndex = Math.max(lastNonEmptyIndex, i);
+    //   }
+    // }
+
+    // if (lastNonEmptyIndex !== 0 && firstNonEmptyIndex !== histogramData.bins.length) {
+    //   histogramData.bins = histogramData.bins.slice(firstNonEmptyIndex, lastNonEmptyIndex + 1);
+    //   histogramData.min = histogramData.bins[0].minValue;
+    //   histogramData.max = histogramData.bins[histogramData.bins.length - 1].maxValue;
+    // }
     histogramData.average = (histogramData.max + histogramData.min) * 0.5;
     return histogramData;
   }
@@ -111,7 +116,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
 
   private readonly _throttledSetViewTimeExtent = throttle(
     (date: Date | null) => this.actions.setViewTimeExtent(date),
-    500 /* ms */
+    1000 /* ms */
   );
 
   render() {

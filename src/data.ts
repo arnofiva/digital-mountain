@@ -1,6 +1,7 @@
 import { Polygon, SpatialReference } from "@arcgis/core/geometry";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GroupLayer from "@arcgis/core/layers/GroupLayer";
+import ImageryTileLayer from "@arcgis/core/layers/ImageryTileLayer";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import Map from "@arcgis/core/Map";
 
@@ -63,6 +64,14 @@ export function findElectricalLayer(map: Map): FeatureLayer {
 
 export function findGalaaxyLOD2Layer(map: Map): SceneLayer {
   return map.findLayerById("1868e9f9866-layer-68") as SceneLayer;
+}
+
+export function findWaterPitsMaxLayer(map: Map): FeatureLayer {
+  return map.findLayerById("1869d5d9218-layer-72") as FeatureLayer;
+}
+
+export function findSnowHeightLayer(map: Map): ImageryTileLayer {
+  return map.findLayerById("1869cdeb863-layer-69") as ImageryTileLayer;
 }
 
 export const skiResortArea = new Polygon({
