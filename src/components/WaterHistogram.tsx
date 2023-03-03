@@ -61,6 +61,21 @@ export class WaterHistogram extends Widget<ConstructProperties> {
   private _date: Date | null = null;
 
   @property()
+  private get _volumeToday(): number {
+    const date = this._date;
+    if (!date) {
+      return 0;
+    }
+    const time = date.getTime();
+    for (const { minValue, maxValue, count } of this._histogram.bins) {
+      if (minValue < time && time < maxValue) {
+        return count;
+      }
+    }
+    return 0;
+  }
+
+  @property()
   private get _histogramData(): HistogramData | null {
     const { records } = this;
     if (!records) {
@@ -127,31 +142,39 @@ export class WaterHistogram extends Widget<ConstructProperties> {
 
   render() {
     const histogramData = this._histogramData;
-    const hasData = histogramData && histogramData.bins.length !== 0;
-
-    let message = "No data loaded";
-    let histogramElement: tsx.JSX.Element | null = null;
-    if (hasData) {
-      this._histogram.bins = histogramData.bins;
-      this._histogram.min = histogramData.min;
-      this._histogram.max = histogramData.max;
-      this._histogram.values = [this._date?.valueOf() ?? 0];
-
-      message = "Volume of water used by snow cannons";
-      histogramElement = <div class="histogram-container">{this._histogram.render()}</div>;
-    }
+    const date = this._date;
+    const hasData = date && histogramData && histogramData.bins.length !== 0;
 
     return (
       <div class="statistics-time esri-widget">
-        <p>{message}</p>
-        {histogramElement}
+        {hasData ? (
+          this._renderChildren(histogramData, date)
+        ) : (
+          <p class="statistics-message">No data loaded</p>
+        )}
       </div>
     );
+  }
+
+  private _renderChildren(histogramData: HistogramData, date: Date): tsx.JSX.Element[] {
+    const histogram = this._histogram;
+    histogram.bins = histogramData.bins;
+    histogram.min = histogramData.min;
+    histogram.max = histogramData.max;
+    histogram.values = [date.valueOf() ?? 0];
+
+    return [
+      <div class="histogram-container">{histogram.render()}</div>,
+      <div class="histogram-info">
+        <p>Date: {longDateFormatter.format(date)}</p>
+        <p>Volume of water used: {this._volumeToday.toFixed(0)} m³</p>
+      </div>
+    ];
   }
 }
 
 function formatNumberAsDate(timestamp: number) {
-  return formatter.format(timestamp);
+  return shortDateFormatter.format(timestamp);
 }
 
 function recordIsAfterDayStart({ attributes: { Date } }: Graphic, start: number): boolean {
@@ -181,9 +204,12 @@ function dayTimeExtentFromDate(date: Date | null): TimeExtent | null {
 function datesAreWithinSameDay(oldDate: Date | null, newDate: Date | null): boolean {
   return (
     oldDate === newDate ||
-    (oldDate != null && newDate != null && formatter.format(oldDate) === formatter.format(newDate))
+    (oldDate != null &&
+      newDate != null &&
+      shortDateFormatter.format(oldDate) === shortDateFormatter.format(newDate))
   ); // This formatter only displays the year/month/day
 }
 
-const formatter = new Intl.DateTimeFormat("en-US", { dateStyle: "short" });
+const shortDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "short" });
+const longDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 const tmpDate = new Date(0);
