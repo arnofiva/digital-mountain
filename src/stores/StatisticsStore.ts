@@ -56,7 +56,7 @@ class StatisticsStore extends ScreenStore {
       (timeExtent) => {
         const date = new Date(timeExtent.end);
         date.setUTCDate(date.getUTCDate() + 45);
-        date.setUTCHours(0, 0, 0, 0);
+        date.setUTCHours(23, 59, 59, 999);
         snowHeightLayer.multidimensionalDefinition = [
           new DimensionalDefinition({
             dimensionName: "StdTime",

@@ -1,11 +1,12 @@
 import Graphic from "@arcgis/core/Graphic";
+import TimeExtent from "@arcgis/core/TimeExtent";
 
 export interface UIActions {
   exportPlan(): void;
   goToAlert(data: AlertData): void;
   openTaskScreen(taskScreenType: TaskScreenType): void;
   openTaskSelectionScreen(options: { animateCameraToStart: boolean }): void;
-  setViewTimeExtent(date: Date | null): void;
+  setViewTimeExtent(timeExtent: TimeExtent | null): void;
   startSlopeEditor(): void;
   startLiftEditor(options?: { updateGraphic?: Graphic }): void;
   toggleStartTime(): void;

@@ -119,21 +119,8 @@ class AppStore extends Accessor implements UIActions {
    * View actions
    ***************/
 
-  setViewTimeExtent(date: Date | null) {
-    if (!date) {
-      this._view.timeExtent = null;
-      return;
-    }
-
-    const start = new Date(date);
-    start.setHours(start.getHours() - 12);
-    const end = new Date(date);
-    end.setHours(end.getHours() + 12);
-
-    this._view.timeExtent = new TimeExtent({
-      start,
-      end
-    });
+  setViewTimeExtent(timeExtent: TimeExtent | null) {
+    this._view.timeExtent = timeExtent;
   }
 
   private _setupHitTest(): IHandle {

@@ -1,6 +1,7 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { watch } from "@arcgis/core/core/reactiveUtils";
 import Graphic from "@arcgis/core/Graphic";
+import TimeExtent from "@arcgis/core/TimeExtent";
 import HistogramRangeSlider from "@arcgis/core/widgets/HistogramRangeSlider";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 import { UIActions } from "../interfaces";
@@ -10,7 +11,7 @@ import { Widget } from "./Widget";
 type ConstructProperties = Pick<WaterHistogram, "actions" | "records">;
 type HistogramData = Pick<HistogramRangeSlider, "min" | "max" | "bins" | "average">;
 
-const timeRange: number[] = [Date.UTC(2021, 10, 23), Date.UTC(2021, 11, 15)];
+const timeRange = [Date.UTC(2021, 10, 23), Date.UTC(2021, 11, 15)] as const;
 
 @subclass("digital-mountain.WaterHistogram")
 export class WaterHistogram extends Widget<ConstructProperties> {
@@ -36,7 +37,11 @@ export class WaterHistogram extends Widget<ConstructProperties> {
       ),
       watch(
         () => this._date,
-        (date) => ignoreAbortErrors(this._throttledSetViewTimeExtent(abortController.signal, date)),
+        (date) => {
+          ignoreAbortErrors(
+            this._throttledSetViewTimeExtent(abortController.signal, dayTimeExtentFromDate(date))
+          );
+        },
         { initial: true }
       ),
       this._histogram.on("thumb-change", (event) => (this._date = new Date(event.value))),
@@ -57,32 +62,47 @@ export class WaterHistogram extends Widget<ConstructProperties> {
 
   @property()
   private get _histogramData(): HistogramData | null {
-    if (!this.records) {
+    const { records } = this;
+    if (!records) {
       return null;
     }
 
     const histogramData: HistogramData = {
       bins: [],
-      average: 0,
-      min: Number.POSITIVE_INFINITY,
-      max: Number.NEGATIVE_INFINITY
+      average: (timeRange[0] + timeRange[1]) * 0.5,
+      min: timeRange[0],
+      max: timeRange[1]
     };
 
-    for (const { attributes } of this.records) {
-      const date: number = attributes.Date;
-      if (date > timeRange[0] && date < timeRange[1]) {
-        const volume: number = attributes.volumen_sum;
-        histogramData.min = Math.min(histogramData.min, date);
-        histogramData.max = Math.max(histogramData.max, date);
-        histogramData.bins.push({
-          count: volume,
-          minValue: date,
-          maxValue: date
-        });
+    // We loop over each day in the range, create a bin for it, and count the volume from that day.
+    // We assume records are sorted in ascending date order.
+    for (
+      let binDate = new Date(timeRange[0]), i = 0;
+      binDate.getTime() <= timeRange[1];
+      binDate.setUTCDate(binDate.getUTCDate() + 1)
+    ) {
+      tmpDate.setTime(binDate.getTime());
+      tmpDate.setUTCHours(0, 0, 0, 0); // Start of day
+      const binStart = tmpDate.getTime();
+      tmpDate.setUTCHours(23, 59, 59, 999); // End of day
+      const binEnd = tmpDate.getTime();
+
+      // Find all records within this day and add them up (generally there will be only one).
+      // We continue from were previous iterations stopped, since records are sorted.
+      let dailyVolume = 0;
+      for (; i < records.length && recordIsBeforeDayEnd(records[i], binEnd); ++i) {
+        if (recordIsAfterDayStart(records[i], binStart)) {
+          // Record is within day
+          dailyVolume += records[i].attributes.volumen_sum;
+        }
       }
+      histogramData.bins.push({
+        count: dailyVolume,
+        minValue: binStart,
+        maxValue: binEnd
+      });
     }
 
-    histogramData.average = (histogramData.max + histogramData.min) * 0.5;
     return histogramData;
   }
 
@@ -94,7 +114,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
   });
 
   private readonly _throttledSetViewTimeExtent = throttle(
-    (date: Date | null) => this.actions.setViewTimeExtent(date),
+    (timeExtent: TimeExtent | null) => this.actions.setViewTimeExtent(timeExtent),
     1000 /* ms */
   );
 
@@ -127,4 +147,29 @@ function formatNumberAsDate(timestamp: number) {
   return formatter.format(timestamp);
 }
 
+function recordIsAfterDayStart({ attributes: { Date } }: Graphic, start: number): boolean {
+  return start <= Date;
+}
+
+function recordIsBeforeDayEnd({ attributes: { Date } }: Graphic, end: number): boolean {
+  return Date <= end;
+}
+
+function dayTimeExtentFromDate(date: Date | null): TimeExtent | null {
+  if (!date) {
+    return null;
+  }
+
+  const start = new Date(date);
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setUTCHours(23, 59, 59, 999);
+
+  return new TimeExtent({
+    start,
+    end
+  });
+}
+
 const formatter = new Intl.DateTimeFormat("en-US", { dateStyle: "short" });
+const tmpDate = new Date(0);
