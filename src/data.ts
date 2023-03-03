@@ -74,6 +74,10 @@ export function findSnowHeightLayer(map: Map): ImageryTileLayer {
   return map.findLayerById("1869cdeb863-layer-69") as ImageryTileLayer;
 }
 
+export function findRealisticLiftsLayer(map: Map) {
+  return map.findLayerById("18633186fa9-layer-106") as GroupLayer
+}
+
 export const skiResortArea = new Polygon({
   spatialReference: SpatialReference.WebMercator,
   rings: [

@@ -1,10 +1,12 @@
 import Color from "@arcgis/core/Color";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import ImageryTileLayer from "@arcgis/core/layers/ImageryTileLayer";
+import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import { RasterStretchRenderer } from "@arcgis/core/rasterRenderers";
 import { SimpleRenderer } from "@arcgis/core/renderers";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
+import RotationVariable from "@arcgis/core/renderers/visualVariables/RotationVariable";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
 import AlgorithmicColorRamp from "@arcgis/core/rest/support/AlgorithmicColorRamp";
 import MultipartColorRamp from "@arcgis/core/rest/support/MultipartColorRamp";
@@ -21,7 +23,7 @@ import {
 import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
 import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 
-import { towerColor, liftInvalidPreviewColor, maxTowerHeight, cableColor } from "./constants";
+import { cableColor, liftInvalidPreviewColor, maxTowerHeight, towerColor } from "./constants";
 
 /**
  * Symbols used to visualize slopes based on status.
@@ -255,5 +257,33 @@ export function configureSnowHeightLayer(layer: ImageryTileLayer) {
         })
       ]
     })
+  });
+}
+
+export function configureStatisticsTreeLayer(layer: SceneLayer) {
+  layer.renderer = new SimpleRenderer({
+    symbol: new PointSymbol3D({
+      symbolLayers: [
+        new ObjectSymbol3DLayer({
+          resource: {
+            href: "https://ralucanicola.github.io/3d-models/Norway_Spruce.glb"
+          },
+          material: {
+            // color: [206, 230, 184]
+            color: [255, 255, 255]
+          },
+          castShadows: false
+        })
+      ]
+    }),
+    visualVariables: [
+      new SizeVariable({
+        axis: "height",
+        valueExpression: "$feature.height"
+      }),
+      new RotationVariable({
+        valueExpression: "Random() * 360"
+      })
+    ]
   });
 }
