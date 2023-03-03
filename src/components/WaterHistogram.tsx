@@ -110,7 +110,14 @@ export class WaterHistogram extends Widget<ConstructProperties> {
   private _histogram = new HistogramRangeSlider({
     rangeType: "equal",
     values: [0],
-    labelFormatFunction: formatNumberAsDate
+    labelFormatFunction: formatNumberAsDate,
+    barCreatedFunction: (index, element: SVGElement) => {
+      element.addEventListener("click", () => {
+        const bin = this._histogram.bins[index];
+        this._date = new Date((bin.maxValue + bin.minValue) * 0.5);
+      });
+      element.style.cursor = "pointer";
+    }
   });
 
   private readonly _throttledSetViewTimeExtent = throttle(
