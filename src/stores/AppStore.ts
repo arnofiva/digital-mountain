@@ -70,6 +70,18 @@ class AppStore extends Accessor implements UIActions {
     }
   }
 
+  toggleSnowDepths(): void {
+    if (this._screenStore?.type === ScreenType.Statistics) {
+      this._screenStore.snowCoverVisible = !this._screenStore.snowCoverVisible;
+    }
+  }
+
+  toggleWaterUsage(): void {
+    if (this._screenStore?.type === ScreenType.Statistics) {
+      this._screenStore.waterUsageVisible = !this._screenStore.waterUsageVisible;
+    }
+  }
+
   openTaskScreen(taskScreenType: TaskScreenType): void {
     this._screenStore?.destroy();
     document.body.classList.add(taskScreenClass);
