@@ -73,7 +73,7 @@ class StatisticsStore extends ScreenStore {
 
     snowDepthsLayer.visible = false;
     groupLayer.visible = true;
-    slopesLayer.visible = false;
+    // slopesLayer.visible = false;
     waterPipesLayer.visible = false;
     fiberOpticLayer.visible = false;
     staffLayer.visible = false;
@@ -97,6 +97,7 @@ class StatisticsStore extends ScreenStore {
       (visible) => {
         snowDepthsLayer.visible = visible;
         legend.visible = visible;
+        slopesLayer.visible = !visible;
       }
     );
 
@@ -105,6 +106,20 @@ class StatisticsStore extends ScreenStore {
       (visible) => {
         waterLayer.visible = visible;
         waterMaxLayer.visible = visible;
+
+
+        if (visible) {
+          setTimeout(() => 
+          view.goTo({
+            position: {
+              longitude: 9.24161775,
+              latitude: 46.84152087,
+              z: 1944.50930
+            },
+            heading: 267.21,
+            tilt: 74.16
+          }), 1000);
+        }
       }
     )
 
@@ -112,7 +127,7 @@ class StatisticsStore extends ScreenStore {
       () => view.timeExtent,
       (timeExtent) => {
         const date = new Date(timeExtent.end);
-        date.setUTCDate(date.getUTCDate() + 45);
+        date.setUTCDate(date.getUTCDate() + 46);
         date.setUTCHours(0, 0, 0, 0);
         snowDepthsLayer.multidimensionalDefinition = [
           new DimensionalDefinition({
@@ -141,6 +156,7 @@ class StatisticsStore extends ScreenStore {
           fiberOpticLayer.visible = previousFiberOpticLayerVisible;
           staffLayer.visible = previousStaffLayerVisible;
           realisticLiftsLayer.visible = previousRealisticLiftsLayerVisible;
+          view.ui.remove(legend);
         }
       },
       timeExtentHandle,

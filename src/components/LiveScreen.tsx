@@ -1,13 +1,14 @@
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
+import { UIActions } from "../interfaces";
 import LiveStore from "../stores/LiveStore";
+import { ensureViewUIContainer } from "../utils";
 import Alerts from "./Alerts";
 import Clock from "./Clock";
+import CodeSnippet from "./CodeSnippet";
 import Header from "./Header";
-import { UIActions } from "../interfaces";
 import { Widget } from "./Widget";
-import { ensureViewUIContainer } from "../utils";
 
 type ConstructProperties = Pick<LiveScreen, "actions" | "store">;
 
@@ -20,9 +21,24 @@ class LiveScreen extends Widget<ConstructProperties> {
   store: LiveStore;
 
   render() {
+
+    const dimensionSnippetText = `const streamLayer = new StreamLayer({
+  url: "https://us-iot.arcgis.com/.../slopesStatus/StreamServer"
+});
+
+const streamLayerView = await view.whenLayerView(streamLayer);
+
+streamLayerView.on("data-received", (e) => {
+  if (e.attributes["status"] === "OPEN") {
+    showNotification(e);
+  }
+});`;
+
+
     return (
       <div class="screen">
         <Header actions={this.actions} subtitle="Live" />
+        <CodeSnippet display={this.store.codeSnippetVisible} text={dimensionSnippetText} />
         <Clock
           actions={this.actions}
           container={ensureViewUIContainer("top-left", "clock")}

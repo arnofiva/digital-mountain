@@ -57,7 +57,7 @@ class LiveStore extends ScreenStore {
   private readonly _staffMock: StreamServiceMock;
 
   @property()
-  private _codeSnippetVisible = false;
+  public codeSnippetVisible = false;
 
   private _goToAlertAbortController: AbortController | null = null;
 
@@ -80,7 +80,7 @@ class LiveStore extends ScreenStore {
       staffLayer.visible = false;
     }, view);
 
-    this.goToCamera(liveScreenStartCamera, view);
+    this.goToCamera(liveScreenStartCamera, view, false);
 
     this._assetsStream = new StreamLayer({
       url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowGroomers/StreamServer",
@@ -145,15 +145,25 @@ class LiveStore extends ScreenStore {
       } else if (e.key === "3") {
         view.goTo(new Camera({
           position: {
-            longitude: 9.23344056,
-            latitude: 46.84112040,
-            z: 1858.33258
+            longitude: 9.22816550,
+            latitude: 46.84097062,
+            z: 1881.33641
           },
-          heading: 285.75,
-          tilt: 80.58
+          heading: 56.06,
+          tilt: 67.89
+        }));
+      } else if (e.key === "4") {
+        view.goTo(new Camera({
+          position: {
+            longitude: 9.23594818,
+            latitude: 46.84156585,
+            z: 1874.88595
+          },
+          heading: 274.59,
+          tilt: 77.76
         }));
       } else if (e.key === "c") {
-        this._codeSnippetVisible = !this._codeSnippetVisible;
+        this.codeSnippetVisible = !this.codeSnippetVisible;
       }
     }
     window.addEventListener("keydown", onKeyDown);
