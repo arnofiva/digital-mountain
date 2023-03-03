@@ -42,7 +42,7 @@ export class WaterHistogram extends Widget<ConstructProperties> {
             this._throttledSetViewTimeExtent(abortController.signal, dayTimeExtentFromDate(date))
           );
         },
-        { initial: true }
+        { initial: true, equals: datesAreWithinSameDay }
       ),
       this._histogram.on("thumb-change", (event) => (this._date = new Date(event.value))),
       this._histogram.on("thumb-drag", (event) => (this._date = new Date(event.value))),
@@ -176,6 +176,13 @@ function dayTimeExtentFromDate(date: Date | null): TimeExtent | null {
     start,
     end
   });
+}
+
+function datesAreWithinSameDay(oldDate: Date | null, newDate: Date | null): boolean {
+  return (
+    oldDate === newDate ||
+    (oldDate != null && newDate != null && formatter.format(oldDate) === formatter.format(newDate))
+  ); // This formatter only displays the year/month/day
 }
 
 const formatter = new Intl.DateTimeFormat("en-US", { dateStyle: "short" });
