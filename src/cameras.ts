@@ -60,11 +60,10 @@ export const planningScreenDetailCamera = new Camera({
 
 export const statisticsScreenStartCamera = new Camera({
   position: {
-    spatialReference: { wkid: 102100 },
-    x: 1028789,
-    y: 5913876,
-    z: 2519
+    longitude: 9.24212490,
+    latitude: 46.84139223,
+    z: 1971.68015
   },
-  heading: 310,
-  tilt: 78
+  heading: 271.81,
+  tilt: 68.63
 });
