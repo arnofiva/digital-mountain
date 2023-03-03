@@ -1,3 +1,13 @@
+import Color from "@arcgis/core/Color";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import ImageryTileLayer from "@arcgis/core/layers/ImageryTileLayer";
+import LabelClass from "@arcgis/core/layers/support/LabelClass";
+import { RasterStretchRenderer } from "@arcgis/core/rasterRenderers";
+import { SimpleRenderer } from "@arcgis/core/renderers";
+import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
+import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable";
+import AlgorithmicColorRamp from "@arcgis/core/rest/support/AlgorithmicColorRamp";
+import MultipartColorRamp from "@arcgis/core/rest/support/MultipartColorRamp";
 import {
   FillSymbol3DLayer,
   IconSymbol3DLayer,
@@ -8,6 +18,8 @@ import {
   PointSymbol3D,
   PolygonSymbol3D
 } from "@arcgis/core/symbols";
+import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
+import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 
 import { towerColor, liftInvalidPreviewColor, maxTowerHeight, cableColor } from "./constants";
 
@@ -161,4 +173,87 @@ export function towerSymbolLayers(options?: {
           depth: 1
         })
       ];
+}
+
+export function configureWaterMaxLayer(layer: FeatureLayer, waterLayer: FeatureLayer) {
+  // get maximum size of cylinders from the water pits layer renderer
+  const height = (
+    (waterLayer.renderer as ClassBreaksRenderer).visualVariables.find(
+      (vv) => vv instanceof SizeVariable && vv.axis === "height"
+    ) as SizeVariable
+  ).maxSize as number;
+  layer.renderer = new SimpleRenderer({
+    symbol: new PointSymbol3D({
+      symbolLayers: [
+        new ObjectSymbol3DLayer({
+          resource: {
+            primitive: "cylinder"
+          },
+          castShadows: false,
+          width: 1.5,
+          depth: 1.5,
+          height,
+          material: {
+            color: [35, 8, 199, 0.8]
+          }
+        })
+      ]
+    })
+  });
+  layer.labelingInfo = [
+    new LabelClass({
+      labelExpressionInfo: {
+        expression: "Floor($feature.volumen, 1) + ' m³ (' + Floor($feature.volumen/379*100, 2) + '%)'"
+      },
+      labelPlacement: "above-right",
+      symbol: new LabelSymbol3D({
+        symbolLayers: [
+          new TextSymbol3DLayer({
+            material: {
+              color: [26, 7, 143]
+            },
+            halo: {
+              color: [255, 255, 255, 0.4],
+              size: 0.5
+            },
+            font: {
+              size: 9,
+              weight: "bold",
+              decoration: "underline",
+              family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
+            }
+          })
+        ]
+      })
+    })
+  ];
+}
+
+export function configureSnowHeightLayer(layer: ImageryTileLayer) {
+  layer.renderer = new RasterStretchRenderer({
+    stretchType: "min-max",
+    statistics: [[0, 2, 0.8551445263440985, 1.9532896461042648]],
+    gamma: [1],
+    computeGamma: false,
+    useGamma: true,
+    colorRamp: new MultipartColorRamp({
+      colorRamps: [
+        new AlgorithmicColorRamp({
+          algorithm: "hsv",
+          fromColor: new Color([255, 0, 0, 255]),
+          toColor: new Color([255, 255, 0, 255])
+        }),
+        new AlgorithmicColorRamp({
+          algorithm: "hsv",
+          fromColor: new Color([255, 255, 0, 255]),
+          toColor: new Color([0, 255, 255, 255])
+        }),
+        new AlgorithmicColorRamp({
+          algorithm: "hsv",
+          fromColor: new Color([0, 255, 255, 255]),
+          toColor: new Color([0, 0, 255, 255])
+        })
+      ]
+    })
+  });
 }
