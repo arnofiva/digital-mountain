@@ -21,7 +21,10 @@ const morningUpdates: SlopeStreamEvent[] = [
       STATUS: "Offen",
       showAlert: true
     }
-  },
+  }
+];
+
+const openingUpdates: SlopeStreamEvent[] = [
   {
     attributes: {
       track_id: 306,
@@ -52,6 +55,11 @@ export const slopeEventsMorning = morningUpdates.map((message, idx) => ({
   message,
   msAfterStart: idx * 6000 + 1500
 }));
+
+export const slopeEventsOpening = openingUpdates.map((message, idx) => ({
+  message,
+  msAfterStart: 2500
+}))
 
 export const slopeEventsEvening = eveningUpdates.map((message, idx) => ({
   message,

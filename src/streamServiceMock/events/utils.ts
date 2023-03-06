@@ -6,7 +6,7 @@ export const convertPathToEvents = (
   line: Polyline,
   updateRate: number,
   speed: number,
-  attributes: { track_id: number }
+  attributes: any | { track_id: number }
 ) => {
   const spatialReference = line.spatialReference;
   const densifiedLine = geometryEngine.densify(line, updateRate * speed, "meters") as Polyline;
@@ -20,7 +20,7 @@ export const convertPathToEvents = (
         spatialReference
       }
     },
-    msAfterStart: idx * updateRate * 1000
+    msAfterStart: idx * updateRate * 1000 + 500 * Math.random()
   }));
 
   console.log("Events", events.length, { events });

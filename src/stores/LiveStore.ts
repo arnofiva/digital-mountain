@@ -7,7 +7,7 @@ import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
 
 import { liveScreenStartCamera } from "../cameras";
-import { clockIntervalMs, taskSelectionViewDate } from "../constants";
+import { clockIntervalMs } from "../constants";
 import {
   findElectricalLayer,
   findFiberOpticLayer,
@@ -28,6 +28,7 @@ import SmoothSnowGroomer from "../layers/smoothSnowGrommer";
 import {
   slopeEventsEvening,
   slopeEventsMorning,
+  slopeEventsOpening,
   slopeResetMessagesEvening,
   slopeResetMessagesMorning
 } from "../streamServiceMock/events/slopeEvents";
@@ -130,7 +131,11 @@ class LiveStore extends ScreenStore {
             heading: 244.2,
             tilt: 66.24
           })
-        );
+        ).then(async () => {
+          const lv = await view.whenLayerView(this._slopeStream)
+          this._slopeMock.setEvents(slopeEventsOpening);
+          this._slopeMock.start(lv);
+        });
       } else if (e.key === "2") {
         view.goTo(
           new Camera({

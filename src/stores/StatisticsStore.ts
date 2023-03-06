@@ -107,7 +107,6 @@ class StatisticsStore extends ScreenStore {
     );
 
     const translateSnowDepthDate = (selectedDate: Date) => {
-      console.log({ selectedDate });
       const day = selectedDate.getDate();
       switch (day) {
         case 24:

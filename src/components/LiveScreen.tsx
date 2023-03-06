@@ -34,7 +34,7 @@ streamLayerView.on("data-received", (e) => {
 });`;
 
     return (
-      <div class="screen">
+      <div class="screen screen-live">
         <Header actions={this.actions} subtitle="Operations" />
         <CodeSnippet display={this.store.codeSnippetVisible} text={dimensionSnippetText} />
         <Clock
