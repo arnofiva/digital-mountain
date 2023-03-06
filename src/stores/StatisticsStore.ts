@@ -106,20 +106,6 @@ class StatisticsStore extends ScreenStore {
       (visible) => {
         waterLayer.visible = visible;
         waterMaxLayer.visible = visible;
-
-
-        if (visible) {
-          setTimeout(() => 
-          view.goTo({
-            position: {
-              longitude: 9.24161775,
-              latitude: 46.84152087,
-              z: 1944.50930
-            },
-            heading: 267.21,
-            tilt: 74.16
-          }), 1000);
-        }
       }
     )
 

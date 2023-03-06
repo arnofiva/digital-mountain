@@ -49,7 +49,7 @@ class StatisticsScreen extends Widget<ConstructProperties> {
 
     return (
       <div class="screen">
-        <Header actions={this.actions} contentElement={buttons} subtitle="Statistics" />
+        <Header actions={this.actions} contentElement={buttons} subtitle="Snowmaking" />
         <WaterHistogram
           container={ensureViewUIContainer("bottom-left", "statistics")}
           records={this.store.records}
