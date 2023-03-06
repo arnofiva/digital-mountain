@@ -135,12 +135,12 @@ class LiveStore extends ScreenStore {
       } else if (e.key === "2") {
         view.goTo(new Camera({
           position: {
-            longitude: 9.25623898,
-            latitude: 46.83649725,
-            z: 2686.63328
+            longitude: 9.25579187,
+            latitude: 46.83355769,
+            z: 2357.94722
           },
-          heading: 282.07,
-          tilt: 76.96
+          heading: 288.79,
+          tilt: 84.26
         }));
       } else if (e.key === "3") {
         view.goTo(new Camera({
