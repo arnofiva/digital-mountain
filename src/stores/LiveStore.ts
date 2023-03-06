@@ -57,7 +57,7 @@ class LiveStore extends ScreenStore {
   private readonly _staffMock: StreamServiceMock;
 
   @property()
-  private _codeSnippetVisible = false;
+  public codeSnippetVisible = false;
 
   private _goToAlertAbortController: AbortController | null = null;
 
@@ -80,7 +80,7 @@ class LiveStore extends ScreenStore {
       staffLayer.visible = false;
     }, view);
 
-    this.goToCamera(liveScreenStartCamera, view);
+    this.goToCamera(liveScreenStartCamera, view, false);
 
     this._assetsStream = new StreamLayer({
       url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowGroomers/StreamServer",
@@ -135,25 +135,35 @@ class LiveStore extends ScreenStore {
       } else if (e.key === "2") {
         view.goTo(new Camera({
           position: {
-            longitude: 9.25623898,
-            latitude: 46.83649725,
-            z: 2686.63328
+            longitude: 9.25579187,
+            latitude: 46.83355769,
+            z: 2357.94722
           },
-          heading: 282.07,
-          tilt: 76.96
+          heading: 288.79,
+          tilt: 84.26
         }));
       } else if (e.key === "3") {
         view.goTo(new Camera({
           position: {
-            longitude: 9.23344056,
-            latitude: 46.84112040,
-            z: 1858.33258
+            longitude: 9.22816550,
+            latitude: 46.84097062,
+            z: 1881.33641
           },
-          heading: 285.75,
-          tilt: 80.58
+          heading: 56.06,
+          tilt: 67.89
+        }));
+      } else if (e.key === "4") {
+        view.goTo(new Camera({
+          position: {
+            longitude: 9.23656129,
+            latitude: 46.84158115,
+            z: 1890.89974
+          },
+          heading: 264.72,
+          tilt: 79.81
         }));
       } else if (e.key === "c") {
-        this._codeSnippetVisible = !this._codeSnippetVisible;
+        this.codeSnippetVisible = !this.codeSnippetVisible;
       }
     }
     window.addEventListener("keydown", onKeyDown);

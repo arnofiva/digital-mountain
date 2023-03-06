@@ -57,7 +57,8 @@ class SmoothSnowGroomer extends Accessor {
     
         this.interpolateFeatures();
     
-        requestAnimationFrame(loop);
+        setTimeout(loop, 50);
+        // requestAnimationFrame(loop);
       };
 
       loop();

@@ -227,6 +227,10 @@ h3 {
   }
 }
 
+.esri-legend {
+  max-width: 230px;
+}
+
 .esri-view-surface::after {
   outline: none !important;
 }
@@ -234,3 +238,27 @@ h3 {
 #alerts-ui-container {
   pointer-events: none;
 }
+
+
+.esri-legend__ramp-label {
+  visibility: hidden;
+}
+
+.esri-legend__ramp-label:first-child:after {
+  visibility: visible;
+  display: block;
+  position: absolute;
+  padding: 0px;
+  top: 0px;
+  content: "> 6 feet" !important;
+}
+
+.esri-legend__ramp-label:last-child:after {
+  visibility: visible;
+  display: block;
+  position: absolute;
+  padding: 0px;
+  top: 0px;
+  content: "< 1 foot" !important;
+}
+

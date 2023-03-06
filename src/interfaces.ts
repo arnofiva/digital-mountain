@@ -10,6 +10,8 @@ export interface UIActions {
   startSlopeEditor(): void;
   startLiftEditor(options?: { updateGraphic?: Graphic }): void;
   toggleStartTime(): void;
+  toggleSnowDepths(): void;
+  toggleWaterUsage(): void;
 }
 
 export enum ScreenType {

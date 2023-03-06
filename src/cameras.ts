@@ -25,7 +25,7 @@ export const backgroundAnimationTargetCamera = new Camera({
 export const liveScreenStartCamera = new Camera({
   position: {
     longitude: 9.25326442,
-    latitude: 46.81975620,
+    latitude: 46.8197562,
     z: 3368.54016
   },
   heading: 306.84,
@@ -37,12 +37,12 @@ export const planningScreenStartCamera = new Camera({
     spatialReference: {
       wkid: 102100
     },
-    x: 1028212,
-    y: 5912052,
-    z: 1833
+    x: 1028296.683133663,
+    y: 5911958.03045774,
+    z: 1862.1876768777147
   },
-  heading: 321,
-  tilt: 81
+  heading: 321.00056064594423,
+  tilt: 80.2425705684597
 });
 
 export const planningScreenDetailCamera = new Camera({
@@ -50,21 +50,20 @@ export const planningScreenDetailCamera = new Camera({
     spatialReference: {
       wkid: 102100
     },
-    x: 1027062,
-    y: 5913212,
-    z: 1877
+    x: 1027101.7673122805,
+    y: 5913179.97643817,
+    z: 1958.02695877105
   },
-  heading: 321,
-  tilt: 81
+  heading: 321.7750714515087,
+  tilt: 57.915831658534536
 });
 
 export const statisticsScreenStartCamera = new Camera({
   position: {
-    spatialReference: { wkid: 102100 },
-    x: 1028789,
-    y: 5913876,
-    z: 2519
+    longitude: 9.23656129,
+    latitude: 46.84158115,
+    z: 1890.89974
   },
-  heading: 310,
-  tilt: 78
+  heading: 264.72,
+  tilt: 79.81
 });

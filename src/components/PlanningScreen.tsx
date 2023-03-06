@@ -3,14 +3,14 @@ import "@esri/calcite-components/dist/components/calcite-button";
 import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import { tsx } from "@arcgis/core/widgets/support/widget";
 
-import PlanningStore from "../stores/PlanningStore";
-import Header from "./Header";
 import { UIActions } from "../interfaces";
+import PlanningStore from "../stores/PlanningStore";
+import { ensureViewUIContainer } from "../utils";
+import CodeSnippet from "./CodeSnippet";
+import Header from "./Header";
 import PlanActions from "./PlanActions";
 import PlanOverview from "./PlanOverview";
 import { Widget } from "./Widget";
-import { ensureViewUIContainer } from "../utils";
-import CodeSnippet from "./CodeSnippet";
 
 type ConstructProperties = Pick<PlanningScreen, "actions" | "store">;
 

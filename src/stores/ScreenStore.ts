@@ -39,10 +39,10 @@ class ScreenStore extends Accessor {
 
   private _cameraAnimationAbortController: AbortController | null = null;
 
-  protected goToCamera(camera: Camera, view: SceneView): void {
+  protected async goToCamera(camera: Camera, view: SceneView, animate = true) {
     this._cameraAnimationAbortController?.abort();
     const { signal } = (this._cameraAnimationAbortController = this.createAbortController());
-    ignoreAbortErrors(view.goTo(camera, { animate: true, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
+    return ignoreAbortErrors(view.goTo(camera, { animate, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
   }
 
   protected addGoToCameraKey(camera: Camera, key: string, view: SceneView) {

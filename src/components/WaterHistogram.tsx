@@ -123,7 +123,8 @@ export class WaterHistogram extends Widget<ConstructProperties> {
 
   @property()
   private _histogram = new HistogramRangeSlider({
-    rangeType: "equal",
+    // rangeType: "equal",
+    rangeType: "at-most",
     values: [0],
     labelFormatFunction: formatNumberAsDate,
     barCreatedFunction: (index, element: SVGElement) => {
