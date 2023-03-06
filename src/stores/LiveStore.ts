@@ -7,7 +7,7 @@ import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
 
 import { liveScreenStartCamera } from "../cameras";
-import { clockIntervalMs, defaultViewDate } from "../constants";
+import { clockIntervalMs, taskSelectionViewDate } from "../constants";
 import {
   findElectricalLayer,
   findFiberOpticLayer,
@@ -289,7 +289,6 @@ class LiveStore extends ScreenStore {
     this.addHandles({
       remove: () => {
         clearInterval(this._timeInterval);
-        updateViewDate(defaultViewDate);
       }
     });
   }

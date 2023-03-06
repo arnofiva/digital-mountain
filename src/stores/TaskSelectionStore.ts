@@ -3,7 +3,11 @@ import SceneView from "@arcgis/core/views/SceneView";
 
 import { backgroundAnimationTargetCamera, backgroundCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
-import { backgroundCameraAnimationSpeedFactor, transitionCameraAnimationSpeedFactor } from "../constants";
+import {
+  backgroundCameraAnimationSpeedFactor,
+  taskSelectionViewDate,
+  transitionCameraAnimationSpeedFactor
+} from "../constants";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
 
@@ -30,6 +34,11 @@ class TaskSelectionStore extends ScreenStore {
         }
       });
     }, view);
+
+    const { lighting } = view.environment;
+    if (lighting.type === "sun") {
+      lighting.date = taskSelectionViewDate;
+    }
   }
 
   private async _startBackgroundCameraAnimation(

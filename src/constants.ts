@@ -18,9 +18,14 @@ export const transitionCameraAnimationSpeedFactor = 0.5;
 export const backgroundCameraAnimationSpeedFactor = 0.01;
 
 /**
- * The default date used for the view.
+ * The date used for the view on the task selection screen.
  */
-export const defaultViewDate = new Date(1678878000000);
+export const taskSelectionViewDate = new Date(Date.UTC(2022, 6, 1, 7, 30));
+
+/**
+ * The date used for the view on the planning screen.
+ */
+export const planningViewDate = new Date(1678878000000);
 
 /**
  * Slope editor

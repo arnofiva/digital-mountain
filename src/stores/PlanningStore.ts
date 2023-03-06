@@ -11,7 +11,7 @@ import WebScene from "@arcgis/core/WebScene";
 
 import { planningScreenDetailCamera, planningScreenStartCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
-import { filterUpdateIntervalMs, sceneExportTitle, treeFilterDistance } from "../constants";
+import { filterUpdateIntervalMs, planningViewDate, sceneExportTitle, treeFilterDistance } from "../constants";
 import {
   findCablesLayer,
   findSlopesLayer,
@@ -51,6 +51,11 @@ export class PlanningStore extends ScreenStore {
     };
     window.addEventListener("keydown", onKeyPress);
     this.addHandles({ remove: () => window.removeEventListener("keydown", onKeyPress) });
+
+    const { lighting } = this._view.environment;
+    if (lighting.type === "sun") {
+      lighting.date = planningViewDate;
+    }
   }
 
   destroy(): void {
