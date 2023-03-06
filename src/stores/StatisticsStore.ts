@@ -109,13 +109,37 @@ class StatisticsStore extends ScreenStore {
       }
     )
 
+    const translateSnowDepthDate = (selectedDate: Date) => {
+      console.log({selectedDate});
+      const day = selectedDate.getDate();
+      switch (day) {
+        case 24:
+          return new Date(Date.UTC(2021, 11, 29));
+        case 25:
+          return new Date(Date.UTC(2022, 0, 1));
+        case 26:
+          return new Date(Date.UTC(2022, 0, 29));
+        case 27:
+          return new Date(Date.UTC(2022, 0, 28));
+        case 28:
+          return new Date(Date.UTC(2022, 1, 2));
+        case 29:
+          return new Date(Date.UTC(2022, 1, 4));
+          case 30:
+          return new Date(Date.UTC(2022, 1, 9));
+        default:
+          break;
+      }
+      const date = new Date(selectedDate);
+      date.setUTCDate(date.getUTCDate() + 46);
+      date.setUTCHours(0, 0, 0, 0);
+      return date;
+    };
+
     const timeExtentHandle = watch(
       () => view.timeExtent,
       (timeExtent) => {
-        const date = new Date(timeExtent.end);
-        date.setUTCDate(date.getUTCDate() + 46);
-        date.setUTCHours(0, 0, 0, 0);
-        console.log({date, snowDepthsLayer});
+        const date = translateSnowDepthDate(timeExtent.end);
         snowDepthsLayer.multidimensionalDefinition = [
           new DimensionalDefinition({
             dimensionName: "StdTime",

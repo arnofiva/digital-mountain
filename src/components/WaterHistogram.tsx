@@ -11,7 +11,7 @@ import { Widget } from "./Widget";
 type ConstructProperties = Pick<WaterHistogram, "actions" | "records">;
 type HistogramData = Pick<HistogramRangeSlider, "min" | "max" | "bins" | "average">;
 
-const timeRange = [Date.UTC(2021, 10, 23), Date.UTC(2021, 11, 15)] as const;
+const timeRange = [Date.UTC(2021, 10, 24), Date.UTC(2021, 11, 15)] as const;
 
 @subclass("digital-mountain.WaterHistogram")
 export class WaterHistogram extends Widget<ConstructProperties> {
