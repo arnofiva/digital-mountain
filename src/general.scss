@@ -235,7 +235,7 @@ h3 {
   position: absolute;
   padding: 0px;
   top: 0px;
-  content: "6 feet" !important;
+  content: "> 6 feet" !important;
 }
 
 .esri-legend__ramp-label:last-child:after {
@@ -244,5 +244,5 @@ h3 {
   position: absolute;
   padding: 0px;
   top: 0px;
-  content: "1 feet" !important;
+  content: "< 1 foot" !important;
 }
