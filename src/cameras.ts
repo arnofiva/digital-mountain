@@ -60,10 +60,10 @@ export const planningScreenDetailCamera = new Camera({
 
 export const statisticsScreenStartCamera = new Camera({
   position: {
-    longitude: 9.23656129,
-    latitude: 46.84158115,
-    z: 1890.89974
+    longitude: 9.23899066,
+    latitude: 46.84125790,
+    z: 1915.18369
   },
-  heading: 264.72,
-  tilt: 79.81
+  heading: 270.56,
+  tilt: 75.30
 });

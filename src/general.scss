@@ -201,15 +201,29 @@ h3 {
 }
 
 .statistics-time {
-  width: 500px;
+  width: 600px;
   height: 270px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: space-around;
   align-items: center;
   justify-content: center;
 
+  .statistics-message {
+    flex-grow: 1;
+    margin: 5px;
+  }
+
   .histogram-container {
-    width: 90%;
+    flex-grow: 0.8;
+    margin: 5px 20px 5px 35px;
+  }
+
+  .histogram-info {
+    min-width: 220px;
+    flex-grow: 0.2;
+    margin: 5px;
   }
 }
 
@@ -225,6 +239,7 @@ h3 {
   pointer-events: none;
 }
 
+
 .esri-legend__ramp-label {
   visibility: hidden;
 }
@@ -235,7 +250,7 @@ h3 {
   position: absolute;
   padding: 0px;
   top: 0px;
-  content: "6 feet" !important;
+  content: "> 6 feet" !important;
 }
 
 .esri-legend__ramp-label:last-child:after {
@@ -244,5 +259,6 @@ h3 {
   position: absolute;
   padding: 0px;
   top: 0px;
-  content: "1 feet" !important;
+  content: "< 1 foot" !important;
 }
+
