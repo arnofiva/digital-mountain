@@ -122,7 +122,8 @@ function routeCableSymbolLayers(options?: { color?: number[] }): (LineSymbol3DLa
       profile: "circle",
       width: 0.25,
       height: 0.25,
-      profileRotation: "heading"
+      profileRotation: "heading",
+      castShadows: false
     })
   ];
 }
