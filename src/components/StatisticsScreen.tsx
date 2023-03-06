@@ -19,32 +19,30 @@ class StatisticsScreen extends Widget<ConstructProperties> {
   store: StatisticsStore;
 
   render() {
-
     const buttons = (
       <div class="align-right">
-      <calcite-button
-        appearance={this.store.snowCoverVisible ? "solid" : "outline"}
-        // icon-start={this.store.exporting ? "spinner" : "save"}
-        // disabled={this.store.exporting}
-        // kind={this.store.didExportFail ? "danger" : "brand"}
-        class="align-right save-button"
-        onclick={() => this.actions.toggleSnowDepths()}
-      >
-        Snow Depths
-      </calcite-button>
-      &nbsp;
-      <calcite-button
-        appearance={this.store.waterUsageVisible ? "solid" : "outline"}
-      // icon-start={this.store.exporting ? "spinner" : "save"}
-      // disabled={this.store.exporting}
-      // kind={this.store.didExportFail ? "danger" : "brand"}
-      class="align-right save-button"
-      onclick={() => this.actions.toggleWaterUsage()}
-    >
-      Water Usage
-    </calcite-button>
-    </div>
-      
+        <calcite-button
+          appearance={this.store.snowCoverVisible ? "solid" : "outline"}
+          // icon-start={this.store.exporting ? "spinner" : "save"}
+          // disabled={this.store.exporting}
+          // kind={this.store.didExportFail ? "danger" : "brand"}
+          class="align-right save-button"
+          onclick={() => this.actions.toggleSnowDepths()}
+        >
+          Snow Depths
+        </calcite-button>
+        &nbsp;
+        <calcite-button
+          appearance={this.store.waterUsageVisible ? "solid" : "outline"}
+          // icon-start={this.store.exporting ? "spinner" : "save"}
+          // disabled={this.store.exporting}
+          // kind={this.store.didExportFail ? "danger" : "brand"}
+          class="align-right save-button"
+          onclick={() => this.actions.toggleWaterUsage()}
+        >
+          Water Usage
+        </calcite-button>
+      </div>
     );
 
     return (

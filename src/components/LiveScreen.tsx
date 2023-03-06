@@ -21,7 +21,6 @@ class LiveScreen extends Widget<ConstructProperties> {
   store: LiveStore;
 
   render() {
-
     const dimensionSnippetText = `const streamLayer = new StreamLayer({
   url: "https://us-iot.arcgis.com/.../slopesStatus/StreamServer"
 });
@@ -33,7 +32,6 @@ streamLayerView.on("data-received", (e) => {
     showNotification(e);
   }
 });`;
-
 
     return (
       <div class="screen">

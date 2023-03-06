@@ -14,7 +14,6 @@ type Snapshot = {
 };
 
 class SmoothSnowGroomer extends Accessor {
-
   private readonly snapshots = new Map<number, Snapshot>();
   private objectIdCounter = 0;
   private elevationSampler;
@@ -45,18 +44,19 @@ class SmoothSnowGroomer extends Accessor {
     });
 
     view.whenLayerView(source).then(async (lv) => {
-
-      this.addHandles(lv.on("data-received", (e) => {
-        this.updateFeature(e)
-      }));
+      this.addHandles(
+        lv.on("data-received", (e) => {
+          this.updateFeature(e);
+        })
+      );
 
       const loop = () => {
         if (view.destroyed) {
           return;
         }
-    
+
         this.interpolateFeatures();
-    
+
         setTimeout(loop, 50);
         // requestAnimationFrame(loop);
       };
@@ -64,11 +64,13 @@ class SmoothSnowGroomer extends Accessor {
       loop();
     });
 
-    when(() => source.destroyed, () => this.destroy);
+    when(
+      () => source.destroyed,
+      () => this.destroy
+    );
   }
 
   private updateFeature(feature: __esri.StreamLayerViewDataReceivedEvent) {
-
     const now = performance.now();
     const point = new Point({
       spatialReference: this.source.spatialReference,
@@ -133,8 +135,7 @@ class SmoothSnowGroomer extends Accessor {
       type: "features",
       features
     });
-  }
-
+  };
 }
 
 export default SmoothSnowGroomer;

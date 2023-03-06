@@ -88,10 +88,7 @@ class LiveStore extends ScreenStore {
       opacity: 0
     });
     this._slopeStream = createSlopeStream();
-    this._assetsMock = new StreamServiceMock(
-      this._assetsStream.url,
-      snowGroomerLayer
-    );
+    this._assetsMock = new StreamServiceMock(this._assetsStream.url, snowGroomerLayer);
     this._slopeMock = new StreamServiceMock(
       this._slopeStream.url,
       "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
@@ -123,51 +120,58 @@ class LiveStore extends ScreenStore {
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "1") {
-        view.goTo(new Camera({
-          position: {
-            longitude: 9.20478243,
-            latitude: 46.85371390,
-            z: 2984.49087
-          },
-          heading: 244.20,
-          tilt: 66.24
-        }));
+        view.goTo(
+          new Camera({
+            position: {
+              longitude: 9.20478243,
+              latitude: 46.8537139,
+              z: 2984.49087
+            },
+            heading: 244.2,
+            tilt: 66.24
+          })
+        );
       } else if (e.key === "2") {
-        view.goTo(new Camera({
-          position: {
-            longitude: 9.25579187,
-            latitude: 46.83355769,
-            z: 2357.94722
-          },
-          heading: 288.79,
-          tilt: 84.26
-        }));
+        view.goTo(
+          new Camera({
+            position: {
+              longitude: 9.25579187,
+              latitude: 46.83355769,
+              z: 2357.94722
+            },
+            heading: 288.79,
+            tilt: 84.26
+          })
+        );
       } else if (e.key === "3") {
-        view.goTo(new Camera({
-          position: {
-            longitude: 9.22816550,
-            latitude: 46.84097062,
-            z: 1881.33641
-          },
-          heading: 56.06,
-          tilt: 67.89
-        }));
+        view.goTo(
+          new Camera({
+            position: {
+              longitude: 9.2281655,
+              latitude: 46.84097062,
+              z: 1881.33641
+            },
+            heading: 56.06,
+            tilt: 67.89
+          })
+        );
       } else if (e.key === "4") {
-        view.goTo(new Camera({
-          position: {
-            longitude: 9.23656129,
-            latitude: 46.84158115,
-            z: 1890.89974
-          },
-          heading: 264.72,
-          tilt: 79.81
-        }));
+        view.goTo(
+          new Camera({
+            position: {
+              longitude: 9.23656129,
+              latitude: 46.84158115,
+              z: 1890.89974
+            },
+            heading: 264.72,
+            tilt: 79.81
+          })
+        );
       } else if (e.key === "c") {
         this.codeSnippetVisible = !this.codeSnippetVisible;
       }
-    }
+    };
     window.addEventListener("keydown", onKeyDown);
-    
 
     this.addHandles({
       remove: () => {

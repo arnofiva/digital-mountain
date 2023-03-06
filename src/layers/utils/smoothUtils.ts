@@ -40,7 +40,6 @@ export const tiltBetweenPoints = (a: Point, b: Point) => {
 
   const angle = 90 - (atan2 * 180) / Math.PI;
 
-  
   return angle;
 };
 

@@ -44,7 +44,6 @@ class StatisticsStore extends ScreenStore {
     configureStatisticsTreeLayer(treesLayer);
     treesLayer.opacity = 0.3;
 
-
     const { map } = view;
     const waterLayer = findWaterPitsLayer(map);
     const previousOutFields = waterLayer.outFields;
@@ -60,7 +59,7 @@ class StatisticsStore extends ScreenStore {
     const fiberOpticLayer = findFiberOpticLayer(map);
     const staffLayer = findStaffLayer(map);
     const realisticLiftsLayer = findRealisticLiftsLayer(map);
-    
+
     const previousSnowDepthsLayerVisible = snowDepthsLayer.visible;
     const previousGroupLayerVisible = groupLayer.visible;
     const previousWaterLayerVisible = waterLayer.visible;
@@ -86,9 +85,7 @@ class StatisticsStore extends ScreenStore {
     const legend = new Legend({
       view,
       visible: false,
-      layerInfos: [
-        {layer: snowDepthsLayer}
-      ]
+      layerInfos: [{ layer: snowDepthsLayer }]
     });
     view.ui.add(legend, "top-left");
 
@@ -107,10 +104,10 @@ class StatisticsStore extends ScreenStore {
         waterLayer.visible = visible;
         waterMaxLayer.visible = visible;
       }
-    )
+    );
 
     const translateSnowDepthDate = (selectedDate: Date) => {
-      console.log({selectedDate});
+      console.log({ selectedDate });
       const day = selectedDate.getDate();
       switch (day) {
         case 24:
@@ -125,7 +122,7 @@ class StatisticsStore extends ScreenStore {
           return new Date(Date.UTC(2022, 1, 2));
         case 29:
           return new Date(Date.UTC(2022, 1, 4));
-          case 30:
+        case 30:
           return new Date(Date.UTC(2022, 1, 9));
         default:
           break;

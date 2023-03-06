@@ -12,7 +12,7 @@ const morningUpdates: SlopeStreamEvent[] = [
     attributes: {
       track_id: 300,
       STATUS: "Offen",
-      showAlert: true,
+      showAlert: true
     }
   },
   {
@@ -26,9 +26,9 @@ const morningUpdates: SlopeStreamEvent[] = [
     attributes: {
       track_id: 306,
       STATUS: "Offen",
-      showAlert: true,
+      showAlert: true
     }
-  },
+  }
 ];
 
 const eveningUpdates: SlopeStreamEvent[] = [
@@ -50,12 +50,12 @@ const eveningUpdates: SlopeStreamEvent[] = [
 
 export const slopeEventsMorning = morningUpdates.map((message, idx) => ({
   message,
-  msAfterStart: (idx) * 6000 + 1500
+  msAfterStart: idx * 6000 + 1500
 }));
 
 export const slopeEventsEvening = eveningUpdates.map((message, idx) => ({
   message,
-  msAfterStart: (idx) * 3000 + 1500
+  msAfterStart: idx * 3000 + 1500
 }));
 
 export const slopeResetMessagesMorning = eveningUpdates.map((message) => ({
