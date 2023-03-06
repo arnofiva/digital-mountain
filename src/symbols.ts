@@ -197,7 +197,7 @@ export function configureWaterMaxLayer(layer: FeatureLayer, waterLayer: FeatureL
           depth: 1.5,
           height,
           material: {
-            color: [35, 8, 199, 0.8]
+            color: [100, 100, 150, 0.7]
           }
         })
       ]
@@ -206,23 +206,22 @@ export function configureWaterMaxLayer(layer: FeatureLayer, waterLayer: FeatureL
   layer.labelingInfo = [
     new LabelClass({
       labelExpressionInfo: {
-        expression: "Floor($feature.volumen, 1) + ' m³ (' + Floor($feature.volumen/379*100, 2) + '%)'"
+        expression: "Floor($feature.volumen/379*100) + '% (' + Floor($feature.volumen, 1) + ' m³)'"
       },
       labelPlacement: "above-right",
       symbol: new LabelSymbol3D({
         symbolLayers: [
           new TextSymbol3DLayer({
             material: {
-              color: [26, 7, 143]
+              color: [100, 100, 130]
             },
             halo: {
               color: [255, 255, 255, 0.4],
               size: 0.5
             },
             font: {
-              size: 9,
+              size: 12,
               weight: "bold",
-              decoration: "underline",
               family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
             }
           })
