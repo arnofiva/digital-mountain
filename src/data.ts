@@ -34,6 +34,10 @@ export function findTreeLayer(map: Map): SceneLayer {
   return map.allLayers.find((l) => l.title === "Trees") as SceneLayer;
 }
 
+export function findSnowCannonsLayer(map: Map) {
+  return map.findLayerById("1867883aab7-layer-123") as FeatureLayer;
+}
+
 export function findWaterPitsLayer(map: Map): FeatureLayer {
   return map.findLayerById("18630ca7994-layer-4") as FeatureLayer;
 }

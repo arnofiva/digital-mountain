@@ -14,6 +14,7 @@ import {
   findGalaaxyLOD2Layer,
   findSlopesGroupLayer,
   findSlopesLayer,
+  findSnowCannonsLayer,
   findSnowGroomerLayer,
   findStaffLayer,
   findWaterPipesLayer
@@ -23,6 +24,8 @@ import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
 import Camera from "@arcgis/core/Camera";
+import LabelClass from "@arcgis/core/layers/support/LabelClass";
+import { LabelSymbol3D, TextSymbol3DLayer } from "@arcgis/core/symbols";
 import { startTimeEvening, startTimeMorning } from "../constants";
 import SmoothSnowGroomer from "../layers/smoothSnowGrommer";
 import {
@@ -159,7 +162,55 @@ class LiveStore extends ScreenStore {
             heading: 56.06,
             tilt: 67.89
           })
-        );
+        ).then(() => {
+
+          
+          const snowCannons = findSnowCannonsLayer(view.map);
+
+          snowCannons.labelingInfo = [
+            new LabelClass({
+              labelExpressionInfo: {
+                expression: "Replace($feature.Name_Nummer, 'Schacht', 'Hydrant') + TextFormatting.NewLine + FromCharCode(128313) + '150L/min'"
+              },
+              labelPlacement: "above-center",
+              symbol: new LabelSymbol3D({
+                symbolLayers: [
+                  new TextSymbol3DLayer({
+                    material: {
+                      color: [250, 253, 255, 1]
+                    },
+                    halo: {
+                      color: [0, 0, 0, 0.2],
+                      size: 0
+                    },
+                    font: {
+                      size: 9,
+                      weight: "bolder",
+                      family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
+                    },
+                    background: {color: [255, 255, 255, 0.2]}
+                  })
+                ],
+                verticalOffset: {
+                  screenLength: 20,
+                  maxWorldLength: 200,
+                  minWorldLength: 0
+                },
+                callout: {
+                  type: "line",
+                  size: 0.75,
+                  color: [255, 255, 255, 0.5],
+                  border: {
+                    color: [0, 0, 0, 0]
+                  }
+                }
+              })
+            })
+          ];
+          snowCannons.labelsVisible = true;
+          
+
+        });
       } else if (e.key === "4") {
         view.goTo(
           new Camera({
