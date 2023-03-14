@@ -124,21 +124,23 @@ class LiveStore extends ScreenStore {
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "1") {
-        view.goTo(
-          new Camera({
-            position: {
-              longitude: 9.20478243,
-              latitude: 46.8537139,
-              z: 2984.49087
-            },
-            heading: 244.2,
-            tilt: 66.24
-          })
-        ).then(async () => {
-          const lv = await view.whenLayerView(this._slopeStream)
-          this._slopeMock.setEvents(slopeEventsOpening);
-          this._slopeMock.start(lv);
-        });
+        view
+          .goTo(
+            new Camera({
+              position: {
+                longitude: 9.20478243,
+                latitude: 46.8537139,
+                z: 2984.49087
+              },
+              heading: 244.2,
+              tilt: 66.24
+            })
+          )
+          .then(async () => {
+            const lv = await view.whenLayerView(this._slopeStream);
+            this._slopeMock.setEvents(slopeEventsOpening);
+            this._slopeMock.start(lv);
+          });
       } else if (e.key === "2") {
         view.goTo(
           new Camera({
@@ -152,65 +154,64 @@ class LiveStore extends ScreenStore {
           })
         );
       } else if (e.key === "3") {
-        view.goTo(
-          new Camera({
-            position: {
-              longitude: 9.2281655,
-              latitude: 46.84097062,
-              z: 1881.33641
-            },
-            heading: 56.06,
-            tilt: 67.89
-          })
-        ).then(() => {
-
-          
-          const snowCannons = findSnowCannonsLayer(view.map);
-
-          snowCannons.labelingInfo = [
-            new LabelClass({
-              labelExpressionInfo: {
-                expression: "Replace($feature.Name_Nummer, 'Schacht', 'Hydrant') + TextFormatting.NewLine + FromCharCode(128313) + '150L/min'"
+        view
+          .goTo(
+            new Camera({
+              position: {
+                longitude: 9.2281655,
+                latitude: 46.84097062,
+                z: 1881.33641
               },
-              labelPlacement: "above-center",
-              symbol: new LabelSymbol3D({
-                symbolLayers: [
-                  new TextSymbol3DLayer({
-                    material: {
-                      color: [250, 253, 255, 1]
-                    },
-                    halo: {
-                      color: [0, 0, 0, 0.2],
-                      size: 0
-                    },
-                    font: {
-                      size: 9,
-                      weight: "bolder",
-                      family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
-                    },
-                    background: {color: [255, 255, 255, 0.2]}
-                  })
-                ],
-                verticalOffset: {
-                  screenLength: 20,
-                  maxWorldLength: 200,
-                  minWorldLength: 0
-                },
-                callout: {
-                  type: "line",
-                  size: 0.75,
-                  color: [255, 255, 255, 0.5],
-                  border: {
-                    color: [0, 0, 0, 0]
-                  }
-                }
-              })
+              heading: 56.06,
+              tilt: 67.89
             })
-          ];
-          snowCannons.labelsVisible = true;
-          
+          )
+          .then(() => {
+            const snowCannons = findSnowCannonsLayer(view.map);
 
-        });
+            snowCannons.labelingInfo = [
+              new LabelClass({
+                labelExpressionInfo: {
+                  expression:
+                    "Replace($feature.Name_Nummer, 'Schacht', 'Hydrant') + TextFormatting.NewLine + FromCharCode(128313) + '150L/min'"
+                },
+                labelPlacement: "above-center",
+                symbol: new LabelSymbol3D({
+                  symbolLayers: [
+                    new TextSymbol3DLayer({
+                      material: {
+                        color: [250, 253, 255, 1]
+                      },
+                      halo: {
+                        color: [0, 0, 0, 0.2],
+                        size: 0
+                      },
+                      font: {
+                        size: 9,
+                        weight: "bolder",
+                        family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
+                      },
+                      background: { color: [255, 255, 255, 0.2] }
+                    })
+                  ],
+                  verticalOffset: {
+                    screenLength: 20,
+                    maxWorldLength: 200,
+                    minWorldLength: 0
+                  },
+                  callout: {
+                    type: "line",
+                    size: 0.75,
+                    color: [255, 255, 255, 0.5],
+                    border: {
+                      color: [0, 0, 0, 0]
+                    }
+                  }
+                })
+              })
+            ];
+            snowCannons.labelsVisible = true;
+          });
       } else if (e.key === "4") {
         view.goTo(
           new Camera({

@@ -59,7 +59,7 @@ export const slopeEventsMorning = morningUpdates.map((message, idx) => ({
 export const slopeEventsOpening = openingUpdates.map((message, idx) => ({
   message,
   msAfterStart: 2500
-}))
+}));
 
 export const slopeEventsEvening = eveningUpdates.map((message, idx) => ({
   message,
