@@ -39,8 +39,8 @@ export class PlanningStore extends ScreenStore {
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
     this.goToCamera(planningScreenStartCamera, view);
-    this.addGoToCameraKey(planningScreenDetailCamera, "g", view);
-    this.addGoToCameraKey(planningScreenStartCamera, "h", view);
+    this.addGoToCameraKey(planningScreenDetailCamera, "1", view);
+    this.addGoToCameraKey(planningScreenStartCamera, "2", view);
     this._setupTreeFilterWatch(view);
 
     // add code snippet
