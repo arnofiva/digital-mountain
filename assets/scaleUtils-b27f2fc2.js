@@ -1,0 +1,1 @@
+import{$ as i,C as r}from"./Extent-2ad2c9a9.js";const o=96;function s(t,e){const n=e||t.extent,c=t.width,f=i(n&&n.spatialReference);return n&&c?n.width/c*f*r*o:0}function a(t,e){return t/(i(e)*r*o)}function d(t){return t/(r*o)}export{s as i,d as o,a as r};
