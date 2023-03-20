@@ -1,177 +1,18 @@
-import config from "@arcgis/core/config";
-import { SpatialReference } from "@arcgis/core/geometry";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import request from "@arcgis/core/request";
+import StreamLayer from "@arcgis/core/layers/StreamLayer";
 import Query from "@arcgis/core/rest/support/Query";
-import StreamLayerView from "@arcgis/core/views/layers/StreamLayerView";
 import StreamLayerEvent from "./webSocketEvents";
 
-const connections = new Map<string | URL, WebSocketMock>();
-
-function delay(handler: TimerHandler, duration = 10) {
-  setTimeout(handler, duration);
-}
-
-// e.g. https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
-const regex = /[https|wss]:\/\/((.*)\/([a-zA-Z0-9_]*)\/StreamServer)/;
-function parseStreamUrl(streamUrl: string) {
-  const urlParts = regex.exec(streamUrl);
-  return {
-    streamName: urlParts[3], // snowCat_StreamLayer4
-    webSocketUrl: `wss://${urlParts[1]}` // wss://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
-  };
-}
-
-class WebSocketMock {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-
-  public onopen: () => void;
-  public onmessage: (message: any) => void;
-
-  public readyState = WebSocketMock.CONNECTING;
-
-  constructor(private url: string) {
-    const { webSocketUrl } = parseStreamUrl(url);
-
-    delay(() => {
-      this.readyState = WebSocketMock.OPEN;
-      this.onopen();
-    });
-
-    connections.set(webSocketUrl, this);
-  }
-
-  send(data: any) {
-    if (typeof data === "string") {
-      const parsedData = JSON.parse(data);
-      if (parsedData.filter) {
-        delay(() => {
-          this.onmessage({
-            data
-          });
-        });
-      }
-    }
-  }
-
-  close() {
-    this.readyState = WebSocketMock.CLOSED;
-    connections.delete(this.url);
-  }
-}
-
-//   wss://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer/subscribe?outSR=102100&token=MOCK_TOKEN
-// https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/snowCat_StreamLayer4/StreamServer
+// each new object id used for a client-side stream layer update must be unique
+let nextObjectId = new Date().getTime();
 
 class StreamServiceMock {
-  private readonly _webSocketUrl: string;
-  private _featureLayerSourceJSON: Promise<any>;
   private _events: StreamLayerEvent[] = [];
-  private _featureLayer?: FeatureLayer;
-  private _startTime: number;
+  private _initializePromise: Promise<void>;
+  private _abortController = new AbortController();
 
-  private readonly _featureLayerUrl: string;
-
-  constructor(_streamUrl: string, featureLayer: string | FeatureLayer) {
-    window.WebSocket = WebSocketMock as any;
-
-    const { streamName, webSocketUrl } = parseStreamUrl(_streamUrl);
-
-    this._webSocketUrl = webSocketUrl;
-
-    if (typeof featureLayer === "string") {
-      this._featureLayerUrl = featureLayer;
-    } else if (featureLayer.sourceJSON) {
-      this._featureLayer = featureLayer;
-      this._featureLayerUrl = (featureLayer as any).parsedUrl.path;
-    } else {
-      throw new Error("featureLayer either has to be a url or a loaded FeatureLayer with sourceJSON");
-    }
-
-    config.request.interceptors.push({
-      urls: [_streamUrl, this._featureLayerUrl],
-
-      before: async (params) => {
-        const url = params.url;
-        if (url === _streamUrl) {
-          let hasZ: boolean;
-          let drawingInfo: any;
-          let fields: any;
-          let geometryType: string;
-          if (this._featureLayer) {
-            hasZ = this._featureLayer.hasZ;
-            drawingInfo = {
-              renderer: this._featureLayer.renderer.toJSON(),
-              labelingInfo: this._featureLayer.labelingInfo
-                ? this._featureLayer.labelingInfo.map((l) => l.toJSON())
-                : undefined
-            };
-            fields = this._featureLayer.fields.map((f) => f.toJSON());
-            geometryType = this._featureLayer.geometryType;
-          } else {
-            const sourceJSON = await this.loadFeatureLayerJSON(params.requestOptions);
-            hasZ = sourceJSON.hasZ;
-            drawingInfo = sourceJSON.drawingInfo;
-            fields = sourceJSON.fields;
-            geometryType = sourceJSON.geometryType;
-          }
-
-          return {
-            capabilities: "broadcast,subscribe",
-            currentVersion: 11,
-            description: null,
-            displayField: "x",
-            drawingInfo,
-            fields: fields.filter((f: any) => f.name !== "objectid" || f.name !== "OBJECTID"),
-            geometryField: null,
-            geometryType,
-            globalIdField: "globalid",
-            hasZ,
-            keepLatest: {
-              dataSourceLayerName: streamName,
-              dataSourceName: streamName,
-              datastoreUrl: "",
-              flushInterval: 50,
-              maxTransactionSize: 1000
-            },
-            keepLatestArchive: {
-              featuresUrl: this._featureLayerUrl,
-              maximumFeatureAge: 0,
-              updateInterval: 30
-            },
-            objectIdField: null,
-            portalProperties: {
-              /* TODO */
-            },
-            spatialReference: SpatialReference.WebMercator.toJSON(),
-            showLabels: false,
-            streamUrls: [
-              {
-                token: "MOCK_TOKEN",
-                transport: "ws",
-                urls: [webSocketUrl]
-              }
-            ],
-            timeInfo: {
-              trackIdField: "track_id"
-            }
-          };
-        }
-      }
-    });
-  }
-
-  private loadFeatureLayerJSON(requestOptions: __esri.RequestOptions) {
-    if (!this._featureLayerSourceJSON) {
-      this._featureLayerSourceJSON = request(this._featureLayerUrl, requestOptions).then((response) => {
-        return response.data;
-      });
-    }
-
-    return this._featureLayerSourceJSON;
+  constructor(private _streamLayer: StreamLayer, private _featureLayer: FeatureLayer) {
+    this._initializePromise = this._initializeFeatures();
   }
 
   setEvents(events: StreamLayerEvent[]) {
@@ -179,72 +20,91 @@ class StreamServiceMock {
     this._events = events;
   }
 
-  async start(layerView: StreamLayerView, resetMessages: StreamLayerEvent["message"][] = []) {
-    if (!this._events || this._events.length === 0) {
+  async start(resetMessages: StreamLayerEvent["message"][] = []) {
+    this._abortController.abort();
+    const { signal } = (this._abortController = new AbortController());
+
+    await this._initializePromise;
+
+    if (signal.aborted || !this._events || this._events.length === 0) {
+      return;
+    }
+
+    const events = [...this._events];
+    await this._reset(resetMessages, signal);
+
+    if (signal.aborted) {
       return;
     }
 
     const startTime = performance.now();
-    this._startTime = startTime;
-
-    const events = [...this._events];
-    await this._reset(layerView, resetMessages);
-
     const loop = async () => {
-      if (startTime !== this._startTime) {
-        return;
-      }
+      const now = performance.now();
+      const msSinceStart = now - startTime;
+      while (events[0].msAfterStart < msSinceStart) {
+        const nextEvent = events.shift();
+        const track_id = nextEvent.message.attributes.track_id;
 
-      let duration = 10;
+        const result = await this._featureLayer.queryFeatures(
+          new Query({
+            returnGeometry: true,
+            outFields: ["*"],
+            where: `track_id = ${track_id}`
+          })
+        );
 
-      const connection = connections.get(this._webSocketUrl);
-
-      if (connection && connection.onmessage) {
-        const now = performance.now();
-        const msSinceStart = now - startTime;
-        while (events[0].msAfterStart < msSinceStart) {
-          const nextEvent = events.shift();
-
-          const track_id = nextEvent.message.attributes.track_id;
-
-          const result = await layerView.queryFeatures(
-            new Query({
-              returnGeometry: true,
-              outFields: ["*"],
-              where: `track_id = ${track_id}`
-            })
-          );
-
-          const attributes = (result.features.length && result.features[0].attributes) || {};
-          const geometry = result.features.length && result.features[0].geometry;
-
-          const message = {
-            attributes: { ...attributes, ...nextEvent.message.attributes },
-            geometry: nextEvent.message.geometry || geometry
-          };
-
-          connection.onmessage?.({
-            data: JSON.stringify(message)
-          });
-
-          if (events.length === 0) {
-            return;
-          }
+        if (signal.aborted) {
+          return;
         }
-        duration = events[0].msAfterStart - msSinceStart;
-      }
 
-      delay(loop, duration);
+        const attributes = result.features[0]?.attributes ?? {};
+        const geometry = result.features[0]?.geometry;
+
+        const message = {
+          attributes: { ...attributes, ...nextEvent.message.attributes },
+          geometry: nextEvent.message.geometry || geometry
+        };
+        message.attributes[this._streamLayer.objectIdField] = nextObjectId++;
+
+        this._streamLayer.sendMessageToClient({
+          type: "features",
+          features: [message]
+        });
+
+        if (events.length === 0) {
+          return;
+        }
+      }
+      const duration = events[0].msAfterStart - msSinceStart;
+      setTimeout(loop, duration);
     };
 
     loop();
   }
 
   stop() {
-    this._startTime = 0;
+    this._abortController.abort();
   }
 
-  private async _reset(layerView: StreamLayerView, resetMessages: StreamLayerEvent["message"][]): Promise<void> {
+  private async _initializeFeatures(): Promise<void> {
+    const result = await this._featureLayer.queryFeatures(
+      new Query({
+        returnGeometry: true,
+        outFields: ["*"],
+        where: "1=1"
+      })
+    );
+    this._streamLayer.sendMessageToClient({
+      type: "features",
+      features: result.features.map((f) => {
+        const attributes = { ...f.attributes };
+        attributes[this._streamLayer.objectIdField] = nextObjectId++;
+        return { attributes, geometry: f.geometry };
+      })
+    });
+  }
+
+  private async _reset(resetMessages: StreamLayerEvent["message"][], signal: AbortSignal): Promise<void> {
     if (resetMessages.length === 0) {
       return;
     }
@@ -254,7 +114,7 @@ class StreamServiceMock {
       resetMessagesMap.set(message.attributes.track_id, message);
     }
 
-    const result = await layerView.queryFeatures(
+    const result = await this._featureLayer.queryFeatures(
       new Query({
         returnGeometry: true,
         outFields: ["*"],
@@ -262,15 +122,19 @@ class StreamServiceMock {
       })
     );
 
-    const connection = connections.get(this._webSocketUrl);
+    if (signal.aborted) {
+      return;
+    }
+
     for (const { attributes, geometry } of result.features) {
       const resetMessage = resetMessagesMap.get(attributes.track_id);
       const message = {
         attributes: { ...attributes, ...resetMessage.attributes },
         geometry: resetMessage.geometry || geometry
       };
-      connection.onmessage?.({
-        data: JSON.stringify(message)
+      this._streamLayer.sendMessageToClient({
+        type: "features",
+        features: [message]
       });
     }
   }

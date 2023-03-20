@@ -1,13 +1,8 @@
-import StreamLayer from "@arcgis/core/layers/StreamLayer";
 import { UniqueValueRenderer } from "@arcgis/core/renderers";
 import { FillSymbol3DLayer, PolygonSymbol3D } from "@arcgis/core/symbols";
 
-const url =
-  "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/streams/arcgis/rest/services/slopesStatusStream/StreamServer";
-
-const createSlopeStream = () =>
-  new StreamLayer({
-    url,
+export const slopeStreamLayerProperties = () =>
+  ({
     title: "Slopes Status",
     opacity: 0.4,
     purgeOptions: {
@@ -67,6 +62,4 @@ const createSlopeStream = () =>
         }
       ]
     })
-  });
-
-export default createSlopeStream;
+  } as const);

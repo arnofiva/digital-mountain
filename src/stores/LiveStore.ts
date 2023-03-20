@@ -5,6 +5,7 @@ import Query from "@arcgis/core/rest/support/Query";
 import SceneView from "@arcgis/core/views/SceneView";
 import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
+import { SpatialReference } from "@arcgis/core/geometry";
 
 import { liveScreenStartCamera } from "../cameras";
 import { clockIntervalMs } from "../constants";
@@ -20,7 +21,6 @@ import {
   findWaterPipesLayer
 } from "../data";
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
-import createSlopeStream from "../layers/liveSlopes";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
 import Camera from "@arcgis/core/Camera";
@@ -39,6 +39,8 @@ import staffEvents from "../streamServiceMock/events/staffEvents";
 import StreamServiceMock from "../streamServiceMock/layers/streamServiceMock";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import { slopeStreamLayerProperties } from "../layers/liveSlopes";
 
 enum StartTime {
   Morning,
@@ -52,10 +54,7 @@ class LiveStore extends ScreenStore {
   readonly type = ScreenType.Live;
 
   private readonly _view: SceneView;
-  private readonly _assetsStream: StreamLayer;
   private readonly _slopeStream: StreamLayer;
-  private readonly _staffStream: StreamLayer;
-
   private readonly _assetsMock: StreamServiceMock;
   private readonly _slopeMock: StreamServiceMock;
   private readonly _staffMock: StreamServiceMock;
@@ -69,9 +68,9 @@ class LiveStore extends ScreenStore {
     super();
     this._view = view;
 
-    const slopesGroupLayer = findSlopesGroupLayer(view.map);
-    const staffLayer = findStaffLayer(view.map);
     const snowGroomerLayer = findSnowGroomerLayer(view.map);
+    const slopesLayer = findSlopesLayer(view.map);
+    const staffLayer = findStaffLayer(view.map);
 
     this.overrideLayerVisibilities(() => {
       findWaterPipesLayer(view.map).visible = false;
@@ -79,41 +78,34 @@ class LiveStore extends ScreenStore {
       findFiberOpticLayer(view.map).visible = false;
       findGalaaxyLOD2Layer(view.map).visible = true;
 
-      // Slopes will be displayed by the stream layer
-      slopesGroupLayer.visible = false;
+      // Features associated with these layers will be displayed by the stream layers instead
+      snowGroomerLayer.visible = false;
+      findSlopesGroupLayer(view.map).visible = false;
       staffLayer.visible = false;
     }, view);
 
     this.goToCamera(liveScreenStartCamera, view, false);
 
-    this._assetsStream = new StreamLayer({
-      url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/snowGroomers/StreamServer",
-      renderer: snowGroomerLayer.renderer,
-      opacity: 0
+    // the snow groomer will be displayed by a smoothed copy of the stream layer, so hide the original layer
+    const assetsStream = createClientSideStreamLayer(snowGroomerLayer, { geometryType: "point", visible: false });
+    this._assetsMock = new StreamServiceMock(assetsStream, snowGroomerLayer);
+
+    this._slopeStream = createClientSideStreamLayer(slopesLayer, {
+      geometryType: "polygon",
+      ...slopeStreamLayerProperties()
     });
-    this._slopeStream = createSlopeStream();
-    this._assetsMock = new StreamServiceMock(this._assetsStream.url, snowGroomerLayer);
-    this._slopeMock = new StreamServiceMock(
-      this._slopeStream.url,
-      "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
-    );
+    this._slopeMock = new StreamServiceMock(this._slopeStream, slopesLayer);
 
-    this._staffStream = new StreamLayer({
-      url: "https://us-iot.arcgis.com/bc1qjuyagnrebxvh/bc1qjuyagnrebxvh/maps/arcgis/rest/services/staff/StreamServer",
-      labelingInfo: staffLayer.labelingInfo,
-      labelsVisible: true
-    });
+    const staffStream = createClientSideStreamLayer(staffLayer, { geometryType: "point" });
+    this._staffMock = new StreamServiceMock(staffStream, staffLayer);
 
-    this._staffMock = new StreamServiceMock(this._staffStream.url, staffLayer);
-
-    view.map.add(this._assetsStream);
+    view.map.add(assetsStream);
     view.map.add(this._slopeStream);
-    view.map.add(this._staffStream);
+    view.map.add(staffStream);
 
-    this._assetsStream.load().then(() => {
-      const smoothSnowGroomer = new SmoothSnowGroomer(this._assetsStream, view);
+    assetsStream.load(this.createAbortController().signal).then(() => {
+      const smoothSnowGroomer = new SmoothSnowGroomer(assetsStream, view);
       view.map.add(smoothSnowGroomer.smoothLayer);
-
       this.addHandles({
         remove: () => {
           view.map.remove(smoothSnowGroomer.smoothLayer);
@@ -136,10 +128,9 @@ class LiveStore extends ScreenStore {
               tilt: 66.24
             })
           )
-          .then(async () => {
-            const lv = await view.whenLayerView(this._slopeStream);
+          .then(() => {
             this._slopeMock.setEvents(slopeEventsOpening);
-            this._slopeMock.start(lv);
+            this._slopeMock.start();
           });
       } else if (e.key === "2") {
         view.goTo(
@@ -233,9 +224,9 @@ class LiveStore extends ScreenStore {
     this.addHandles({
       remove: () => {
         this.removeHandles(mockHandlesKey);
-        view.map.remove(this._assetsStream);
+        view.map.remove(assetsStream);
         view.map.remove(this._slopeStream);
-        view.map.remove(this._staffStream);
+        view.map.remove(staffStream);
         this._assetsMock.stop();
         this._slopeMock.stop();
         this._staffMock.stop();
@@ -355,27 +346,20 @@ class LiveStore extends ScreenStore {
     this._mockAbortController?.abort();
     const { signal } = (this._mockAbortController = this.createAbortController());
 
-    for (const mock of [this._assetsMock, this._slopeMock]) {
+    for (const mock of [this._assetsMock, this._slopeMock, this._staffMock]) {
       mock.stop();
     }
     this._alerts.removeAll();
     this.removeHandles(mockHandlesKey);
 
     const view = this._view;
-    view.whenLayerView(this._assetsStream).then((lv) => {
-      if (signal.aborted) {
-        return;
-      }
-      this._assetsMock.setEvents(assetEvents);
-      this._assetsMock.start(lv);
-    });
-    view.whenLayerView(this._staffStream).then((lv) => {
-      if (signal.aborted) {
-        return;
-      }
-      this._staffMock.setEvents(staffEvents);
-      this._staffMock.start(lv);
-    });
+
+    this._assetsMock.setEvents(assetEvents);
+    this._assetsMock.start();
+
+    this._staffMock.setEvents(staffEvents);
+    this._staffMock.start();
+
     view.whenLayerView(this._slopeStream).then((lv) => {
       if (signal.aborted) {
         return;
@@ -395,11 +379,24 @@ class LiveStore extends ScreenStore {
       );
       this._slopeMock.setEvents(this._startTime === StartTime.Morning ? slopeEventsMorning : slopeEventsEvening);
       this._slopeMock.start(
-        lv,
         this._startTime === StartTime.Morning ? slopeResetMessagesMorning : slopeResetMessagesEvening
       );
     });
   }
+}
+
+function createClientSideStreamLayer(source: FeatureLayer, properties: Partial<StreamLayer>): StreamLayer {
+  return new StreamLayer({
+    labelingInfo: source.labelingInfo,
+    labelsVisible: source.labelsVisible,
+    fields: source.fields.slice(),
+    timeInfo: { trackIdField: "track_id" },
+    updateInterval: 10,
+    spatialReference: SpatialReference.WebMercator,
+    renderer: source.renderer,
+    objectIdField: source.objectIdField,
+    ...properties
+  });
 }
 
 export default LiveStore;
