@@ -1,5 +1,5 @@
 /**
- * Constants used in the application. All values are in meters.
+ * Constants used in the application. All length values are in meters.
  */
 
 /**
@@ -43,10 +43,9 @@ export const cableOffset = 3;
 export const initialTowerHeight = 10;
 export const initialTowerSeparation = 200;
 export const minTowerHeight = 5;
-export const maxTowerHeight = 40;
-export const minCableLength = 0;
-export const maxCableLength = 10000;
-export const minTowerSeparation = 0;
+export const maxTowerHeight = 20;
+export const minTowerSeparation = 50;
+export const maxTowerSeparation = 1000;
 export const towerDimensionOffset = 4;
 
 /**

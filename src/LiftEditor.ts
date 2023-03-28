@@ -1,5 +1,5 @@
 import { Point, Polygon, Polyline, SpatialReference } from "@arcgis/core/geometry";
-import { contains, densify, geodesicLength, offset, planarLength, union } from "@arcgis/core/geometry/geometryEngine";
+import { contains, densify, geodesicLength, offset, union } from "@arcgis/core/geometry/geometryEngine";
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
@@ -19,9 +19,8 @@ import {
   initialTowerHeight,
   minTowerHeight,
   maxTowerHeight,
-  minCableLength,
-  maxCableLength,
   minTowerSeparation,
+  maxTowerSeparation,
   initialTowerSeparation,
   cableOffset,
   towerDimensionOffset
@@ -562,7 +561,7 @@ function isRouteValid(detailGeometry: Polyline, parcelGeometry: Polygon): boolea
       const relativeToPrevious = vec2.subtract(vertex, previous);
       previous = vertex;
       const distance = vec2.length(relativeToPrevious);
-      if (distance < minTowerSeparation) {
+      if (distance < minTowerSeparation || distance > maxTowerSeparation) {
         return false;
       }
       const isVertexInOrder = vec2.dot(startToEnd, relativeToPrevious) > 0;
@@ -575,8 +574,7 @@ function isRouteValid(detailGeometry: Polyline, parcelGeometry: Polygon): boolea
     parcelGeometry,
     path.length > 1 ? detailGeometry : vertexToPoint(path[0], detailGeometry.spatialReference)
   );
-  const length = planarLength(detailGeometry);
-  return isContained && (length === 0 || (length >= minCableLength && length <= maxCableLength));
+  return isContained;
 }
 
 function constrainRouteDetailGeometry(detailGeometry: Polyline, options: { relativeToStart: boolean }): Polyline {
