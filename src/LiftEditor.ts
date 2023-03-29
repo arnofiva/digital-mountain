@@ -1,5 +1,5 @@
 import { Point, Polygon, Polyline, SpatialReference } from "@arcgis/core/geometry";
-import { contains, densify, geodesicLength, offset, union } from "@arcgis/core/geometry/geometryEngine";
+import { contains, densify, offset, union } from "@arcgis/core/geometry/geometryEngine";
 import { geodesicDistance } from "@arcgis/core/geometry/support/geodesicUtils";
 import { webMercatorToGeographic } from "@arcgis/core/geometry/support/webMercatorUtils";
 import ElevationSampler from "@arcgis/core/layers/support/ElevationSampler";
@@ -14,6 +14,7 @@ import Layer from "@arcgis/core/layers/Layer";
 import Geometry from "@arcgis/core/geometry/Geometry";
 import DimensionAnalysis from "@arcgis/core/analysis/DimensionAnalysis";
 import LengthDimension from "@arcgis/core/analysis/LengthDimension";
+import Collection from "@arcgis/core/core/Collection";
 
 import {
   initialTowerHeight,
@@ -27,7 +28,7 @@ import {
 } from "./constants";
 import { createSag, sagToSpanRatio } from "./sag";
 import * as vec2 from "./vec2";
-import { ignoreAbortErrors, removeNullable } from "./utils";
+import { distanceScaleFactor, ignoreAbortErrors, removeNullable } from "./utils";
 import { skiResortArea } from "./data";
 import {
   hiddenLineSymbol,
@@ -128,10 +129,19 @@ class LiftEditor extends Accessor {
 
   @property()
   get cableLength(): number {
-    return this._detailLayer.graphics.reduce(
-      (length, graphic) => length + geodesicLength(graphic.geometry, "meters"),
-      0
-    );
+    return this._graphicGroups.reduce((length, group) => {
+      const { detailGraphic, displayGraphic } = group;
+      let geometry = displayGraphic.geometry as Polyline;
+      if (!displayGraphic.visible) {
+        geometry = detailGraphic.geometry as Polyline;
+      }
+      if (geometry) {
+        // We only measure one path of the cable, but the lift contains an offset copy of the path so
+        // we should double the length measured.
+        length += cableLength(geometry);
+      }
+      return length;
+    }, 0);
   }
 
   @property()
@@ -200,7 +210,7 @@ class LiftEditor extends Accessor {
   /**
    * Associates the graphics that belong to each lift across the various layers.
    */
-  private readonly _graphicGroups: LiftGraphicGroup[] = [];
+  private readonly _graphicGroups = new Collection<LiftGraphicGroup>();
 
   /**
    * SketchViewModel used to create the start and end points of lifts.
@@ -547,6 +557,7 @@ function geometryToAbsoluteHeight(geometry: Polyline, elevationSampler: Elevatio
 function isRouteValid(detailGeometry: Polyline, parcelGeometry: Polygon): boolean {
   const path = detailGeometry.paths[0];
   if (path.length > 1) {
+    const scaleFactor = distanceScaleFactor(detailGeometry);
     const start = path[0];
     const end = path[path.length - 1];
     const startToEnd = vec2.subtract(end, start);
@@ -560,7 +571,7 @@ function isRouteValid(detailGeometry: Polyline, parcelGeometry: Polygon): boolea
       }
       const relativeToPrevious = vec2.subtract(vertex, previous);
       previous = vertex;
-      const distance = vec2.length(relativeToPrevious);
+      const distance = vec2.length(relativeToPrevious) * scaleFactor;
       if (distance < minTowerSeparation || distance > maxTowerSeparation) {
         return false;
       }
@@ -697,6 +708,22 @@ function setInitialTowerHeight(line: Polyline): Polyline {
 
 function vertexToPoint(vertex: number[], spatialReference: SpatialReference): Point {
   return new Point({ x: vertex[0], y: vertex[1], z: vertex[2], spatialReference });
+}
+
+function cableLength(geometry: Polyline): number {
+  let length = 0;
+  const scaleFactor = distanceScaleFactor(geometry);
+  const path = geometry.paths[0];
+  for (let i = 0; i < path.length - 1; i++) {
+    const [x0, y0, z0] = path[i];
+    const [x1, y1, z1] = path[i + 1];
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dz = z1 - z0;
+    const dxySqrd = (dx ** 2 + dy ** 2) * scaleFactor ** 2;
+    length += Math.sqrt(dxySqrd + dz ** 2);
+  }
+  return length;
 }
 
 export default LiftEditor;

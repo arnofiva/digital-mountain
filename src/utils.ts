@@ -1,10 +1,14 @@
 import { createAbortError, isAbortError } from "@arcgis/core/core/promiseUtils";
 import { MeasurementSystem } from "@arcgis/core/core/units";
+import { Polyline } from "@arcgis/core/geometry";
+import { geodesicLength } from "@arcgis/core/geometry/geometryEngine";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Portal from "@arcgis/core/portal/Portal";
 import SceneView from "@arcgis/core/views/SceneView";
 import DefaultUI from "@arcgis/core/views/ui/DefaultUI";
 import WebScene from "@arcgis/core/WebScene";
+
+import * as vec2 from "./vec2";
 
 /**
  * Suppress errors about uncaught abort errors in promises, for cases where we expect them to be thrown.
@@ -126,4 +130,19 @@ export function throttle<Arguments extends unknown[], Return>(
   }
 
   return process;
+}
+
+/**
+ * Calculate an approximate scale factor for the provided polyline that can be used to compensate
+ * for distortion in the Web Mercator projection.
+ */
+export function distanceScaleFactor(geometry: Polyline): number {
+  const path = geometry.paths[0];
+  const start = path[0];
+  const end = path[path.length - 1];
+  const planarDistance = vec2.distance(start, end);
+  const scaleFactor =
+    geodesicLength(new Polyline({ paths: [[start, end]], spatialReference: geometry.spatialReference })) /
+    planarDistance;
+  return scaleFactor;
 }
