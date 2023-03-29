@@ -10,6 +10,7 @@ export interface UIActions {
   startSlopeEditor(): void;
   startLiftEditor(options?: { updateGraphic?: Graphic }): void;
   toggleStartTime(): void;
+  toggleSnowCannonLabels(): void;
   toggleSnowDepths(): void;
   toggleWaterUsage(): void;
 }

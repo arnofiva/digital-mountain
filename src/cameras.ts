@@ -1,6 +1,9 @@
 import Camera from "@arcgis/core/Camera";
 
-export const backgroundCamera = new Camera({
+/**
+ * Camera position used to start the task selection screen background animation.
+ */
+export const backgroundAnimationStartCamera = new Camera({
   position: {
     spatialReference: { wkid: 102100 },
     x: 1035322.3255799332,
@@ -11,7 +14,10 @@ export const backgroundCamera = new Camera({
   tilt: 81.34980895091589
 });
 
-export const backgroundAnimationTargetCamera = new Camera({
+/**
+ * Camera position used to end the task selection screen background animation.
+ */
+export const backgroundAnimationEndCamera = new Camera({
   position: {
     spatialReference: { wkid: 102100 },
     x: 1043715.8992755726,
@@ -22,6 +28,9 @@ export const backgroundAnimationTargetCamera = new Camera({
   tilt: 81.01481716117439
 });
 
+/**
+ * Initial camera position for the live task screen.
+ */
 export const liveScreenStartCamera = new Camera({
   position: {
     longitude: 9.25326442,
@@ -32,6 +41,9 @@ export const liveScreenStartCamera = new Camera({
   tilt: 72.59
 });
 
+/**
+ * Initial camera position for the planning task screen.
+ */
 export const planningScreenStartCamera = new Camera({
   position: {
     spatialReference: {
@@ -45,19 +57,9 @@ export const planningScreenStartCamera = new Camera({
   tilt: 80.2425705684597
 });
 
-export const planningScreenDetailCamera = new Camera({
-  position: {
-    spatialReference: {
-      wkid: 102100
-    },
-    x: 1027056.4694989114,
-    y: 5913143.630033293,
-    z: 1949.5658749071881
-  },
-  heading: 334.7862768811804,
-  tilt: 60.848789240734405
-});
-
+/**
+ * Initial camera position for the statistics task screen.
+ */
 export const statisticsScreenStartCamera = new Camera({
   position: {
     longitude: 9.23899066,
@@ -66,4 +68,17 @@ export const statisticsScreenStartCamera = new Camera({
   },
   heading: 270.56,
   tilt: 75.3
+});
+
+/**
+ * Camera position used to frame snow cannons on live task screen.
+ */
+export const snowCannonsCamera = new Camera({
+  position: {
+    longitude: 9.2281655,
+    latitude: 46.84097062,
+    z: 1881.33641
+  },
+  heading: 56.06,
+  tilt: 67.89
 });

@@ -44,16 +44,6 @@ class ScreenStore extends Accessor {
     const { signal } = (this._cameraAnimationAbortController = this.createAbortController());
     return ignoreAbortErrors(view.goTo(camera, { animate, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
   }
-
-  protected addGoToCameraKey(camera: Camera, key: string, view: SceneView) {
-    const onKeyPress = (event: KeyboardEvent) => {
-      if (event.key === key) {
-        this.goToCamera(camera, view);
-      }
-    };
-    window.addEventListener("keydown", onKeyPress);
-    this.addHandles({ remove: () => window.removeEventListener("keydown", onKeyPress) });
-  }
 }
 
 export default ScreenStore;

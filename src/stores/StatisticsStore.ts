@@ -12,7 +12,7 @@ import {
   findFiberOpticLayer,
   findRealisticLiftsLayer,
   findSlopesGroupLayer,
-  findSnowHeightLayer,
+  findSnowDepthsLayer,
   findStaffLayer,
   findStatisticsDataGroupLayer,
   findTreeLayer,
@@ -21,7 +21,7 @@ import {
   findWaterPitsMaxLayer
 } from "../data";
 import { ScreenType } from "../interfaces";
-import { configureSnowHeightLayer, configureStatisticsTreeLayer, configureWaterMaxLayer } from "../symbols";
+import { configureSnowDepthsLayer, configureStatisticsTreeLayer, configureWaterMaxLayer } from "../symbols";
 import ScreenStore from "./ScreenStore";
 
 @subclass("digital-mountain.StatisticsStore")
@@ -36,47 +36,36 @@ class StatisticsStore extends ScreenStore {
 
   constructor({ view }: { view: SceneView }) {
     super();
+    const { map } = view;
 
-    const snowDepthsLayer = findSnowHeightLayer(view.map);
-
-    const treesLayer = findTreeLayer(view.map);
+    const treesLayer = findTreeLayer(map);
     const previousTreeRenderer = treesLayer.renderer;
     configureStatisticsTreeLayer(treesLayer);
     treesLayer.opacity = 0.3;
+    this.addHandles({
+      remove: () => {
+        treesLayer.renderer = previousTreeRenderer;
+        treesLayer.opacity = 1;
+      }
+    });
 
-    const { map } = view;
     const waterLayer = findWaterPitsLayer(map);
-    const previousOutFields = waterLayer.outFields;
     waterLayer.outFields = ["Date", "volumen", "volumen_cumulative"];
 
     const waterMaxLayer = findWaterPitsMaxLayer(map);
     configureWaterMaxLayer(waterMaxLayer, waterLayer);
-    configureSnowHeightLayer(snowDepthsLayer);
-    const groupLayer = findStatisticsDataGroupLayer(map);
-    const slopesLayer = findSlopesGroupLayer(map);
 
-    const waterPipesLayer = findWaterPipesLayer(map);
-    const fiberOpticLayer = findFiberOpticLayer(map);
-    const staffLayer = findStaffLayer(map);
-    const realisticLiftsLayer = findRealisticLiftsLayer(map);
+    const snowDepthsLayer = findSnowDepthsLayer(view.map);
+    configureSnowDepthsLayer(snowDepthsLayer);
 
-    const previousSnowDepthsLayerVisible = snowDepthsLayer.visible;
-    const previousGroupLayerVisible = groupLayer.visible;
-    const previousWaterLayerVisible = waterLayer.visible;
-    const previousWaterMaxLayerVisible = waterMaxLayer.visible;
-    const previousSlopesLayerVisible = slopesLayer.visible;
-    const previousWaterPipesLayerVisible = waterPipesLayer.visible;
-    const previousFiberOpticLayerVisible = fiberOpticLayer.visible;
-    const previousStaffLayerVisible = staffLayer.visible;
-    const previousRealisticLiftsLayerVisible = realisticLiftsLayer.visible;
-
-    snowDepthsLayer.visible = false;
-    groupLayer.visible = true;
-    // slopesLayer.visible = false;
-    waterPipesLayer.visible = false;
-    fiberOpticLayer.visible = false;
-    staffLayer.visible = false;
-    realisticLiftsLayer.visible = false;
+    this.overrideLayerVisibilities(() => {
+      snowDepthsLayer.visible = false;
+      findStatisticsDataGroupLayer(map).visible = true;
+      findWaterPipesLayer(map).visible = false;
+      findFiberOpticLayer(map).visible = false;
+      findStaffLayer(map).visible = false;
+      findRealisticLiftsLayer(map).visible = false;
+    }, view);
 
     this.goToCamera(statisticsScreenStartCamera, view);
 
@@ -88,22 +77,29 @@ class StatisticsStore extends ScreenStore {
       layerInfos: [{ layer: snowDepthsLayer }]
     });
     view.ui.add(legend, "top-left");
+    this.addHandles({ remove: () => view.ui.remove(legend) });
 
-    const snowDepthHandle = watch(
-      () => this.snowCoverVisible,
-      (visible) => {
-        snowDepthsLayer.visible = visible;
-        legend.visible = visible;
-        slopesLayer.visible = !visible;
-      }
+    this.addHandles(
+      watch(
+        () => this.snowCoverVisible,
+        (visible) => {
+          snowDepthsLayer.visible = visible;
+          legend.visible = visible;
+          findSlopesGroupLayer(map).visible = !visible;
+        },
+        { initial: true }
+      )
     );
 
-    const waterUsageHandle = watch(
-      () => this.waterUsageVisible,
-      (visible) => {
-        waterLayer.visible = visible;
-        waterMaxLayer.visible = visible;
-      }
+    this.addHandles(
+      watch(
+        () => this.waterUsageVisible,
+        (visible) => {
+          waterLayer.visible = visible;
+          waterMaxLayer.visible = visible;
+        },
+        { initial: true }
+      )
     );
 
     const translateSnowDepthDate = (selectedDate: Date) => {
@@ -132,44 +128,23 @@ class StatisticsStore extends ScreenStore {
       return date;
     };
 
-    const timeExtentHandle = watch(
-      () => view.timeExtent,
-      (timeExtent) => {
-        const date = translateSnowDepthDate(timeExtent.end);
-        snowDepthsLayer.multidimensionalDefinition = [
-          new DimensionalDefinition({
-            dimensionName: "StdTime",
-            isSlice: false,
-            values: [date.getTime()],
-            variableName: "snowHeight"
-          })
-        ];
-        snowDepthsLayer.useViewTime = false;
-      }
-    );
-
-    this.addHandles([
-      {
-        remove: () => {
-          treesLayer.renderer = previousTreeRenderer;
-          treesLayer.opacity = 1;
-          snowDepthsLayer.visible = previousSnowDepthsLayerVisible;
-          slopesLayer.visible = previousSlopesLayerVisible;
-          groupLayer.visible = previousGroupLayerVisible;
-          waterLayer.visible = previousWaterLayerVisible;
-          waterMaxLayer.visible = previousWaterMaxLayerVisible;
-          waterLayer.outFields = previousOutFields;
-          waterPipesLayer.visible = previousWaterPipesLayerVisible;
-          fiberOpticLayer.visible = previousFiberOpticLayerVisible;
-          staffLayer.visible = previousStaffLayerVisible;
-          realisticLiftsLayer.visible = previousRealisticLiftsLayerVisible;
-          view.ui.remove(legend);
+    this.addHandles(
+      watch(
+        () => view.timeExtent,
+        (timeExtent) => {
+          const date = translateSnowDepthDate(timeExtent.end);
+          snowDepthsLayer.multidimensionalDefinition = [
+            new DimensionalDefinition({
+              dimensionName: "StdTime",
+              isSlice: false,
+              values: [date.getTime()],
+              variableName: "snowHeight"
+            })
+          ];
+          snowDepthsLayer.useViewTime = false;
         }
-      },
-      timeExtentHandle,
-      snowDepthHandle,
-      waterUsageHandle
-    ]);
+      )
+    );
   }
 
   @property()

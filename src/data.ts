@@ -74,7 +74,7 @@ export function findWaterPitsMaxLayer(map: Map): FeatureLayer {
   return map.findLayerById("1869d5d9218-layer-72") as FeatureLayer;
 }
 
-export function findSnowHeightLayer(map: Map): ImageryTileLayer {
+export function findSnowDepthsLayer(map: Map): ImageryTileLayer {
   return map.findLayerById("1869cdeb863-layer-69") as ImageryTileLayer;
 }
 
