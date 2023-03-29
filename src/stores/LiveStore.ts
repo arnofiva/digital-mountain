@@ -95,7 +95,7 @@ class LiveStore extends ScreenStore {
     this._assetsMock = new StreamServiceMock(this._assetsStream.url, snowGroomerLayer);
     this._slopeMock = new StreamServiceMock(
       this._slopeStream.url,
-      "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten/FeatureServer/6"
+      "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Laax_Pisten_View/FeatureServer/6"
     );
 
     this._staffStream = new StreamLayer({
