@@ -23,10 +23,7 @@ class StatisticsScreen extends Widget<ConstructProperties> {
       <div class="align-right">
         <calcite-button
           appearance={this.store.snowCoverVisible ? "solid" : "outline"}
-          // icon-start={this.store.exporting ? "spinner" : "save"}
-          // disabled={this.store.exporting}
-          // kind={this.store.didExportFail ? "danger" : "brand"}
-          class="align-right save-button"
+          class="align-right"
           onclick={() => this.actions.toggleSnowDepths()}
         >
           Snow Depths
@@ -34,10 +31,7 @@ class StatisticsScreen extends Widget<ConstructProperties> {
         &nbsp;
         <calcite-button
           appearance={this.store.waterUsageVisible ? "solid" : "outline"}
-          // icon-start={this.store.exporting ? "spinner" : "save"}
-          // disabled={this.store.exporting}
-          // kind={this.store.didExportFail ? "danger" : "brand"}
-          class="align-right save-button"
+          class="align-right"
           onclick={() => this.actions.toggleWaterUsage()}
         >
           Water Usage

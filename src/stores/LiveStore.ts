@@ -7,7 +7,7 @@ import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
 import { SpatialReference } from "@arcgis/core/geometry";
 
-import { liveScreenStartCamera } from "../cameras";
+import { liveScreenStartCamera, snowCannonsCamera } from "../cameras";
 import { clockIntervalMs } from "../constants";
 import {
   findElectricalLayer,
@@ -23,15 +23,11 @@ import {
 import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interfaces";
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
-import Camera from "@arcgis/core/Camera";
-import LabelClass from "@arcgis/core/layers/support/LabelClass";
-import { LabelSymbol3D, TextSymbol3DLayer } from "@arcgis/core/symbols";
 import { startTimeEvening, startTimeMorning } from "../constants";
 import SmoothSnowGroomer from "../layers/smoothSnowGrommer";
 import {
   slopeEventsEvening,
   slopeEventsMorning,
-  slopeEventsOpening,
   slopeResetMessagesEvening,
   slopeResetMessagesMorning
 } from "../streamServiceMock/events/slopeEvents";
@@ -41,6 +37,9 @@ import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { slopeStreamLayerProperties } from "../layers/liveSlopes";
+import { snowCannonLabelSymbol } from "../symbols";
+import LabelClass from "@arcgis/core/layers/support/LabelClass";
+import { watch } from "@arcgis/core/core/reactiveUtils";
 
 enum StartTime {
   Morning,
@@ -59,32 +58,55 @@ class LiveStore extends ScreenStore {
   private readonly _slopeMock: StreamServiceMock;
   private readonly _staffMock: StreamServiceMock;
 
-  @property()
-  public codeSnippetVisible = false;
-
   private _goToAlertAbortController: AbortController | null = null;
 
   constructor({ view }: { view: SceneView }) {
     super();
     this._view = view;
+    const { map } = view;
 
-    const snowGroomerLayer = findSnowGroomerLayer(view.map);
-    const slopesLayer = findSlopesLayer(view.map);
-    const staffLayer = findStaffLayer(view.map);
+    const snowGroomerLayer = findSnowGroomerLayer(map);
+    const slopesLayer = findSlopesLayer(map);
+    const staffLayer = findStaffLayer(map);
 
     this.overrideLayerVisibilities(() => {
-      findWaterPipesLayer(view.map).visible = false;
-      findElectricalLayer(view.map).visible = false;
-      findFiberOpticLayer(view.map).visible = false;
-      findGalaaxyLOD2Layer(view.map).visible = true;
+      findWaterPipesLayer(map).visible = false;
+      findElectricalLayer(map).visible = false;
+      findFiberOpticLayer(map).visible = false;
+      findGalaaxyLOD2Layer(map).visible = true;
 
       // Features associated with these layers will be displayed by the stream layers instead
       snowGroomerLayer.visible = false;
-      findSlopesGroupLayer(view.map).visible = false;
+      findSlopesGroupLayer(map).visible = false;
       staffLayer.visible = false;
     }, view);
 
     this.goToCamera(liveScreenStartCamera, view, false);
+
+    const snowCannons = findSnowCannonsLayer(map);
+    snowCannons.labelingInfo = [
+      new LabelClass({
+        labelExpressionInfo: {
+          expression:
+            "Replace($feature.Name_Nummer, 'Schacht', 'Hydrant') + TextFormatting.NewLine + FromCharCode(128313) + '150L/min'"
+        },
+        labelPlacement: "above-center",
+        symbol: snowCannonLabelSymbol
+      })
+    ];
+    this.addHandles([
+      watch(
+        () => this.snowCannonLabelsEnabled,
+        (enabled) => {
+          if (enabled) {
+            this.goToCamera(snowCannonsCamera, view);
+          }
+          snowCannons.labelsVisible = enabled;
+        },
+        { initial: true }
+      ),
+      { remove: () => (snowCannons.labelsVisible = false) }
+    ]);
 
     // the snow groomer will be displayed by a smoothed copy of the stream layer, so hide the original layer
     const assetsStream = createClientSideStreamLayer(snowGroomerLayer, { geometryType: "point", visible: false });
@@ -99,138 +121,30 @@ class LiveStore extends ScreenStore {
     const staffStream = createClientSideStreamLayer(staffLayer, { geometryType: "point" });
     this._staffMock = new StreamServiceMock(staffStream, staffLayer);
 
-    view.map.add(assetsStream);
-    view.map.add(this._slopeStream);
-    view.map.add(staffStream);
+    map.add(assetsStream);
+    map.add(this._slopeStream);
+    map.add(staffStream);
 
     assetsStream.load(this.createAbortController().signal).then(() => {
       const smoothSnowGroomer = new SmoothSnowGroomer(assetsStream, view);
-      view.map.add(smoothSnowGroomer.smoothLayer);
+      map.add(smoothSnowGroomer.smoothLayer);
       this.addHandles({
         remove: () => {
-          view.map.remove(smoothSnowGroomer.smoothLayer);
+          map.remove(smoothSnowGroomer.smoothLayer);
           smoothSnowGroomer.destroy();
         }
       });
     });
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "1") {
-        view
-          .goTo(
-            new Camera({
-              position: {
-                longitude: 9.20478243,
-                latitude: 46.8537139,
-                z: 2984.49087
-              },
-              heading: 244.2,
-              tilt: 66.24
-            })
-          )
-          .then(() => {
-            this._slopeMock.setEvents(slopeEventsOpening);
-            this._slopeMock.start();
-          });
-      } else if (e.key === "2") {
-        view.goTo(
-          new Camera({
-            position: {
-              longitude: 9.25579187,
-              latitude: 46.83355769,
-              z: 2357.94722
-            },
-            heading: 288.79,
-            tilt: 84.26
-          })
-        );
-      } else if (e.key === "3") {
-        view
-          .goTo(
-            new Camera({
-              position: {
-                longitude: 9.2281655,
-                latitude: 46.84097062,
-                z: 1881.33641
-              },
-              heading: 56.06,
-              tilt: 67.89
-            })
-          )
-          .then(() => {
-            const snowCannons = findSnowCannonsLayer(view.map);
-
-            snowCannons.labelingInfo = [
-              new LabelClass({
-                labelExpressionInfo: {
-                  expression:
-                    "Replace($feature.Name_Nummer, 'Schacht', 'Hydrant') + TextFormatting.NewLine + FromCharCode(128313) + '150L/min'"
-                },
-                labelPlacement: "above-center",
-                symbol: new LabelSymbol3D({
-                  symbolLayers: [
-                    new TextSymbol3DLayer({
-                      material: {
-                        color: [250, 253, 255, 1]
-                      },
-                      halo: {
-                        color: [0, 0, 0, 0.2],
-                        size: 0
-                      },
-                      font: {
-                        size: 9,
-                        weight: "bolder",
-                        family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
-                      },
-                      background: { color: [255, 255, 255, 0.2] }
-                    })
-                  ],
-                  verticalOffset: {
-                    screenLength: 20,
-                    maxWorldLength: 200,
-                    minWorldLength: 0
-                  },
-                  callout: {
-                    type: "line",
-                    size: 0.75,
-                    color: [255, 255, 255, 0.5],
-                    border: {
-                      color: [0, 0, 0, 0]
-                    }
-                  }
-                })
-              })
-            ];
-            snowCannons.labelsVisible = true;
-          });
-      } else if (e.key === "4") {
-        view.goTo(
-          new Camera({
-            position: {
-              longitude: 9.23656129,
-              latitude: 46.84158115,
-              z: 1890.89974
-            },
-            heading: 264.72,
-            tilt: 79.81
-          })
-        );
-      } else if (e.key === "c") {
-        this.codeSnippetVisible = !this.codeSnippetVisible;
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-
     this.addHandles({
       remove: () => {
         this.removeHandles(mockHandlesKey);
-        view.map.remove(assetsStream);
-        view.map.remove(this._slopeStream);
-        view.map.remove(staffStream);
+        map.remove(assetsStream);
+        map.remove(this._slopeStream);
+        map.remove(staffStream);
         this._assetsMock.stop();
         this._slopeMock.stop();
         this._staffMock.stop();
-        window.removeEventListener("keydown", onKeyDown);
       }
     });
 
@@ -252,6 +166,9 @@ class LiveStore extends ScreenStore {
   get alerts(): Collection<AlertData> {
     return this._alerts;
   }
+
+  @property()
+  snowCannonLabelsEnabled = false;
 
   @property()
   private _alerts = new Collection<AlertData>([

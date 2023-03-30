@@ -8,22 +8,22 @@ import { ignoreAbortErrors } from "../utils";
 
 @subclass("digital-mountain.ScreenStore")
 class ScreenStore extends Accessor {
-  private readonly _initialLayerVisibilities: boolean[] = [];
+  private readonly _initialLayerVisibilities = new Map<string, boolean>();
 
   protected overrideLayerVisibilities(callback: () => void, view: SceneView) {
     // hide layers until task is selected
     view.when(() => {
       if (!this.destroyed) {
-        this._initialLayerVisibilities.length = 0;
+        this._initialLayerVisibilities.clear();
         view.map.allLayers.forEach((l) => {
-          this._initialLayerVisibilities.push(l.visible);
+          this._initialLayerVisibilities.set(l.id, l.visible);
         });
         callback();
       }
     });
     this.addHandles({
       remove: () => {
-        view.map.allLayers.forEach((l, i) => (l.visible = this._initialLayerVisibilities[i]));
+        view.map.allLayers.forEach((l) => (l.visible = this._initialLayerVisibilities.get(l.id)));
       }
     });
   }
@@ -43,16 +43,6 @@ class ScreenStore extends Accessor {
     this._cameraAnimationAbortController?.abort();
     const { signal } = (this._cameraAnimationAbortController = this.createAbortController());
     return ignoreAbortErrors(view.goTo(camera, { animate, speedFactor: transitionCameraAnimationSpeedFactor, signal }));
-  }
-
-  protected addGoToCameraKey(camera: Camera, key: string, view: SceneView) {
-    const onKeyPress = (event: KeyboardEvent) => {
-      if (event.key === key) {
-        this.goToCamera(camera, view);
-      }
-    };
-    window.addEventListener("keydown", onKeyPress);
-    this.addHandles({ remove: () => window.removeEventListener("keydown", onKeyPress) });
   }
 }
 

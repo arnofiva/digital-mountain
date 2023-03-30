@@ -70,6 +70,12 @@ class AppStore extends Accessor implements UIActions {
     }
   }
 
+  toggleSnowCannonLabels(): void {
+    if (this._screenStore?.type === ScreenType.Live) {
+      this._screenStore.snowCannonLabelsEnabled = !this._screenStore.snowCannonLabelsEnabled;
+    }
+  }
+
   toggleSnowDepths(): void {
     if (this._screenStore?.type === ScreenType.Statistics) {
       this._screenStore.snowCoverVisible = !this._screenStore.snowCoverVisible;

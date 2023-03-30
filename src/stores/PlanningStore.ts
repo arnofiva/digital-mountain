@@ -9,7 +9,7 @@ import SceneFilter from "@arcgis/core/layers/support/SceneFilter";
 import SceneView from "@arcgis/core/views/SceneView";
 import WebScene from "@arcgis/core/WebScene";
 
-import { planningScreenDetailCamera, planningScreenStartCamera } from "../cameras";
+import { planningScreenStartCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
 import { filterUpdateIntervalMs, planningViewDate, sceneExportTitle, treeFilterDistance } from "../constants";
 import {
@@ -39,18 +39,7 @@ export class PlanningStore extends ScreenStore {
     this._liftEditor = new LiftEditor({ view });
     this._slopeEditor = new SlopeEditor({ view });
     this.goToCamera(planningScreenStartCamera, view);
-    this.addGoToCameraKey(planningScreenDetailCamera, "1", view);
-    this.addGoToCameraKey(planningScreenStartCamera, "2", view);
     this._setupTreeFilterWatch(view);
-
-    // add code snippet
-    const onKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "c") {
-        this._codeSnippetVisible = !this._codeSnippetVisible;
-      }
-    };
-    window.addEventListener("keydown", onKeyPress);
-    this.addHandles({ remove: () => window.removeEventListener("keydown", onKeyPress) });
 
     const { lighting } = this._view.environment;
     if (lighting.type === "sun") {
@@ -80,14 +69,6 @@ export class PlanningStore extends ScreenStore {
     }
     return null;
   }
-
-  @property()
-  get codeSnippetVisible(): boolean {
-    return this._codeSnippetVisible;
-  }
-
-  @property()
-  private _codeSnippetVisible = false;
 
   @property()
   get cableLength(): number {

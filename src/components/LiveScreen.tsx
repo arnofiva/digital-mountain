@@ -6,7 +6,6 @@ import LiveStore from "../stores/LiveStore";
 import { ensureViewUIContainer } from "../utils";
 import Alerts from "./Alerts";
 import Clock from "./Clock";
-import CodeSnippet from "./CodeSnippet";
 import Header from "./Header";
 import { Widget } from "./Widget";
 
@@ -21,22 +20,21 @@ class LiveScreen extends Widget<ConstructProperties> {
   store: LiveStore;
 
   render() {
-    const dimensionSnippetText = `const streamLayer = new StreamLayer({
-  url: "https://us-iot.arcgis.com/.../slopesStatus/StreamServer"
-});
-
-const streamLayerView = await view.whenLayerView(streamLayer);
-
-streamLayerView.on("data-received", (e) => {
-  if (e.attributes["status"] === "OPEN") {
-    showNotification(e);
-  }
-});`;
+    const buttons = (
+      <div class="align-right">
+        <calcite-button
+          appearance={this.store.snowCannonLabelsEnabled ? "solid" : "outline"}
+          class="align-right"
+          onclick={() => this.actions.toggleSnowCannonLabels()}
+        >
+          Snow Cannons
+        </calcite-button>
+      </div>
+    );
 
     return (
       <div class="screen screen-live">
-        <Header actions={this.actions} subtitle="Operations" />
-        <CodeSnippet display={this.store.codeSnippetVisible} text={dimensionSnippetText} />
+        <Header actions={this.actions} contentElement={buttons} subtitle="Operations" />
         <Clock
           actions={this.actions}
           container={ensureViewUIContainer("top-left", "clock")}

@@ -23,8 +23,6 @@ export const convertPathToEvents = (
     msAfterStart: idx * updateRate * 1000 + 500 * Math.random()
   }));
 
-  console.log("Events", events.length, { events });
-
   return events as StreamLayerEvent[];
 };
 

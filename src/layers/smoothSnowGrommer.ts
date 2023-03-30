@@ -56,9 +56,7 @@ class SmoothSnowGroomer extends Accessor {
         }
 
         this.interpolateFeatures();
-
         setTimeout(loop, 50);
-        // requestAnimationFrame(loop);
       };
 
       loop();
@@ -72,10 +70,8 @@ class SmoothSnowGroomer extends Accessor {
 
   private updateFeature(feature: __esri.StreamLayerViewDataReceivedEvent) {
     const now = performance.now();
-    const point = new Point({
-      spatialReference: this.source.spatialReference,
-      ...feature.geometry
-    });
+    const { x, y } = feature.geometry;
+    const point = new Point({ x, y, spatialReference: this.source.spatialReference });
     const trackIdField = this.source.timeInfo.trackIdField;
     const trackId = feature.attributes[trackIdField];
 

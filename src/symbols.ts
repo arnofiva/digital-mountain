@@ -231,7 +231,7 @@ export function configureWaterMaxLayer(layer: FeatureLayer, waterLayer: FeatureL
   ];
 }
 
-export function configureSnowHeightLayer(layer: ImageryTileLayer) {
+export function configureSnowDepthsLayer(layer: ImageryTileLayer) {
   layer.renderer = new RasterStretchRenderer({
     stretchType: "min-max",
     statistics: [[0, 2, 0.8551445263440985, 1.9532896461042648]],
@@ -287,3 +287,36 @@ export function configureStatisticsTreeLayer(layer: SceneLayer) {
     ]
   });
 }
+
+export const snowCannonLabelSymbol = new LabelSymbol3D({
+  symbolLayers: [
+    new TextSymbol3DLayer({
+      material: {
+        color: [250, 253, 255, 1]
+      },
+      halo: {
+        color: [0, 0, 0, 0.2],
+        size: 0
+      },
+      font: {
+        size: 9,
+        weight: "bolder",
+        family: '"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif'
+      },
+      background: { color: [255, 255, 255, 0.2] }
+    })
+  ],
+  verticalOffset: {
+    screenLength: 20,
+    maxWorldLength: 200,
+    minWorldLength: 0
+  },
+  callout: {
+    type: "line",
+    size: 0.75,
+    color: [255, 255, 255, 0.5],
+    border: {
+      color: [0, 0, 0, 0]
+    }
+  }
+});

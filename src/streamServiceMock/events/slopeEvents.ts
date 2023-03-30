@@ -1,13 +1,6 @@
 import { SlopeStreamEvent } from "../../interfaces";
 
 const morningUpdates: SlopeStreamEvent[] = [
-  // {
-  //   attributes: {
-  //     track_id: 255,
-  //     STATUS: "Offen",
-  //     showAlert: true
-  //   }
-  // },
   {
     attributes: {
       track_id: 300,
@@ -21,10 +14,7 @@ const morningUpdates: SlopeStreamEvent[] = [
       STATUS: "Offen",
       showAlert: true
     }
-  }
-];
-
-const openingUpdates: SlopeStreamEvent[] = [
+  },
   {
     attributes: {
       track_id: 306,
@@ -54,11 +44,6 @@ const eveningUpdates: SlopeStreamEvent[] = [
 export const slopeEventsMorning = morningUpdates.map((message, idx) => ({
   message,
   msAfterStart: idx * 6000 + 1500
-}));
-
-export const slopeEventsOpening = openingUpdates.map((message, idx) => ({
-  message,
-  msAfterStart: 2500
 }));
 
 export const slopeEventsEvening = eveningUpdates.map((message, idx) => ({

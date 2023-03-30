@@ -1,7 +1,7 @@
 import { subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import SceneView from "@arcgis/core/views/SceneView";
 
-import { backgroundAnimationTargetCamera, backgroundCamera } from "../cameras";
+import { backgroundAnimationEndCamera, backgroundAnimationStartCamera } from "../cameras";
 import { ScreenType } from "../interfaces";
 import {
   backgroundCameraAnimationSpeedFactor,
@@ -51,8 +51,8 @@ class TaskSelectionStore extends ScreenStore {
       signal: AbortSignal;
     }
   ): Promise<void> {
-    const camera1 = backgroundCamera;
-    const camera2 = backgroundAnimationTargetCamera;
+    const camera1 = backgroundAnimationStartCamera;
+    const camera2 = backgroundAnimationEndCamera;
     await view.when();
     if (animateCameraToStart) {
       await ignoreAbortErrors(
