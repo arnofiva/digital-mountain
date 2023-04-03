@@ -707,6 +707,9 @@ function vertexToPoint(vertex: number[], spatialReference: SpatialReference): Po
   return new Point({ x: vertex[0], y: vertex[1], z: vertex[2], spatialReference });
 }
 
+/**
+ * Calculate the length of a cable in 3D, by combining the 2D geodesic distance with the difference in Z.
+ */
 function cableLength(geometry: Polyline): number {
   let length = 0;
   const scaleFactor = distanceScaleFactor(geometry);
