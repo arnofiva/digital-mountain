@@ -131,10 +131,7 @@ class LiftEditor extends Accessor {
   get cableLength(): number {
     return this._graphicGroups.reduce((length, group) => {
       const { detailGraphic, displayGraphic } = group;
-      let geometry = displayGraphic.geometry as Polyline;
-      if (!displayGraphic.visible) {
-        geometry = detailGraphic.geometry as Polyline;
-      }
+      const geometry = (displayGraphic.visible ? displayGraphic.geometry : detailGraphic.geometry) as Polyline | null;
       if (geometry) {
         // We only measure one path of the cable, but the lift contains an offset copy of the path so
         // we should double the length measured.
