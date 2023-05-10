@@ -17,29 +17,33 @@ class TaskSelectionScreen extends Widget<ConstructProperties> {
   store: TaskSelectionStore;
 
   render() {
-    return (
-      <div class="screen task-selection">
-        <h1 class="title">Digital Mountain</h1>
-        <h3 class="subtitle">What's your job today?</h3>
-        <div class="tasks">
-          <TaskSelectionButton
-            actions={this.actions}
-            text="Operations"
-            taskScreenType={ScreenType.Live}
-          />
-          <TaskSelectionButton
-            actions={this.actions}
-            text="Snowmaking"
-            taskScreenType={ScreenType.Statistics}
-          />
-          <TaskSelectionButton
-            actions={this.actions}
-            text="Planning"
-            taskScreenType={ScreenType.Planning}
-          />
+    if (this.store.ready) {
+      return (
+        <div class="screen task-selection">
+          <h1 class="title">Digital Mountain</h1>
+          <h3 class="subtitle">What's your job today?</h3>
+          <div class="tasks">
+            <TaskSelectionButton
+              actions={this.actions}
+              text="Operations"
+              taskScreenType={ScreenType.Live}
+            />
+            <TaskSelectionButton
+              actions={this.actions}
+              text="Snowmaking"
+              taskScreenType={ScreenType.Statistics}
+            />
+            <TaskSelectionButton
+              actions={this.actions}
+              text="Planning"
+              taskScreenType={ScreenType.Planning}
+            />
+          </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      return <div class="screen task-selection"></div>;
+    }
   }
 }
 

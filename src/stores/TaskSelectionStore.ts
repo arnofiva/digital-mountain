@@ -1,19 +1,22 @@
-import { subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import SceneView from "@arcgis/core/views/SceneView";
 
 import { backgroundAnimationTargetCamera, backgroundCamera } from "../cameras";
-import { ScreenType } from "../interfaces";
 import {
   backgroundCameraAnimationSpeedFactor,
   taskSelectionViewDate,
   transitionCameraAnimationSpeedFactor
 } from "../constants";
+import { ScreenType } from "../interfaces";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
 
 @subclass("digital-mountain.TaskSelectionStore")
 class TaskSelectionStore extends ScreenStore {
   readonly type = ScreenType.TaskSelection;
+
+  @property()
+  ready = false;
 
   constructor({ animateCameraToStart, view }: { animateCameraToStart: boolean; view: SceneView }) {
     super();
@@ -25,6 +28,7 @@ class TaskSelectionStore extends ScreenStore {
     view.when(() => {
       const { signal } = this.createAbortController();
       this._startBackgroundCameraAnimation(view, { animateCameraToStart, signal });
+      this.ready = true;
     });
 
     this.overrideLayerVisibilities(() => {
