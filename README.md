@@ -1,4 +1,4 @@
-# ArcGIS API for JavaScript template
+# Digital Mountain
 
 ## Prerequisites
 
