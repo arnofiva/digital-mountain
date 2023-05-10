@@ -147,7 +147,7 @@ export function towerSymbolLayers(options?: {
     ? [
         new ObjectSymbol3DLayer({
           resource: {
-            href: "https://arnofiva.github.io/winter-resort/ski-lift-tower.glb"
+            href: "https://www.arcgis.com/sharing/rest/content/items/2e0b4ceaba2d4ebb9f8022cb7632b3c6/resources/assets/ski-lift-tower.glb"
           },
           anchor: "relative",
           anchorPosition: { x: 0, y: 0, z: 0.4 },
@@ -266,7 +266,7 @@ export function configureStatisticsTreeLayer(layer: SceneLayer) {
       symbolLayers: [
         new ObjectSymbol3DLayer({
           resource: {
-            href: "https://ralucanicola.github.io/3d-models/Norway_Spruce.glb"
+            href: "https://www.arcgis.com/sharing/rest/content/items/2e0b4ceaba2d4ebb9f8022cb7632b3c6/resources/assets/norway-spruce.glb"
           },
           material: {
             // color: [206, 230, 184]

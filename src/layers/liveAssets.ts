@@ -38,7 +38,7 @@ const createAssetsStream = () =>
         symbolLayers: [
           new ObjectSymbol3DLayer({
             resource: {
-              href: "https://arnofiva.github.io/winter-resort/Bully.glb"
+              href: "https://www.arcgis.com/sharing/rest/content/items/2e0b4ceaba2d4ebb9f8022cb7632b3c6/resources/assets/bully.glb"
             },
             // width: 3.046784222126007,
             height: 4,

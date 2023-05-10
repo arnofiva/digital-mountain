@@ -1,11 +1,11 @@
-import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
 import Collection from "@arcgis/core/core/Collection";
+import { property, subclass } from "@arcgis/core/core/accessorSupport/decorators";
+import { SpatialReference } from "@arcgis/core/geometry";
 import StreamLayer from "@arcgis/core/layers/StreamLayer";
 import Query from "@arcgis/core/rest/support/Query";
 import SceneView from "@arcgis/core/views/SceneView";
 import Expand from "@arcgis/core/widgets/Expand";
 import LayerList from "@arcgis/core/widgets/LayerList";
-import { SpatialReference } from "@arcgis/core/geometry";
 
 import { liveScreenStartCamera } from "../cameras";
 import { clockIntervalMs } from "../constants";
@@ -24,9 +24,11 @@ import { AlertData, AlertType, ScreenType, SlopeStreamEvent } from "../interface
 import assetEvents from "../streamServiceMock/events/assetEvents";
 
 import Camera from "@arcgis/core/Camera";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
 import { LabelSymbol3D, TextSymbol3DLayer } from "@arcgis/core/symbols";
 import { startTimeEvening, startTimeMorning } from "../constants";
+import { slopeStreamLayerProperties } from "../layers/liveSlopes";
 import SmoothSnowGroomer from "../layers/smoothSnowGrommer";
 import {
   slopeEventsEvening,
@@ -39,8 +41,6 @@ import staffEvents from "../streamServiceMock/events/staffEvents";
 import StreamServiceMock from "../streamServiceMock/layers/streamServiceMock";
 import { ignoreAbortErrors } from "../utils";
 import ScreenStore from "./ScreenStore";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import { slopeStreamLayerProperties } from "../layers/liveSlopes";
 
 enum StartTime {
   Morning,
@@ -387,6 +387,7 @@ class LiveStore extends ScreenStore {
 
 function createClientSideStreamLayer(source: FeatureLayer, properties: Partial<StreamLayer>): StreamLayer {
   return new StreamLayer({
+    title: `${source.title} (client side)`,
     labelingInfo: source.labelingInfo,
     labelsVisible: source.labelsVisible,
     fields: source.fields.slice(),
