@@ -1,1 +1,0 @@
-import{f as s,t as o,z as r,B as w,y as c,P as m,E as a,s as E}from"./Extent-2ad2c9a9.js";const i=new s(o),t=new s(r),f=new s(w),u=new s(c);function $(n){return n&&(m(n)||a(n,t))?t:n&&(E(n)||a(n,f))?f:i}export{u as a,$ as c,i as f};
