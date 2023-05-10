@@ -1,23 +1,23 @@
 import "@esri/calcite-components/dist/calcite/calcite.css";
 import { setAssetPath } from "@esri/calcite-components/dist/components";
 
+import Graphic from "@arcgis/core/Graphic";
+import WebScene from "@arcgis/core/WebScene";
 import "@arcgis/core/assets/esri/themes/light/main.css";
 import esriConfig from "@arcgis/core/config";
+import { Point } from "@arcgis/core/geometry";
 import IdentityManager from "@arcgis/core/identity/IdentityManager";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
-import SceneView from "@arcgis/core/views/SceneView";
-import WebScene from "@arcgis/core/WebScene";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import Graphic from "@arcgis/core/Graphic";
-import { Point } from "@arcgis/core/geometry";
 import { IconSymbol3DLayer, PointSymbol3D } from "@arcgis/core/symbols";
 import LineCallout3D from "@arcgis/core/symbols/callouts/LineCallout3D";
+import SceneView from "@arcgis/core/views/SceneView";
 
 import App from "./components/App";
+import { taskSelectionViewDate } from "./constants";
 import { portalUrl, webSceneId } from "./data";
 import AppStore from "./stores/AppStore";
 import { setViewUI } from "./utils";
-import { taskSelectionViewDate } from "./constants";
 
 setAssetPath(window.document.URL);
 esriConfig.assetsPath = "./assets";
@@ -36,7 +36,7 @@ IdentityManager.registerOAuthInfos([oAuthInfo]);
 };
 
 const map = new WebScene({ portalItem: { id: webSceneId, portal: { url: portalUrl } } });
-const view = (window["view"] = new SceneView({
+const view = new SceneView({
   container: "view",
   map,
   environment: {
@@ -50,8 +50,10 @@ const view = (window["view"] = new SceneView({
   padding: { top: 100 }, // include padding from application header
   qualityProfile: "high",
   ui: { components: ["attribution"] }
-}));
+});
 setViewUI(view.ui);
+
+(window as any).view = view;
 
 view.popup.defaultPopupTemplateEnabled = true;
 

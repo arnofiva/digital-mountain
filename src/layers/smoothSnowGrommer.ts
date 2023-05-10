@@ -118,8 +118,9 @@ class SmoothSnowGroomer extends Accessor {
       const attributes = {
         OBJECTID,
         heading,
-        tilt: snapshot.tilt
-      };
+        tilt: snapshot.tilt,
+        trackIdField: trackId
+      } as any;
       attributes[trackIdField] = trackId;
 
       return {
